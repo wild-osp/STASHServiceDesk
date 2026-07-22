@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Модуль для синхронизации базы данных с GitHub
+Модуль для синхронизации базы данных с GitHub через API
 """
 
 import os
-import shutil
-import subprocess
+import base64
+import json
+import requests
 from datetime import datetime
 import logging
 
@@ -13,41 +14,55 @@ logger = logging.getLogger(__name__)
 
 
 class DBSync:
-    """Класс для синхронизации БД с GitHub"""
+    """Класс для синхронизации БД с GitHub через API"""
     
     def __init__(self, db_path='orders.db'):
         self.db_path = db_path
-        self.backup_path = f'{db_path}.backup'
+        self.github_token = os.getenv('GITHUB_TOKEN')
+        self.repo_owner = 'wild-osp'  # Ваш логин на GitHub
+        self.repo_name = 'STASHServiceDesk'
+        self.api_url = f'https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/contents/{self.db_path}'
         
+        if not self.github_token:
+            logger.warning("⚠️ GITHUB_TOKEN не найден! БД будет только локальной.")
+    
     def pull_from_github(self):
         """
-        Загружает БД из GitHub перед запуском
+        Загружает БД из GitHub через API
         """
+        if not self.github_token:
+            logger.warning("⚠️ Пропуск загрузки: нет GITHUB_TOKEN")
+            return False
+        
         try:
-            # Проверяем, есть ли файл в репозитории
-            if os.path.exists(self.db_path):
-                # Создаем бэкап существующего файла (на случай ошибки)
-                if os.path.exists(self.db_path):
-                    shutil.copy2(self.db_path, self.backup_path)
-                    logger.info(f"📋 Создан бэкап БД: {self.backup_path}")
+            headers = {
+                'Authorization': f'token {self.github_token}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
             
-            # Пытаемся получить файл из GitHub
-            result = subprocess.run(
-                ['git', 'checkout', '--', self.db_path],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(os.path.abspath(__file__))
-            )
+            response = requests.get(self.api_url, headers=headers)
             
-            if result.returncode == 0:
-                if os.path.exists(self.db_path):
-                    logger.info(f"✅ БД загружена из GitHub: {self.db_path}")
+            if response.status_code == 200:
+                data = response.json()
+                content = base64.b64decode(data['content'])
+                
+                with open(self.db_path, 'wb') as f:
+                    f.write(content)
+                
+                logger.info(f"✅ БД загружена из GitHub ({len(content)} байт)")
+                
+                # Проверяем, что файл не пустой
+                if len(content) > 0:
                     return True
                 else:
-                    logger.warning(f"⚠️ Файл {self.db_path} не найден в репозитории")
+                    logger.warning("⚠️ Файл БД пустой, создаем новую")
                     return False
+                    
+            elif response.status_code == 404:
+                logger.info("ℹ️ Файл БД не найден на GitHub, будет создан новый")
+                return False
             else:
-                logger.warning(f"⚠️ Не удалось загрузить БД из GitHub: {result.stderr}")
+                logger.error(f"❌ Ошибка загрузки: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
@@ -56,59 +71,56 @@ class DBSync:
     
     def push_to_github(self, commit_message=None):
         """
-        Сохраняет БД в GitHub после изменений
+        Сохраняет БД в GitHub через API
         """
+        if not self.github_token:
+            logger.warning("⚠️ Пропуск сохранения: нет GITHUB_TOKEN")
+            return False
+        
         try:
             # Проверяем, существует ли файл
             if not os.path.exists(self.db_path):
-                logger.warning(f"⚠️ Файл {self.db_path} не найден для сохранения")
+                logger.warning(f"⚠️ Файл {self.db_path} не найден")
                 return False
+            
+            # Читаем файл
+            with open(self.db_path, 'rb') as f:
+                content = base64.b64encode(f.read()).decode('utf-8')
             
             # Если нет сообщения, создаем автоматическое
             if commit_message is None:
-                commit_message = f"Update orders database - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                commit_message = f"Update database - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             
-            # Добавляем файл
-            result_add = subprocess.run(
-                ['git', 'add', self.db_path],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(os.path.abspath(__file__))
-            )
+            headers = {
+                'Authorization': f'token {self.github_token}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
             
-            if result_add.returncode != 0:
-                logger.error(f"❌ Ошибка git add: {result_add.stderr}")
-                return False
+            # Проверяем, существует ли файл на GitHub
+            response_get = requests.get(self.api_url, headers=headers)
             
-            # Коммитим
-            result_commit = subprocess.run(
-                ['git', 'commit', '-m', commit_message],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(os.path.abspath(__file__))
-            )
+            if response_get.status_code == 200:
+                # Файл существует - обновляем
+                sha = response_get.json()['sha']
+                data = {
+                    'message': commit_message,
+                    'content': content,
+                    'sha': sha
+                }
+                response = requests.put(self.api_url, headers=headers, json=data)
+            else:
+                # Файл не существует - создаем
+                data = {
+                    'message': commit_message,
+                    'content': content
+                }
+                response = requests.put(self.api_url, headers=headers, json=data)
             
-            if result_commit.returncode != 0:
-                if "nothing to commit" in result_commit.stderr:
-                    logger.info("ℹ️ Нет изменений для сохранения")
-                    return True
-                else:
-                    logger.error(f"❌ Ошибка git commit: {result_commit.stderr}")
-                    return False
-            
-            # Отправляем на GitHub
-            result_push = subprocess.run(
-                ['git', 'push', 'origin', 'main'],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(os.path.abspath(__file__))
-            )
-            
-            if result_push.returncode == 0:
+            if response.status_code in [200, 201]:
                 logger.info(f"✅ БД сохранена в GitHub: {commit_message}")
                 return True
             else:
-                logger.error(f"❌ Ошибка git push: {result_push.stderr}")
+                logger.error(f"❌ Ошибка сохранения: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
@@ -126,14 +138,15 @@ class DBSync:
         
         if not success:
             # Если файла нет, создаем новый
-            if not os.path.exists(self.db_path):
+            if not os.path.exists(self.db_path) or os.path.getsize(self.db_path) == 0:
                 import sqlite3
                 conn = sqlite3.connect(self.db_path)
                 conn.close()
                 logger.info(f"✅ Создан новый файл БД: {self.db_path}")
                 
-                # Сохраняем в GitHub
-                self.push_to_github("Initial database creation")
+                # Сохраняем в GitHub (если есть токен)
+                if self.github_token:
+                    self.push_to_github("Initial database creation")
         
         return True
     
