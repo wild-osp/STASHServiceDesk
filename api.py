@@ -14,6 +14,7 @@ from typing import Optional
 
 from database import get_db
 
+# Создаем приложение
 app = FastAPI(
     title="STASHServiceDesk API",
     description="API для управления заказами сервисного центра",
@@ -29,6 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Подключение статических файлов (HTML, CSS, JS для Mini App)
+# Статические файлы должны лежать в папке static/
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Инициализация базы данных
 db = get_db()
 
 
@@ -39,8 +45,23 @@ async def root():
         "name": "STASHServiceDesk API",
         "version": "1.0.0",
         "status": "running",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "endpoints": {
+            "/app": "Telegram Mini App",
+            "/api/orders": "Список заказов",
+            "/api/orders/{id}": "Заказ по ID",
+            "/api/orders/by-number/{number}": "Заказ по номеру",
+            "/api/statistics": "Статистика",
+            "/api/search": "Поиск",
+            "/health": "Проверка здоровья"
+        }
     }
+
+
+@app.get("/app")
+async def serve_app():
+    """Главная страница Telegram Mini App"""
+    return FileResponse("static/index.html")
 
 
 @app.get("/api/orders")
@@ -49,7 +70,13 @@ async def get_orders(
     offset: int = Query(0, ge=0),
     search: Optional[str] = None
 ):
-    """Получить список заказов"""
+    """
+    Получить список заказов с пагинацией и поиском
+    
+    - **limit**: Количество заказов (от 1 до 200, по умолчанию 50)
+    - **offset**: Смещение для пагинации
+    - **search**: Поиск по всем полям (опционально)
+    """
     try:
         if search:
             results = db.search_orders(search)
@@ -82,7 +109,9 @@ async def get_orders(
 
 @app.get("/api/orders/{order_id}")
 async def get_order(order_id: int):
-    """Получить заказ по ID"""
+    """
+    Получить заказ по ID с историей статусов
+    """
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
@@ -92,6 +121,7 @@ async def get_order(order_id: int):
             if not order:
                 raise HTTPException(status_code=404, detail="Заказ не найден")
             
+            # Получаем историю статусов
             cursor.execute('''
                 SELECT * FROM order_history 
                 WHERE order_id = ? 
@@ -114,7 +144,9 @@ async def get_order(order_id: int):
 
 @app.get("/api/orders/by-number/{order_number}")
 async def get_order_by_number(order_number: str):
-    """Получить заказ по номеру"""
+    """
+    Получить заказ по номеру с историей статусов
+    """
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
@@ -126,6 +158,7 @@ async def get_order_by_number(order_number: str):
             
             order_id = order['id']
             
+            # Получаем историю статусов
             cursor.execute('''
                 SELECT * FROM order_history 
                 WHERE order_id = ? 
@@ -148,38 +181,54 @@ async def get_order_by_number(order_number: str):
 
 @app.get("/api/statistics")
 async def get_statistics():
-    """Получить статистику"""
+    """
+    Получить расширенную статистику по заказам
+    """
     try:
         stats = db.get_statistics()
         
         with db.get_connection() as conn:
             cursor = conn.cursor()
             
+            # По приёмщикам
             cursor.execute('''
                 SELECT receiver, COUNT(*) as count 
                 FROM orders 
-                WHERE receiver IS NOT NULL
+                WHERE receiver IS NOT NULL AND receiver != ''
                 GROUP BY receiver
                 ORDER BY count DESC
             ''')
             by_receiver = [dict(row) for row in cursor.fetchall()]
             
+            # По устройствам (топ 10)
             cursor.execute('''
                 SELECT device, COUNT(*) as count 
                 FROM orders 
-                WHERE device IS NOT NULL
+                WHERE device IS NOT NULL AND device != ''
                 GROUP BY device
                 ORDER BY count DESC
                 LIMIT 10
             ''')
             by_device = [dict(row) for row in cursor.fetchall()]
+            
+            # За последние 7 дней
+            cursor.execute('''
+                SELECT date, COUNT(*) as count 
+                FROM orders 
+                WHERE date IS NOT NULL
+                GROUP BY date
+                ORDER BY date DESC
+                LIMIT 7
+            ''')
+            by_day = [dict(row) for row in cursor.fetchall()]
         
         return JSONResponse({
             "success": True,
             "data": {
                 **stats,
                 "by_receiver": by_receiver,
-                "by_device": by_device
+                "by_device": by_device,
+                "by_day": by_day
             }
         })
     except Exception as e:
@@ -188,18 +237,25 @@ async def get_statistics():
 
 @app.get("/api/search")
 async def search_orders(
-    q: str = Query(..., min_length=1),
-    limit: int = Query(50, ge=1, le=100)
+    q: str = Query(..., min_length=1, description="Поисковый запрос"),
+    limit: int = Query(50, ge=1, le=100, description="Максимальное количество результатов")
 ):
-    """Поиск заказов"""
+    """
+    Поиск заказов по всем полям
+    
+    - **q**: Поисковый запрос (номер, телефон, ФИО, устройство, неисправность)
+    - **limit**: Максимальное количество результатов (до 100)
+    """
     try:
         results = db.search_orders(q)
+        total = len(results)
         results = results[:limit]
         
         return JSONResponse({
             "success": True,
             "data": results,
-            "total": len(results)
+            "total": total,
+            "limit": limit
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -207,15 +263,22 @@ async def search_orders(
 
 @app.get("/health")
 async def health_check():
-    """Проверка состояния API"""
+    """
+    Проверка состояния API и базы данных
+    """
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT 1')
         
+        # Получаем количество заказов
+        cursor.execute('SELECT COUNT(*) as count FROM orders')
+        count = cursor.fetchone()['count']
+        
         return JSONResponse({
             "status": "healthy",
             "database": "connected",
+            "orders_count": count,
             "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
@@ -224,9 +287,34 @@ async def health_check():
             content={
                 "status": "unhealthy",
                 "database": "disconnected",
-                "error": str(e)
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
             }
         )
+
+
+@app.get("/api/statuses")
+async def get_statuses():
+    """
+    Получить список всех статусов заказов
+    """
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT status 
+                FROM orders 
+                WHERE status IS NOT NULL AND status != ''
+                ORDER BY status
+            ''')
+            statuses = [row['status'] for row in cursor.fetchall()]
+        
+        return JSONResponse({
+            "success": True,
+            "data": statuses
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
