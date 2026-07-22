@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 STASHServiceDesk Orders Bot
-Исправленная версия с правильным порядком обработчиков
+С поддержкой синхронизации БД с GitHub
 """
 
 import logging
@@ -15,6 +15,7 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes, Com
 from database import get_db
 from order_parser import OrderParser
 from models import Order
+from db_sync import db_sync  # ⬅️ ДОБАВЛЯЕМ ИМПОРТ
 
 # Настройка логирования
 logging.basicConfig(
@@ -117,7 +118,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📌 Доступные команды:\n"
         "/status <номер> - Информация о заказе\n"
         "/search <текст> - Поиск заказов\n"
-        "/stats - Статистика"
+        "/stats - Статистика\n"
+        "/sync - Синхронизация с GitHub"
     )
 
 
@@ -238,6 +240,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/status <номер> - Информация о заказе\n"
         "/search <текст> - Поиск заказов\n"
         "/stats - Статистика\n"
+        "/sync - Синхронизация с GitHub\n"
         "/help - Помощь\n\n"
         "📌 Примеры:\n"
         "/status 043906\n"
@@ -246,30 +249,55 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик команды /sync - принудительная синхронизация с GitHub"""
+    await update.message.reply_text("🔄 Синхронизация с GitHub...")
+    
+    # Загружаем из GitHub
+    success_load = db_sync.pull_from_github()
+    if success_load:
+        await update.message.reply_text("✅ База данных загружена из GitHub")
+    else:
+        await update.message.reply_text("⚠️ Не удалось загрузить БД из GitHub")
+    
+    # Сохраняем в GitHub
+    success_save = db_sync.push_to_github("Manual sync from bot")
+    if success_save:
+        await update.message.reply_text("✅ База данных сохранена в GitHub")
+    else:
+        await update.message.reply_text("⚠️ Не удалось сохранить БД в GitHub")
+
+
 def main():
     try:
         logger.info("=" * 60)
-        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot (ФИНАЛЬНАЯ ВЕРСИЯ)")
+        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot (С СИНХРОНИЗАЦИЕЙ)")
         logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
+        # ⚡ СИНХРОНИЗАЦИЯ С GITHUB ПРИ ЗАПУСКЕ
+        logger.info("🔄 Загрузка базы данных из GitHub...")
+        db_sync.sync_on_startup()
+        
+        # Инициализация БД
         db.init_database()
         
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # ⚡ ВАЖНО: Команды должны быть ДО обработчика сообщений
+        # Команды
         application.add_handler(CommandHandler("start", start_command))
         application.add_handler(CommandHandler("status", status_command))
         application.add_handler(CommandHandler("search", search_command))
         application.add_handler(CommandHandler("stats", stats_command))
         application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("sync", sync_command))  # ⬅️ НОВАЯ КОМАНДА
         
-        # Обработчик обычных сообщений (не команд)
+        # Обработчик обычных сообщений
         application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
         
         logger.info("✅ Бот успешно инициализирован")
         logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("📌 Команды: /start, /status, /search, /stats, /help")
+        logger.info("📌 Команды: /start, /status, /search, /stats, /help, /sync")
         logger.info("=" * 60)
         
         application.run_polling(
