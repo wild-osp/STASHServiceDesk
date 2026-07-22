@@ -9,12 +9,8 @@ import os
 import sys
 from datetime import datetime
 
-from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-
-# Загрузка переменных окружения
-load_dotenv()
 
 # Настройка логирования
 logging.basicConfig(
@@ -26,23 +22,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Конфигурация
+# Конфигурация - токен берется из переменных окружения
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 if not BOT_TOKEN:
     logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
+    logger.error("Пожалуйста, установите переменную окружения BOT_TOKEN")
     sys.exit(1)
-
-# Разрешенные типы сообщений для логирования
-ALLOWED_CONTENT_TYPES = [
-    'text',
-    'photo',
-    'document',
-    'voice',
-    'video',
-    'audio',
-    'animation',
-]
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,6 +43,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Логирование только сообщений из групп/супергрупп
     if chat.type not in ['group', 'supergroup']:
+        logger.debug(f"Пропущено сообщение из чата типа: {chat.type}")
         return
     
     # Получение информации об отправителе
@@ -91,6 +78,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"[Документ: {message.document.file_name}]"
     elif message.photo:
         text = f"[Фото: {len(message.photo)} изображений]"
+    else:
+        # Логируем другие типы сообщений
+        logger.info(f"📨 Получено сообщение типа: {message.effective_attachment}")
+        text = f"[Сообщение типа: {type(message).__name__}]"
     
     # Вывод в лог
     logger.info("=" * 80)
@@ -109,12 +100,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("📄 Текст сообщения:")
         logger.info(text)
     else:
-        logger.info("📄 Текст сообщения отсутствует или это медиа-файл")
+        logger.info("📄 Текст сообщения отсутствует")
     
     logger.info("=" * 80)
     
-    # Дополнительное логирование для отладки
-    logger.debug(f"Полный объект message: {message}")
+    # Дополнительное логирование для отладки (если нужно)
+    # logger.debug(f"Полный объект message: {message.to_dict()}")
+
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик команды /start для активации бота в группе
+    """
+    await update.message.reply_text(
+        "🤖 Бот STASHServiceDesk Orders Bot запущен!\n"
+        "Я буду логировать все сообщения в этой группе.\n"
+        "Для проверки работы отправьте любое сообщение."
+    )
+    logger.info(f"📨 Получена команда /start от пользователя {update.effective_user.full_name}")
 
 
 def main():
@@ -122,13 +125,20 @@ def main():
     Основная функция запуска бота
     """
     try:
-        logger.info("🚀 Запуск STASHServiceDesk Orders Bot (Этап 1)")
-        logger.info(f"🤖 Используется токен: {BOT_TOKEN[:10]}...")
+        logger.info("=" * 60)
+        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot")
+        logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"🤖 Токен: {BOT_TOKEN[:15]}...{BOT_TOKEN[-5:]}")
+        logger.info("=" * 60)
         
         # Создание приложения
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # Добавление обработчика для всех сообщений
+        # Добавление обработчиков
+        # 1. Обработчик команды /start
+        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/start$'), start_command))
+        
+        # 2. Обработчик для всех сообщений (кроме команд)
         message_handler = MessageHandler(
             filters.ALL & ~filters.COMMAND,
             handle_message
@@ -137,6 +147,9 @@ def main():
         
         logger.info("✅ Бот успешно инициализирован")
         logger.info("📡 Начинаю прослушивание сообщений...")
+        logger.info("💡 Убедитесь, что бот имеет права администратора в группе")
+        logger.info("💡 Для активации отправьте /start в группе")
+        logger.info("=" * 60)
         
         # Запуск бота
         application.run_polling(
@@ -145,7 +158,9 @@ def main():
         )
         
     except Exception as e:
-        logger.error(f"❌ Ошибка при запуске бота: {e}")
+        logger.error(f"❌ Критическая ошибка при запуске бота: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
