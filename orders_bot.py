@@ -108,7 +108,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Обработчик команды /start
     """
     user = update.effective_user
-    logger.info(f"📨 Команда /start от {user.full_name} (ID: {user.id})")
+    chat = update.effective_chat
+    
+    logger.info(f"📨 Команда /start от {user.full_name} (ID: {user.id}) в чате {chat.id}")
     
     # Получаем статистику
     stats = db.get_statistics()
@@ -118,8 +120,66 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📦 Система учета заказов\n\n"
         f"📊 Всего заказов: {stats['total']}\n"
         f"📅 Сегодня: {stats['today']}\n\n"
-        "Бот автоматически обрабатывает заказы из группы."
+        "📌 Доступные команды:\n"
+        "/status <номер> - Информация о заказе\n"
+        "/search <текст> - Поиск заказов\n"
+        "/stats - Статистика"
     )
+
+
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик команды /status - информация о заказе по номеру
+    Использование: /status 043906
+    """
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Укажите номер заказа.\n"
+            "Использование: /status <номер_заказа>\n"
+            "Например: /status 043906"
+        )
+        return
+    
+    order_number = context.args[0].strip()
+    
+    # Ищем заказ
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
+        order = cursor.fetchone()
+        
+        if not order:
+            await update.message.reply_text(f"❌ Заказ #{order_number} не найден")
+            return
+        
+        # Получаем историю статусов
+        cursor.execute('''
+            SELECT * FROM order_history 
+            WHERE order_id = ? 
+            ORDER BY changed_at DESC
+        ''', (order['id'],))
+        history = cursor.fetchall()
+    
+    # Формируем ответ
+    response = f"📋 ИНФОРМАЦИЯ О ЗАКАЗЕ #{order_number}\n\n"
+    response += f"📌 Статус: {order['status']}\n"
+    response += f"👤 Клиент: {order['client_name']}\n"
+    response += f"📱 Телефон: {order['phone']}\n"
+    response += f"🖥️ Устройство: {order['device']}\n"
+    response += f"👨‍💼 Приёмщик: {order['receiver']}\n"
+    response += f"📅 Дата: {order['date']}\n"
+    
+    if order['problem']:
+        response += f"\n🔧 Неисправность:\n{order['problem']}\n"
+    
+    # История статусов
+    if history:
+        response += "\n📜 История статусов:\n"
+        for record in history:
+            changed_at = record['changed_at'][:16]  # YYYY-MM-DD HH:MM
+            response += f"  • {changed_at} - {record['status']}\n"
+    
+    await update.message.reply_text(response)
 
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -130,7 +190,8 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
             "🔍 Использование: /search <текст>\n"
-            "Поиск по номеру, телефону, ФИО, устройству или неисправности"
+            "Поиск по номеру, телефону, ФИО, устройству или неисправности\n"
+            "Например: /search Xiaomi"
         )
         return
     
@@ -165,10 +226,31 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response += f"📅 Сегодня: {stats['today']}\n\n"
     response += "📌 По статусам:\n"
     
-    for status in stats['by_status']:
-        response += f"  • {status['status']}: {status['count']}\n"
+    if stats['by_status']:
+        for status in stats['by_status']:
+            response += f"  • {status['status']}: {status['count']}\n"
+    else:
+        response += "  • Нет заказов\n"
     
     await update.message.reply_text(response)
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик команды /help - помощь
+    """
+    await update.message.reply_text(
+        "📚 ДОСТУПНЫЕ КОМАНДЫ\n\n"
+        "/start - Главное меню\n"
+        "/status <номер> - Информация о заказе\n"
+        "/search <текст> - Поиск заказов\n"
+        "/stats - Статистика\n"
+        "/help - Помощь\n\n"
+        "📌 Примеры:\n"
+        "/status 043906\n"
+        "/search Xiaomi\n"
+        "/search Новицкий"
+    )
 
 
 def main():
@@ -188,15 +270,19 @@ def main():
         # Создание приложения
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # Добавление обработчиков
+        # Добавление обработчиков команд
         application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/start$'), start_command))
+        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/status$'), status_command))
         application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/search$'), search_command))
         application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/stats$'), stats_command))
+        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/help$'), help_command))
+        
+        # Обработчик всех остальных сообщений
         application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
         
         logger.info("✅ Бот успешно инициализирован")
         logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("💡 Обрабатываются только сообщения с заказами")
+        logger.info("📌 Доступные команды: /start, /status, /search, /stats, /help")
         logger.info("=" * 60)
         
         application.run_polling(
