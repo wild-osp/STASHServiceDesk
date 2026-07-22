@@ -1,262 +1,162 @@
 #!/usr/bin/env python3
 """
-STASHServiceDesk Orders Bot
-С поддержкой синхронизации БД с GitHub
+Модуль для парсинга заказов из текста сообщений 1С
 """
 
-import logging
-import os
-import sys
+import re
 from datetime import datetime
-
-from telegram import Update
-from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
-
-from database import get_db
-from order_parser import OrderParser
+from typing import Optional, Dict, Any
 from models import Order
-from db_sync import db_sync
-
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-logger = logging.getLogger(__name__)
-
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-
-if not BOT_TOKEN:
-    logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
-    sys.exit(1)
-
-# Инициализация компонентов
-db = get_db()
-parser = OrderParser()
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик всех сообщений в группе"""
-    message = update.effective_message
-    chat = update.effective_chat
+class OrderParser:
+    """Парсер заказов из текстовых сообщений"""
     
-    if not message or chat.type not in ['group', 'supergroup']:
-        return
-    
-    text = message.text or message.caption or ""
-    if not text or not parser.is_order_message(text):
-        return
-    
-    logger.info("=" * 80)
-    logger.info("📦 ОБНАРУЖЕН ЗАКАЗ")
-    logger.info(f"🆔 Chat ID: {chat.id}")
-    logger.info(f"📌 Группа: {chat.title or 'Без названия'}")
-    logger.info(f"🔢 Message ID: {message.message_id}")
-    logger.info("-" * 40)
-    
-    order = parser.parse(text)
-    if not order:
-        logger.warning("❌ Не удалось распарсить заказ")
-        return
-    
-    order.telegram_chat_id = str(chat.id)
-    order.telegram_message_id = message.message_id
-    order.telegram_message_date = datetime.fromtimestamp(message.date.timestamp()).isoformat()
-    order.raw_message_text = text
-    
-    try:
-        order_id = db.save_order(order)
-        logger.info(f"✅ Заказ #{order.order_number} обработан (ID: {order_id})")
-        logger.info(f"  Статус: {order.status}")
-        logger.info(f"  Клиент: {order.client_name}")
-        logger.info(f"  Устройство: {order.device}")
+    @staticmethod
+    def parse(text: str) -> Optional[Order]:
+        """
+        Парсит текст сообщения и возвращает объект заказа
         
-        stats = db.get_statistics()
-        logger.info(f"📊 Всего заказов: {stats['total']}, сегодня: {stats['today']}")
-    except Exception as e:
-        logger.error(f"❌ Ошибка при сохранении заказа: {e}")
-    
-    logger.info("=" * 80)
-
-
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /start"""
-    stats = db.get_statistics()
-    await update.message.reply_text(
-        "🤖 STASHServiceDesk Orders Bot\n"
-        "📦 Система учета заказов\n\n"
-        f"📊 Всего заказов: {stats['total']}\n"
-        f"📅 Сегодня: {stats['today']}\n\n"
-        "📌 Доступные команды:\n"
-        "/status <номер> - Информация о заказе\n"
-        "/search <текст> - Поиск заказов\n"
-        "/stats - Статистика"
-    )
-
-
-async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /status"""
-    if not context.args:
-        await update.message.reply_text(
-            "❌ Укажите номер заказа.\n"
-            "Использование: /status <номер_заказа>"
+        Args:
+            text: Текст сообщения из Telegram
+            
+        Returns:
+            Объект Order или None, если парсинг не удался
+        """
+        if not text or not isinstance(text, str):
+            return None
+        
+        lines = text.strip().split('\n')
+        order_data = {}
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Парсим каждую строку
+            if 'Номер заказа:' in line or 'Номер заказа' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['order_number'] = parts[1].strip()
+                    
+            elif 'Дата приема:' in line or 'Дата приема' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['date_raw'] = parts[1].strip()
+                    order_data['date'] = OrderParser._parse_date(parts[1].strip())
+                    
+            elif 'Статус:' in line or 'Статус' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['status'] = parts[1].strip()
+                    
+            elif 'Приёмщик:' in line or 'Приёмщик' in line or 'Приемщик:' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['receiver'] = parts[1].strip()
+                    
+            elif 'Номер телефона:' in line or 'Номер телефона' in line or 'Телефон:' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['phone'] = parts[1].strip()
+                    
+            elif 'ФИО:' in line or 'ФИО' in line or 'Клиент:' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['client_name'] = parts[1].strip()
+                    
+            elif 'Устройство:' in line or 'Устройство' in line or 'Оборудование:' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['device'] = parts[1].strip()
+                    
+            elif 'Неисправность:' in line or 'Неисправность' in line or 'Проблема:' in line:
+                parts = line.split(':', 1)
+                if len(parts) > 1:
+                    order_data['problem'] = parts[1].strip()
+        
+        # Проверяем, что обязательные поля есть
+        if 'order_number' not in order_data:
+            return None
+        
+        # Создаем объект заказа
+        return Order(
+            order_number=order_data.get('order_number'),
+            date=order_data.get('date'),
+            status=order_data.get('status'),
+            receiver=order_data.get('receiver'),
+            phone=order_data.get('phone'),
+            client_name=order_data.get('client_name'),
+            device=order_data.get('device'),
+            problem=order_data.get('problem')
         )
-        return
     
-    order_number = context.args[0].strip()
-    
-    with db.get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
-        order = cursor.fetchone()
+    @staticmethod
+    def _parse_date(date_str: str) -> Optional[str]:
+        """Парсит дату из строки в формат YYYY-MM-DD"""
+        if not date_str:
+            return None
+            
+        try:
+            date_match = re.search(r'(\d+)\s+([а-я]+)\s+(\d+)', date_str)
+            if date_match:
+                day = int(date_match.group(1))
+                month_str = date_match.group(2).lower()
+                year = int(date_match.group(3))
+                
+                months = {
+                    'января': 1, 'февраля': 2, 'марта': 3,
+                    'апреля': 4, 'мая': 5, 'июня': 6,
+                    'июля': 7, 'августа': 8, 'сентября': 9,
+                    'октября': 10, 'ноября': 11, 'декабря': 12
+                }
+                month = months.get(month_str)
+                if month:
+                    return f"{year}-{month:02d}-{day:02d}"
+        except Exception:
+            pass
         
-        if not order:
-            await update.message.reply_text(f"❌ Заказ #{order_number} не найден")
-            return
+        return None
+    
+    @staticmethod
+    def is_order_message(text: str) -> bool:
+        """Проверяет, является ли сообщение заказом"""
+        if not text:
+            return False
         
-        cursor.execute('''
-            SELECT * FROM order_history 
-            WHERE order_id = ? 
-            ORDER BY changed_at DESC
-        ''', (order['id'],))
-        history = cursor.fetchall()
-    
-    response = f"📋 ИНФОРМАЦИЯ О ЗАКАЗЕ #{order_number}\n\n"
-    response += f"📌 Статус: {order['status']}\n"
-    response += f"👤 Клиент: {order['client_name']}\n"
-    response += f"📱 Телефон: {order['phone']}\n"
-    response += f"🖥️ Устройство: {order['device']}\n"
-    response += f"👨‍💼 Приёмщик: {order['receiver']}\n"
-    response += f"📅 Дата: {order['date']}\n"
-    
-    if order['problem']:
-        response += f"\n🔧 Неисправность:\n{order['problem']}\n"
-    
-    if history:
-        response += "\n📜 История статусов:\n"
-        for record in history:
-            changed_at = record['changed_at'][:16]
-            response += f"  • {changed_at} - {record['status']}\n"
-    
-    await update.message.reply_text(response)
+        keywords = ['Номер заказа', 'Статус', 'Устройство', 'Неисправность']
+        return all(keyword in text for keyword in keywords)
 
 
-async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /search"""
-    if not context.args:
-        await update.message.reply_text(
-            "🔍 Использование: /search <текст>\n"
-            "Поиск по номеру, телефону, ФИО, устройству или неисправности"
-        )
-        return
+def test_parser():
+    """Тестовая функция для проверки парсера"""
+    test_text = """Номер заказа: 043904
+Дата приема: 22 июля 2026 г.
+Статус: Принят в ремонт
+Приёмщик: STASH
+Номер телефона: +375339175570
+ФИО: Дмитрий
+Устройство: Принтер Pantum 5100
+Неисправность: Жуёт листы и странный звук при работе."""
     
-    query = ' '.join(context.args)
-    results = db.search_orders(query)
+    parser = OrderParser()
+    order = parser.parse(test_text)
     
-    if not results:
-        await update.message.reply_text(f"❌ По запросу '{query}' ничего не найдено")
-        return
-    
-    response = f"🔍 Результаты поиска по '{query}':\n\n"
-    for order in results[:10]:
-        response += f"📌 #{order['order_number']} - {order['status']}\n"
-        response += f"   Клиент: {order['client_name']}\n"
-        response += f"   Устройство: {order['device']}\n\n"
-    
-    if len(results) > 10:
-        response += f"... и еще {len(results) - 10} результатов"
-    
-    await update.message.reply_text(response)
-
-
-async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /stats"""
-    stats = db.get_statistics()
-    
-    response = "📊 СТАТИСТИКА ЗАКАЗОВ\n\n"
-    response += f"📦 Всего заказов: {stats['total']}\n"
-    response += f"📅 Сегодня: {stats['today']}\n\n"
-    response += "📌 По статусам:\n"
-    
-    if stats['by_status']:
-        for status in stats['by_status']:
-            response += f"  • {status['status']}: {status['count']}\n"
+    if order:
+        print("✅ Заказ успешно распарсен:")
+        print(f"  Номер: {order.order_number}")
+        print(f"  Дата: {order.date}")
+        print(f"  Статус: {order.status}")
+        print(f"  Приёмщик: {order.receiver}")
+        print(f"  Телефон: {order.phone}")
+        print(f"  Клиент: {order.client_name}")
+        print(f"  Устройство: {order.device}")
+        print(f"  Проблема: {order.problem}")
+        print(f"\n  Является заказом: {parser.is_order_message(test_text)}")
     else:
-        response += "  • Нет заказов\n"
-    
-    await update.message.reply_text(response)
-
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /help"""
-    await update.message.reply_text(
-        "📚 ДОСТУПНЫЕ КОМАНДЫ\n\n"
-        "/start - Главное меню\n"
-        "/status <номер> - Информация о заказе\n"
-        "/search <текст> - Поиск заказов\n"
-        "/stats - Статистика\n"
-        "/help - Помощь"
-    )
-
-
-async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /sync - принудительная синхронизация с GitHub"""
-    await update.message.reply_text("🔄 Синхронизация с GitHub...")
-    
-    success = db_sync.push_to_github("Manual sync from bot")
-    
-    if success:
-        await update.message.reply_text("✅ База данных синхронизирована с GitHub")
-    else:
-        await update.message.reply_text("❌ Ошибка синхронизации с GitHub")
-
-
-def main():
-    try:
-        logger.info("=" * 60)
-        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot")
-        logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logger.info("=" * 60)
-        
-        # ⚡ СИНХРОНИЗАЦИЯ С GITHUB ПРИ ЗАПУСКЕ
-        logger.info("🔄 Загрузка базы данных из GitHub...")
-        db_sync.sync_on_startup()
-        
-        # Инициализация БД
-        db.init_database()
-        
-        application = Application.builder().token(BOT_TOKEN).build()
-        
-        # Команды
-        application.add_handler(CommandHandler("start", start_command))
-        application.add_handler(CommandHandler("status", status_command))
-        application.add_handler(CommandHandler("search", search_command))
-        application.add_handler(CommandHandler("stats", stats_command))
-        application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("sync", sync_command))
-        
-        # Обработчик сообщений
-        application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
-        
-        logger.info("✅ Бот успешно инициализирован")
-        logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("📌 Команды: /start, /status, /search, /stats, /help, /sync")
-        logger.info("=" * 60)
-        
-        application.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            drop_pending_updates=True,
-        )
-        
-    except Exception as e:
-        logger.error(f"❌ Критическая ошибка: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+        print("❌ Не удалось распарсить заказ")
 
 
 if __name__ == "__main__":
-    main()
+    test_parser()
