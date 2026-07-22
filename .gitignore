@@ -1,9 +1,33 @@
+# Python
 *.pyc
 __pycache__/
-*.db
-*.sqlite3
-.DS_Store
-*.log
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
 venv/
 env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment variables
 .env
+
+# ⚠️ НЕ игнорируем БД
+# *.db  ← ЭТУ СТРОКУ УДАЛИТЬ!
+# *.sqlite3  ← И ЭТУ ТОЖЕ!
