@@ -20,6 +20,12 @@ class Database:
         self.db_path = db_path
         self.init_database()
     
+    def get_connection(self):
+        """Получает соединение с БД"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    
     def init_database(self):
         """Инициализирует структуру базы данных"""
         with self.get_connection() as conn:
@@ -132,7 +138,7 @@ class Database:
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
                 
-                # ⚡ СИНХРОНИЗАЦИЯ С GITHUB
+                # Синхронизация с GitHub
                 db_sync.sync_on_change(order.order_number)
                 
                 return order_id
@@ -178,12 +184,11 @@ class Database:
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
                 
-                # ⚡ СИНХРОНИЗАЦИЯ С GITHUB
+                # Синхронизация с GitHub
                 db_sync.sync_on_change(order.order_number)
                 
                 return order_id
     
-    # Остальные методы без изменений...
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
         """Получает заказ по номеру"""
         with self.get_connection() as conn:
@@ -199,10 +204,11 @@ class Database:
         """Получает историю изменений статуса заказа"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                'SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC',
-                (order_id,)
-            )
+            cursor.execute('''
+                SELECT * FROM order_history 
+                WHERE order_id = ? 
+                ORDER BY changed_at DESC
+            ''', (order_id,))
             return [dict(row) for row in cursor.fetchall()]
     
     def search_orders(self, query: str) -> List[Dict[str, Any]]:
