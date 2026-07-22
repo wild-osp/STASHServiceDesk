@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 STASHServiceDesk Orders Bot
-Основной бот для обработки заказов
+Диагностическая версия для отладки команд
 """
 
 import logging
@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 from telegram import Update
-from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
 
 from database import get_db
 from order_parser import OrderParser
@@ -37,6 +37,26 @@ db = get_db()
 parser = OrderParser()
 
 
+# ⚡ ДИАГНОСТИЧЕСКИЙ ОБРАБОТЧИК - логирует ВСЕ сообщения
+async def log_all_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Логирует все входящие обновления для диагностики"""
+    if update.message:
+        chat = update.effective_chat
+        user = update.effective_user
+        text = update.message.text or update.message.caption or "[без текста]"
+        
+        logger.info("=" * 80)
+        logger.info("🔍 ДИАГНОСТИКА: Получено сообщение")
+        logger.info(f"  Chat ID: {chat.id}")
+        logger.info(f"  Chat Type: {chat.type}")
+        logger.info(f"  Chat Title: {chat.title or 'Нет названия'}")
+        logger.info(f"  User: {user.full_name if user else 'Unknown'} (ID: {user.id if user else 'N/A'})")
+        logger.info(f"  Message ID: {update.message.message_id}")
+        logger.info(f"  Текст: {text[:200]}")
+        logger.info(f"  Является командой: {text.startswith('/') if text else False}")
+        logger.info("=" * 80)
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработчик всех сообщений в группе
@@ -49,6 +69,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Только группы и супергруппы
     if chat.type not in ['group', 'supergroup']:
+        logger.info(f"⏭️ Пропущено (не группа, тип: {chat.type})")
         return
     
     # Получаем текст сообщения
@@ -59,7 +80,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Проверяем, является ли сообщение заказом
     if not parser.is_order_message(text):
-        logger.info(f"⏭️ Пропущено (не заказ): {text[:50]}...")
+        logger.info(f"⏭️ Пропущено (не заказ)")
         return
     
     logger.info("=" * 80)
@@ -104,17 +125,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /start
-    """
+    """Обработчик команды /start"""
     user = update.effective_user
     chat = update.effective_chat
+    logger.info(f"✅ Команда /start получена от {user.full_name} в чате {chat.id} ({chat.type})")
     
-    logger.info(f"📨 Команда /start от {user.full_name} (ID: {user.id}) в чате {chat.id}")
-    
-    # Получаем статистику
     stats = db.get_statistics()
-    
     await update.message.reply_text(
         "🤖 STASHServiceDesk Orders Bot\n"
         "📦 Система учета заказов\n\n"
@@ -128,10 +144,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /status - информация о заказе по номеру
-    Использование: /status 043906
-    """
+    """Обработчик команды /status"""
+    user = update.effective_user
+    chat = update.effective_chat
+    logger.info(f"✅ Команда /status получена от {user.full_name} в чате {chat.id} ({chat.type})")
+    
     if not context.args:
         await update.message.reply_text(
             "❌ Укажите номер заказа.\n"
@@ -141,6 +158,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     order_number = context.args[0].strip()
+    logger.info(f"  Поиск заказа #{order_number}")
     
     # Ищем заказ
     with db.get_connection() as conn:
@@ -149,6 +167,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         order = cursor.fetchone()
         
         if not order:
+            logger.info(f"  ❌ Заказ #{order_number} не найден")
             await update.message.reply_text(f"❌ Заказ #{order_number} не найден")
             return
         
@@ -172,39 +191,35 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if order['problem']:
         response += f"\n🔧 Неисправность:\n{order['problem']}\n"
     
-    # История статусов
     if history:
         response += "\n📜 История статусов:\n"
         for record in history:
-            changed_at = record['changed_at'][:16]  # YYYY-MM-DD HH:MM
+            changed_at = record['changed_at'][:16]
             response += f"  • {changed_at} - {record['status']}\n"
     
+    logger.info(f"  ✅ Отправлен ответ для заказа #{order_number}")
     await update.message.reply_text(response)
 
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /search - поиск заказов
-    Использование: /search текст
-    """
+    """Обработчик команды /search"""
     if not context.args:
         await update.message.reply_text(
             "🔍 Использование: /search <текст>\n"
-            "Поиск по номеру, телефону, ФИО, устройству или неисправности\n"
-            "Например: /search Xiaomi"
+            "Поиск по номеру, телефону, ФИО, устройству или неисправности"
         )
         return
     
     query = ' '.join(context.args)
+    logger.info(f"🔍 Поиск по запросу: {query}")
     results = db.search_orders(query)
     
     if not results:
         await update.message.reply_text(f"❌ По запросу '{query}' ничего не найдено")
         return
     
-    # Формируем ответ
     response = f"🔍 Результаты поиска по '{query}':\n\n"
-    for order in results[:10]:  # Показываем первые 10
+    for order in results[:10]:
         response += f"📌 #{order['order_number']} - {order['status']}\n"
         response += f"   Клиент: {order['client_name']}\n"
         response += f"   Устройство: {order['device']}\n\n"
@@ -216,9 +231,8 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /stats - статистика
-    """
+    """Обработчик команды /stats"""
+    logger.info("📊 Запрос статистики")
     stats = db.get_statistics()
     
     response = "📊 СТАТИСТИКА ЗАКАЗОВ\n\n"
@@ -236,9 +250,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /help - помощь
-    """
+    """Обработчик команды /help"""
     await update.message.reply_text(
         "📚 ДОСТУПНЫЕ КОМАНДЫ\n\n"
         "/start - Главное меню\n"
@@ -254,35 +266,32 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    """
-    Основная функция запуска бота
-    """
     try:
         logger.info("=" * 60)
-        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot")
+        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot (ДИАГНОСТИЧЕСКАЯ ВЕРСИЯ)")
         logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
-        # Инициализация БД
-        logger.info("📂 Инициализация базы данных...")
         db.init_database()
         
-        # Создание приложения
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # Добавление обработчиков команд
-        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/start$'), start_command))
-        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/status$'), status_command))
-        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/search$'), search_command))
-        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/stats$'), stats_command))
-        application.add_handler(MessageHandler(filters.COMMAND & filters.Regex('^/help$'), help_command))
+        # ⚡ ДИАГНОСТИЧЕСКИЙ ОБРАБОТЧИК - логирует ВСЕ
+        application.add_handler(MessageHandler(filters.ALL, log_all_updates), group=0)
         
-        # Обработчик всех остальных сообщений
+        # Команды
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CommandHandler("status", status_command))
+        application.add_handler(CommandHandler("search", search_command))
+        application.add_handler(CommandHandler("stats", stats_command))
+        application.add_handler(CommandHandler("help", help_command))
+        
+        # Обработчик обычных сообщений
         application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
         
-        logger.info("✅ Бот успешно инициализирован")
+        logger.info("✅ Бот успешно инициализирован (диагностический режим)")
         logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("📌 Доступные команды: /start, /status, /search, /stats, /help")
+        logger.info("💡 Будет логироваться КАЖДОЕ сообщение (включая команды)")
         logger.info("=" * 60)
         
         application.run_polling(
