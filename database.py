@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Модуль для работы с базой данных SQLite
+Поддержка хранения в GitHub
 """
 
 import sqlite3
 import json
+import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from models import Order, OrderHistory
@@ -24,7 +26,10 @@ class Database:
         return conn
     
     def init_database(self):
-        """Инициализирует структуру базы данных"""
+        """Инициализирует структуру базы данных (если БД не существует)"""
+        # Проверяем, существует ли файл БД
+        db_exists = os.path.exists(self.db_path)
+        
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
@@ -68,7 +73,15 @@ class Database:
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_status ON orders(status)')
             
             conn.commit()
-            print("✅ База данных инициализирована")
+            
+            if db_exists:
+                print(f"✅ База данных подключена: {self.db_path}")
+                # Проверяем количество заказов
+                cursor.execute('SELECT COUNT(*) as count FROM orders')
+                count = cursor.fetchone()['count']
+                print(f"📊 В базе данных {count} заказов")
+            else:
+                print(f"✅ База данных создана: {self.db_path}")
     
     def save_order(self, order: Order) -> Optional[int]:
         """Сохраняет или обновляет заказ"""
@@ -87,7 +100,6 @@ class Database:
                 order_id = existing['id']
                 old_status = existing['status']
                 
-                # Обновляем данные
                 cursor.execute('''
                     UPDATE orders SET
                         date = ?,
