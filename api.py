@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 import os
+import threading
+import subprocess
+import time
+
+def run_bot():
+    """Запускает бота в отдельном потоке"""
+    time.sleep(2)  # Даем API время на запуск
+    subprocess.Popen(["python", "orders_bot.py"])
+
+# Запускаем бота в фоновом потоке
+thread = threading.Thread(target=run_bot, daemon=True)
+thread.start()
+
+
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
