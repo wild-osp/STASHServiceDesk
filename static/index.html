@@ -11,12 +11,12 @@
 
         /* ---------- Базовые переменные ---------- */
         :root {
-            --bg-primary: #0b1a2f;      /* темно-синий фон как на сайте */
-            --bg-secondary: #112240;    /* карточки */
+            --bg-primary: #0b1a2f;
+            --bg-secondary: #112240;
             --bg-card: #1a2d4a;
             --text-primary: #e8edf3;
             --text-secondary: #8ba0c7;
-            --accent: #f5a623;          /* оранжевый/золотой акцент */
+            --accent: #f5a623;
             --accent-dark: #d4911f;
             --shadow: 0 4px 20px rgba(0,0,0,0.4);
             --radius: 12px;
@@ -201,11 +201,18 @@
             border-radius: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
-        .status-new { background: #1e3a5f; color: #93bbfc; }
-        .status-diagnostic { background: #5f3a1e; color: #fbbf7c; }
-        .status-repair { background: #1e2f5f; color: #93bbfc; }
-        .status-ready { background: #1e3f2a; color: #6ee7a7; }
+
+        /* ---------- СТАТУСЫ (1С) ---------- */
+        .status-new { background: #1e3a5f; color: #93bbfc; }           /* Принят в ремонт */
+        .status-repair { background: #5f3a1e; color: #fbbf7c; }        /* В ремонте */
+        .status-consultation { background: #4a1e5f; color: #d8b4fe; }  /* Согласование с клиентом */
+        .status-waiting { background: #5f4a1e; color: #fcd34d; }       /* Ожидание запчасти */
+        .status-warranty { background: #1e4a3a; color: #6ee7a7; }      /* Гарантия */
+        .status-ready { background: #1e3a2a; color: #34d399; }         /* Готово */
+        .status-notpaid { background: #4a1e1e; color: #fca5a5; }       /* Выдано (не оплачено) */
+        .status-paid { background: #1a3a2a; color: #86efac; }          /* Выдано (оплачено) */
         .status-default { background: #2d2d3f; color: #9ca3af; }
 
         .order-card .info {
@@ -328,7 +335,7 @@
         }
         .history-item .h-status { font-weight: 500; color: var(--text-primary); }
 
-        /* ---------- Кнопки контактов (в стиле STASH) ---------- */
+        /* ---------- Кнопки контактов ---------- */
         .contact-btn {
             flex: 1;
             min-width: 56px;
@@ -413,9 +420,13 @@
     <div class="filters" id="filters">
         <button class="filter-btn active" data-filter="all">Все</button>
         <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
-        <button class="filter-btn" data-filter="Диагностика">Диагностика</button>
         <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
-        <button class="filter-btn" data-filter="Готов">Готов</button>
+        <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
+        <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
+        <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
+        <button class="filter-btn" data-filter="Готово">Готово</button>
+        <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
+        <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
     </div>
 
     <!-- ==================== ORDER LIST ==================== -->
@@ -462,16 +473,21 @@
         const modalBody = $('modalBody');
 
         // ============================================================
-        // HELPERS
+        // СТАТУСЫ (сопоставление с CSS-классами)
         // ============================================================
-        function statusClass(status) {
-            const map = {
-                'Принят в ремонт': 'new',
-                'Диагностика': 'diagnostic',
-                'В ремонте': 'repair',
-                'Готов': 'ready'
-            };
-            return map[status] || 'default';
+        const statusMap = {
+            'Принят в ремонт': 'new',
+            'В ремонте': 'repair',
+            'Согласование с клиентом': 'consultation',
+            'Ожидание запчасти': 'waiting',
+            'Гарантия': 'warranty',
+            'Готово': 'ready',
+            'Выдано (не оплачено)': 'notpaid',
+            'Выдано (оплачено)': 'paid'
+        };
+
+        function getStatusClass(status) {
+            return statusMap[status] || 'default';
         }
 
         function escapeHtml(text) {
@@ -482,7 +498,7 @@
         }
 
         // ============================================================
-        // OPEN APP FUNCTIONS (Viber, Telegram, Copy)
+        // OPEN APP FUNCTIONS
         // ============================================================
         function openViber(phone) {
             const clean = phone.replace(/[^0-9]/g, '');
@@ -585,7 +601,7 @@
                 <div class="order-card" onclick="openOrder(${order.id})">
                     <div class="top-row">
                         <span class="order-number">#${escapeHtml(order.order_number)}</span>
-                        <span class="order-status status-${statusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span>
+                        <span class="order-status status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span>
                     </div>
                     <div class="info">
                         <span><span class="emoji">👤</span> ${escapeHtml(order.client_name) || 'Не указан'}</span>
@@ -617,7 +633,7 @@
         function showModal(order) {
             modalTitle.textContent = `#${order.order_number}`;
 
-            // ========== КОНТАКТЫ В СТИЛЕ STASH ==========
+            // ========== КОНТАКТЫ ==========
             let contactsHtml = '';
             const phone = order.phone || '';
 
@@ -665,7 +681,7 @@
 
                 <div class="detail-row">
                     <span class="label">Статус</span>
-                    <span class="value"><span class="status-badge status-${statusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span>
+                    <span class="value"><span class="status-badge status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Дата приема</span>
