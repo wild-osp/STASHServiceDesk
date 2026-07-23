@@ -414,30 +414,6 @@
 
         .history-item .h-status { font-weight: 500; color: var(--text); }
 
-        /* ========== Contacts Buttons ========== */
-        .contact-btn {
-            flex: 1;
-            min-width: 60px;
-            color: white;
-            text-decoration: none;
-            padding: 10px 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .contact-btn:active { transform: scale(0.95); }
-        .contact-btn.call { background: #22c55e; }
-        .contact-btn.viber { background: #7360f2; }
-        .contact-btn.telegram { background: #0088cc; }
-
         /* ========== Telegram Theme Support ========== */
         @media (prefers-color-scheme: dark) {
             :root {
@@ -627,12 +603,10 @@
         function renderOrders() {
             let filtered = allOrders;
 
-            // Filter
             if (currentFilter !== 'all') {
                 filtered = filtered.filter(o => o.status === currentFilter);
             }
 
-            // Search
             const q = searchQuery.trim().toLowerCase();
             if (q) {
                 filtered = filtered.filter(o =>
@@ -686,7 +660,7 @@
         }
 
         // ============================================================
-        // SHOW MODAL (with contacts)
+        // SHOW MODAL (with contacts — simplified, no checks)
         // ============================================================
         function showModal(order) {
             modalTitle.textContent = `#${order.order_number}`;
@@ -695,13 +669,11 @@
             let contactsHtml = '';
             const phone = order.phone || '';
 
-            // Очищаем телефон: оставляем только цифры и знак +
+            // Очищаем телефон
             let cleanPhone = phone.replace(/[^0-9+]/g, '');
-            // Если номер начинается с 8, заменяем на +7 (для России/Беларуси)
             if (cleanPhone.startsWith('8') && cleanPhone.length === 11) {
                 cleanPhone = '+7' + cleanPhone.slice(1);
             }
-            // Если номер не начинается с +, добавляем +
             if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) {
                 cleanPhone = '+' + cleanPhone;
             }
@@ -716,23 +688,15 @@
                 contactsHtml = `
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
                         <a href="${telLink}" 
-                           class="contact-btn call"
-                           onmouseover="this.style.transform='scale(1.03)'" 
-                           onmouseout="this.style.transform='scale(1)'">
+                           style="flex:1;min-width:60px;background:#22c55e;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
                             📞 Позвонить
                         </a>
                         <a href="${viberLink}" 
-                           class="contact-btn viber"
-                           onmouseover="this.style.transform='scale(1.03)'" 
-                           onmouseout="this.style.transform='scale(1)'"
-                           onclick="if(!navigator.userAgent.match(/Viber/i)){alert('Viber не установлен на этом устройстве.\\nНомер: ${phone}'); return false;}">
+                           style="flex:1;min-width:60px;background:#7360f2;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
                             💬 Viber
                         </a>
                         <a href="${tgLink}" 
-                           class="contact-btn telegram"
-                           onmouseover="this.style.transform='scale(1.03)'" 
-                           onmouseout="this.style.transform='scale(1)'"
-                           onclick="if(!navigator.userAgent.match(/Telegram/i)){alert('Telegram не установлен на этом устройстве.\\nНомер: ${phone}'); return false;}">
+                           style="flex:1;min-width:60px;background:#0088cc;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
                             ✈️ Telegram
                         </a>
                     </div>
@@ -742,7 +706,7 @@
                 `;
             }
 
-            // ========== ИСТОРИЯ СТАТУСОВ ==========
+            // ========== ИСТОРИЯ ==========
             const historyHtml = order.history && order.history.length > 0
                 ? `
                     <div class="history-title">📜 История статусов</div>
@@ -802,7 +766,6 @@
             document.body.style.overflow = '';
         }
 
-        // Close on backdrop click
         modal.addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
