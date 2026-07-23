@@ -3,18 +3,6 @@ import os
 import threading
 import subprocess
 import time
-
-def run_bot():
-    """Запускает бота в отдельном потоке"""
-    time.sleep(2)  # Даем API время на запуск
-    subprocess.Popen(["python", "orders_bot.py"])
-
-# Запускаем бота в фоновом потоке
-thread = threading.Thread(target=run_bot, daemon=True)
-thread.start()
-
-
-
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -27,6 +15,17 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
 from database import get_db
+
+# Функция для запуска бота
+def run_bot():
+    """Запускает бота в отдельном процессе"""
+    time.sleep(3)  # Ждем, пока API запустится
+    print("🚀 Запуск бота из API...")
+    subprocess.Popen(["python", "orders_bot.py"])
+
+# Запускаем бота в фоновом потоке
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
 
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
 
