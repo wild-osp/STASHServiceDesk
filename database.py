@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
 Модуль для работы с базой данных SQLite
-Поддержка хранения в GitHub
+С поддержкой синхронизации с GitHub
 """
 
 import sqlite3
-import json
 import os
+import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from models import Order, OrderHistory
+from db_sync import db_sync
 
 
 class Database:
@@ -26,10 +27,7 @@ class Database:
         return conn
     
     def init_database(self):
-        """Инициализирует структуру базы данных (если БД не существует)"""
-        # Проверяем, существует ли файл БД
-        db_exists = os.path.exists(self.db_path)
-        
+        """Инициализирует структуру базы данных"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
@@ -65,7 +63,7 @@ class Database:
                 )
             ''')
             
-            # Индексы для быстрого поиска
+            # Индексы
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_phone ON orders(phone)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_client_name ON orders(client_name)')
@@ -74,21 +72,17 @@ class Database:
             
             conn.commit()
             
-            if db_exists:
-                print(f"✅ База данных подключена: {self.db_path}")
-                # Проверяем количество заказов
-                cursor.execute('SELECT COUNT(*) as count FROM orders')
-                count = cursor.fetchone()['count']
-                print(f"📊 В базе данных {count} заказов")
-            else:
-                print(f"✅ База данных создана: {self.db_path}")
+            # Проверяем количество заказов
+            cursor.execute('SELECT COUNT(*) as count FROM orders')
+            count = cursor.fetchone()['count']
+            print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
     def save_order(self, order: Order) -> Optional[int]:
-        """Сохраняет или обновляет заказ"""
+        """Сохраняет или обновляет заказ и синхронизирует с GitHub"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Проверяем, существует ли заказ
+            # Проверяем существование
             cursor.execute(
                 'SELECT id, status FROM orders WHERE order_number = ?',
                 (order.order_number,)
@@ -96,7 +90,7 @@ class Database:
             existing = cursor.fetchone()
             
             if existing:
-                # Обновляем существующий заказ
+                # Обновляем
                 order_id = existing['id']
                 old_status = existing['status']
                 
@@ -131,7 +125,6 @@ class Database:
                     order.order_number
                 ))
                 
-                # Если статус изменился, сохраняем в историю
                 if order.status and old_status != order.status:
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
@@ -144,9 +137,13 @@ class Database:
                 
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
+                
+                # Синхронизация с GitHub
+                db_sync.sync_on_change(order.order_number)
+                
                 return order_id
             else:
-                # Создаем новый заказ
+                # Создаем новый
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, phone,
@@ -174,7 +171,6 @@ class Database:
                 
                 order_id = cursor.lastrowid
                 
-                # Сохраняем начальный статус в историю
                 if order.status:
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
@@ -187,6 +183,10 @@ class Database:
                 
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
+                
+                # Синхронизация с GitHub
+                db_sync.sync_on_change(order.order_number)
+                
                 return order_id
     
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
@@ -204,10 +204,11 @@ class Database:
         """Получает историю изменений статуса заказа"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                'SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC',
-                (order_id,)
-            )
+            cursor.execute('''
+                SELECT * FROM order_history 
+                WHERE order_id = ? 
+                ORDER BY changed_at DESC
+            ''', (order_id,))
             return [dict(row) for row in cursor.fetchall()]
     
     def search_orders(self, query: str) -> List[Dict[str, Any]]:
@@ -236,11 +237,9 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Общее количество
             cursor.execute('SELECT COUNT(*) as total FROM orders')
             total = cursor.fetchone()['total']
             
-            # По статусам
             cursor.execute('''
                 SELECT status, COUNT(*) as count 
                 FROM orders 
@@ -249,7 +248,6 @@ class Database:
             ''')
             by_status = [dict(row) for row in cursor.fetchall()]
             
-            # За сегодня
             today = datetime.now().strftime('%Y-%m-%d')
             cursor.execute(
                 'SELECT COUNT(*) as today FROM orders WHERE date = ?',
@@ -264,11 +262,10 @@ class Database:
             }
 
 
-# Синглтон для использования в боте
+# Синглтон
 _db_instance = None
 
 def get_db() -> Database:
-    """Возвращает экземпляр базы данных (синглтон)"""
     global _db_instance
     if _db_instance is None:
         _db_instance = Database()

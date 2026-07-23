@@ -44,7 +44,6 @@ class OrderParser:
                 parts = line.split(':', 1)
                 if len(parts) > 1:
                     order_data['date_raw'] = parts[1].strip()
-                    # Парсим дату
                     order_data['date'] = OrderParser._parse_date(parts[1].strip())
                     
             elif 'Статус:' in line or 'Статус' in line:
@@ -100,7 +99,6 @@ class OrderParser:
             return None
             
         try:
-            # Пример: "22 июля 2026 г."
             date_match = re.search(r'(\d+)\s+([а-я]+)\s+(\d+)', date_str)
             if date_match:
                 day = int(date_match.group(1))
@@ -127,7 +125,6 @@ class OrderParser:
         if not text:
             return False
         
-        # Проверяем наличие ключевых слов
         keywords = ['Номер заказа', 'Статус', 'Устройство', 'Неисправность']
         return all(keyword in text for keyword in keywords)
 

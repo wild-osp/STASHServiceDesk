@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 STASHServiceDesk Orders Bot
-Исправленная версия с правильным порядком обработчиков
+С поддержкой синхронизации БД с GitHub и кнопкой Mini App
 """
 
 import logging
@@ -9,12 +9,13 @@ import os
 import sys
 from datetime import datetime
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
 
 from database import get_db
 from order_parser import OrderParser
 from models import Order
+from db_sync import db_sync
 
 # Настройка логирования
 logging.basicConfig(
@@ -36,29 +37,20 @@ if not BOT_TOKEN:
 db = get_db()
 parser = OrderParser()
 
+# ⚡ ВАЖНО: Укажите ВАШ URL Mini App
+APP_URL = "https://bot-1784782201-8409-wild-osp.bothost.tech/app"
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик всех сообщений в группе
-    """
+    """Обработчик всех сообщений в группе"""
     message = update.effective_message
     chat = update.effective_chat
     
-    if not message:
+    if not message or chat.type not in ['group', 'supergroup']:
         return
     
-    # Только группы и супергруппы
-    if chat.type not in ['group', 'supergroup']:
-        return
-    
-    # Получаем текст сообщения
     text = message.text or message.caption or ""
-    
-    if not text:
-        return
-    
-    # Проверяем, является ли сообщение заказом
-    if not parser.is_order_message(text):
+    if not text or not parser.is_order_message(text):
         return
     
     logger.info("=" * 80)
@@ -68,34 +60,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"🔢 Message ID: {message.message_id}")
     logger.info("-" * 40)
     
-    # Парсим заказ
     order = parser.parse(text)
-    
     if not order:
         logger.warning("❌ Не удалось распарсить заказ")
-        logger.info(f"📄 Текст:\n{text}")
-        logger.info("=" * 80)
         return
     
-    # Добавляем Telegram-данные
     order.telegram_chat_id = str(chat.id)
     order.telegram_message_id = message.message_id
     order.telegram_message_date = datetime.fromtimestamp(message.date.timestamp()).isoformat()
     order.raw_message_text = text
     
-    # Сохраняем в БД
     try:
         order_id = db.save_order(order)
-        
         logger.info(f"✅ Заказ #{order.order_number} обработан (ID: {order_id})")
         logger.info(f"  Статус: {order.status}")
         logger.info(f"  Клиент: {order.client_name}")
         logger.info(f"  Устройство: {order.device}")
         
-        # Получаем статистику
         stats = db.get_statistics()
         logger.info(f"📊 Всего заказов: {stats['total']}, сегодня: {stats['today']}")
-        
     except Exception as e:
         logger.error(f"❌ Ошибка при сохранении заказа: {e}")
     
@@ -103,21 +86,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /start"""
+    """Обработчик команды /start с кнопкой Mini App"""
     user = update.effective_user
     chat = update.effective_chat
     logger.info(f"✅ Команда /start получена от {user.full_name} в чате {chat.id} ({chat.type})")
     
     stats = db.get_statistics()
+    
+    # Создаем кнопку для открытия Mini App
+    keyboard = [[
+        InlineKeyboardButton(
+            "📦 Открыть заказы", 
+            web_app={"url": APP_URL}
+        )
+    ]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
-        "🤖 STASHServiceDesk Orders Bot\n"
-        "📦 Система учета заказов\n\n"
+        f"🤖 STASHServiceDesk Orders Bot\n"
+        f"📦 Система учета заказов\n\n"
         f"📊 Всего заказов: {stats['total']}\n"
         f"📅 Сегодня: {stats['today']}\n\n"
-        "📌 Доступные команды:\n"
-        "/status <номер> - Информация о заказе\n"
-        "/search <текст> - Поиск заказов\n"
-        "/stats - Статистика"
+        "Нажмите кнопку ниже, чтобы открыть интерфейс заказов:",
+        reply_markup=reply_markup
     )
 
 
@@ -138,7 +129,6 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     order_number = context.args[0].strip()
     logger.info(f"  Поиск заказа #{order_number}")
     
-    # Ищем заказ
     with db.get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
@@ -149,7 +139,6 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"❌ Заказ #{order_number} не найден")
             return
         
-        # Получаем историю статусов
         cursor.execute('''
             SELECT * FROM order_history 
             WHERE order_id = ? 
@@ -157,7 +146,6 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ''', (order['id'],))
         history = cursor.fetchall()
     
-    # Формируем ответ
     response = f"📋 ИНФОРМАЦИЯ О ЗАКАЗЕ #{order_number}\n\n"
     response += f"📌 Статус: {order['status']}\n"
     response += f"👤 Клиент: {order['client_name']}\n"
@@ -231,7 +219,15 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /help"""
+    """Обработчик команды /help с кнопкой Mini App"""
+    keyboard = [[
+        InlineKeyboardButton(
+            "📦 Открыть заказы", 
+            web_app={"url": APP_URL}
+        )
+    ]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
         "📚 ДОСТУПНЫЕ КОМАНДЫ\n\n"
         "/start - Главное меню\n"
@@ -239,37 +235,52 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/search <текст> - Поиск заказов\n"
         "/stats - Статистика\n"
         "/help - Помощь\n\n"
-        "📌 Примеры:\n"
-        "/status 043906\n"
-        "/search Xiaomi\n"
-        "/search Новицкий"
+        "Или нажмите кнопку ниже для открытия интерфейса:",
+        reply_markup=reply_markup
     )
+
+
+async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик команды /sync - принудительная синхронизация с GitHub"""
+    await update.message.reply_text("🔄 Синхронизация с GitHub...")
+    
+    success = db_sync.push_to_github("Manual sync from bot")
+    
+    if success:
+        await update.message.reply_text("✅ База данных синхронизирована с GitHub")
+    else:
+        await update.message.reply_text("❌ Ошибка синхронизации с GitHub")
 
 
 def main():
     try:
         logger.info("=" * 60)
-        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot (ФИНАЛЬНАЯ ВЕРСИЯ)")
+        logger.info("🚀 ЗАПУСК STASHServiceDesk Orders Bot")
         logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
+        
+        # Синхронизация с GitHub
+        logger.info("🔄 Загрузка базы данных из GitHub...")
+        db_sync.sync_on_startup()
         
         db.init_database()
         
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # ⚡ ВАЖНО: Команды должны быть ДО обработчика сообщений
+        # Команды
         application.add_handler(CommandHandler("start", start_command))
         application.add_handler(CommandHandler("status", status_command))
         application.add_handler(CommandHandler("search", search_command))
         application.add_handler(CommandHandler("stats", stats_command))
         application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("sync", sync_command))
         
-        # Обработчик обычных сообщений (не команд)
+        # Обработчик сообщений
         application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
         
         logger.info("✅ Бот успешно инициализирован")
         logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("📌 Команды: /start, /status, /search, /stats, /help")
+        logger.info("📌 Команды: /start, /status, /search, /stats, /help, /sync")
         logger.info("=" * 60)
         
         application.run_polling(

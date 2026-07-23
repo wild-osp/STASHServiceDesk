@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>STASHServiceDesk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 16px;
+            min-height: 100vh;
+        }
+        
+        /* Telegram Themes */
+        :root {
+            --tg-bg: var(--tg-theme-bg-color, #ffffff);
+            --tg-text: var(--tg-theme-text-color, #000000);
+            --tg-hint: var(--tg-theme-hint-color, #999999);
+            --tg-link: var(--tg-theme-link-color, #2481cc);
+            --tg-button: var(--tg-theme-button-color, #2481cc);
+            --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+            --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--tg-secondary-bg);
+            margin-bottom: 16px;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .header .stats-badge {
+            background: var(--tg-button);
+            color: var(--tg-button-text);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--tg-secondary-bg);
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            margin-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: var(--tg-button);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--tg-secondary-bg);
+            border-radius: 16px;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: var(--tg-button);
+            color: var(--tg-button-text);
+            border-color: var(--tg-button);
+        }
+        
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .order-card {
+            background: var(--tg-secondary-bg);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .order-card:active {
+            transform: scale(0.98);
+        }
+        
+        .order-card .order-number {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--tg-text);
+        }
+        
+        .order-card .order-status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .status-new { background: #4CAF50; color: white; }
+        .status-diagnostic { background: #FF9800; color: white; }
+        .status-repair { background: #2196F3; color: white; }
+        .status-ready { background: #9C27B0; color: white; }
+        .status-default { background: #9E9E9E; color: white; }
+        
+        .order-card .order-info {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--tg-hint);
+        }
+        
+        .order-card .order-info span {
+            display: block;
+            margin-top: 2px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--tg-hint);
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--tg-hint);
+        }
+        
+        /* Modal / Detail View */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--tg-bg);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .modal.active {
+            display: block;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--tg-secondary-bg);
+            margin-bottom: 16px;
+        }
+        
+        .modal-header h2 {
+            font-size: 18px;
+        }
+        
+        .close-btn {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--tg-text);
+            background: none;
+            border: none;
+            padding: 0 8px;
+        }
+        
+        .detail-field {
+            margin-bottom: 12px;
+        }
+        
+        .detail-field .label {
+            font-size: 12px;
+            color: var(--tg-hint);
+            text-transform: uppercase;
+        }
+        
+        .detail-field .value {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+        
+        .history-list {
+            margin-top: 16px;
+            border-top: 1px solid var(--tg-secondary-bg);
+            padding-top: 16px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--tg-secondary-bg);
+            font-size: 14px;
+        }
+        
+        .history-item .date {
+            color: var(--tg-hint);
+        }
+        
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <div class="header">
+            <h1>📦 Заказы</h1>
+            <span class="stats-badge" id="totalBadge">0</span>
+        </div>
+        
+        <!-- Search -->
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО..." />
+        
+        <!-- Filters -->
+        <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">Все</button>
+            <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
+            <button class="filter-btn" data-filter="Диагностика">Диагностика</button>
+            <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
+            <button class="filter-btn" data-filter="Готов">Готов</button>
+        </div>
+        
+        <!-- Order List -->
+        <div class="order-list" id="orderList">
+            <div class="loading">Загрузка...</div>
+        </div>
+    </div>
+    
+    <!-- Modal (Detail View) -->
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Заказ</h2>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <div id="modalContent"></div>
+    </div>
+    
+    <script>
+        let allOrders = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+        
+        // Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+        
+        // API URL
+        const API_URL = window.location.origin + '/api';
+        
+        // Load orders
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders?limit=100`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    allOrders = result.data;
+                    updateTotalBadge(result.pagination.total);
+                    renderOrders();
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('orderList').innerHTML = 
+                    '<div class="empty">❌ Ошибка загрузки заказов</div>';
+            }
+        }
+        
+        // Render orders
+        function renderOrders() {
+            const list = document.getElementById('orderList');
+            
+            let filtered = allOrders;
+            
+            // Apply filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(o => o.status === currentFilter);
+            }
+            
+            // Apply search
+            if (searchQuery.trim()) {
+                const q = searchQuery.trim().toLowerCase();
+                filtered = filtered.filter(o => 
+                    o.order_number?.includes(q) ||
+                    o.phone?.includes(q) ||
+                    o.client_name?.toLowerCase().includes(q) ||
+                    o.device?.toLowerCase().includes(q) ||
+                    o.problem?.toLowerCase().includes(q)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty">📭 Заказов не найдено</div>';
+                return;
+            }
+            
+            list.innerHTML = filtered.map(order => `
+                <div class="order-card" onclick="openOrder(${order.id})">
+                    <div class="order-number">#${order.order_number}</div>
+                    <span class="order-status status-${getStatusClass(order.status)}">${order.status || 'Новый'}</span>
+                    <div class="order-info">
+                        <span>👤 ${order.client_name || 'Не указан'}</span>
+                        <span>📱 ${order.phone || 'Не указан'}</span>
+                        <span>🖥️ ${order.device || 'Не указано'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Get status CSS class
+        function getStatusClass(status) {
+            const map = {
+                'Принят в ремонт': 'new',
+                'Диагностика': 'diagnostic',
+                'В ремонте': 'repair',
+                'Готов': 'ready'
+            };
+            return map[status] || 'default';
+        }
+        
+        // Update total badge
+        function updateTotalBadge(total) {
+            document.getElementById('totalBadge').textContent = total || 0;
+        }
+        
+        // Open order detail
+        async function openOrder(orderId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const order = result.data;
+                    showModal(order);
+                }
+            } catch (error) {
+                console.error('Error loading order:', error);
+            }
+        }
+        
+        // Show modal
+        function showModal(order) {
+            const modal = document.getElementById('modal');
+            document.getElementById('modalTitle').textContent = `Заказ #${order.order_number}`;
+            
+            const historyHtml = order.history && order.history.length > 0 ? `
+                <div class="history-list">
+                    <strong>📜 История статусов</strong>
+                    ${order.history.map(h => `
+                        <div class="history-item">
+                            <span>${h.status}</span>
+                            <span class="date">${h.changed_at?.slice(0, 16).replace('T', ' ')}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
+            
+            document.getElementById('modalContent').innerHTML = `
+                <div class="detail-field">
+                    <div class="label">Статус</div>
+                    <div class="value"><span class="order-status status-${getStatusClass(order.status)}">${order.status || 'Новый'}</span></div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Дата приема</div>
+                    <div class="value">${order.date || 'Не указана'}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Приёмщик</div>
+                    <div class="value">${order.receiver || 'Не указан'}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Клиент</div>
+                    <div class="value">${order.client_name || 'Не указан'}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Телефон</div>
+                    <div class="value">${order.phone || 'Не указан'}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Устройство</div>
+                    <div class="value">${order.device || 'Не указано'}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="label">Неисправность</div>
+                    <div class="value">${order.problem || 'Не указана'}</div>
+                </div>
+                ${historyHtml}
+            `;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchQuery = e.target.value;
+            renderOrders();
+        });
+        
+        document.getElementById('filters').addEventListener('click', function(e) {
+            if (e.target.classList.contains('filter-btn')) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                renderOrders();
+            }
+        });
+        
+        // Close modal on background click
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Load orders on start
+        loadOrders();
+        
+        // Refresh every 30 seconds
+        setInterval(loadOrders, 30000);
+    </script>
+</body>
+</html>
