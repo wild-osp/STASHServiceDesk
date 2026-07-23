@@ -414,6 +414,30 @@
 
         .history-item .h-status { font-weight: 500; color: var(--text); }
 
+        /* ========== Contacts Buttons ========== */
+        .contact-btn {
+            flex: 1;
+            min-width: 60px;
+            color: white;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .contact-btn:active { transform: scale(0.95); }
+        .contact-btn.call { background: #22c55e; }
+        .contact-btn.viber { background: #7360f2; }
+        .contact-btn.telegram { background: #0088cc; }
+
         /* ========== Telegram Theme Support ========== */
         @media (prefers-color-scheme: dark) {
             :root {
@@ -670,37 +694,45 @@
             // ========== КОНТАКТЫ ==========
             let contactsHtml = '';
             const phone = order.phone || '';
-            const clientName = order.client_name || 'Клиент';
 
-            // Очищаем телефон от лишних символов
-            const cleanPhone = phone.replace(/[^0-9+]/g, '');
+            // Очищаем телефон: оставляем только цифры и знак +
+            let cleanPhone = phone.replace(/[^0-9+]/g, '');
+            // Если номер начинается с 8, заменяем на +7 (для России/Беларуси)
+            if (cleanPhone.startsWith('8') && cleanPhone.length === 11) {
+                cleanPhone = '+7' + cleanPhone.slice(1);
+            }
+            // Если номер не начинается с +, добавляем +
+            if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) {
+                cleanPhone = '+' + cleanPhone;
+            }
 
-            if (cleanPhone) {
-                // Ссылка для звонка
+            if (cleanPhone && cleanPhone.length > 4) {
                 const telLink = `tel:${cleanPhone}`;
-                // Viber (использует номер телефона)
-                const viberLink = `viber://chat?number=${cleanPhone}`;
-                // Telegram (если есть username, иначе предлагаем поиск по номеру)
-                const tgLink = `tg://resolve?phone=${cleanPhone}`;
+                const viberNumber = cleanPhone.replace('+', '');
+                const viberLink = `viber://chat?number=${viberNumber}`;
+                const tgNumber = cleanPhone.replace('+', '');
+                const tgLink = `tg://resolve?phone=${tgNumber}`;
 
                 contactsHtml = `
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
                         <a href="${telLink}" 
-                           style="flex:1;min-width:60px;background:#4CAF50;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;"
+                           class="contact-btn call"
                            onmouseover="this.style.transform='scale(1.03)'" 
                            onmouseout="this.style.transform='scale(1)'">
                             📞 Позвонить
                         </a>
                         <a href="${viberLink}" 
-                           style="flex:1;min-width:60px;background:#7360f2;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;"
+                           class="contact-btn viber"
                            onmouseover="this.style.transform='scale(1.03)'" 
-                           onmouseout="this.style.transform='scale(1)'">
+                           onmouseout="this.style.transform='scale(1)'"
+                           onclick="if(!navigator.userAgent.match(/Viber/i)){alert('Viber не установлен на этом устройстве.\\nНомер: ${phone}'); return false;}">
                             💬 Viber
                         </a>
                         <a href="${tgLink}" 
-                           style="flex:1;min-width:60px;background:#0088cc;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;"
+                           class="contact-btn telegram"
                            onmouseover="this.style.transform='scale(1.03)'" 
-                           onmouseout="this.style.transform='scale(1)'">
+                           onmouseout="this.style.transform='scale(1)'"
+                           onclick="if(!navigator.userAgent.match(/Telegram/i)){alert('Telegram не установлен на этом устройстве.\\nНомер: ${phone}'); return false;}">
                             ✈️ Telegram
                         </a>
                     </div>
