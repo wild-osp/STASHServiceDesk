@@ -200,6 +200,14 @@ class Database:
             row = cursor.fetchone()
             return dict(row) if row else None
     
+    def get_order_by_id(self, order_id: int) -> Optional[Dict[str, Any]]:
+        """Получает заказ по ID"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM orders WHERE id = ?', (order_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+    
     def get_order_history(self, order_id: int) -> List[Dict[str, Any]]:
         """Получает историю изменений статуса заказа"""
         with self.get_connection() as conn:
@@ -232,8 +240,19 @@ class Database:
             ))
             return [dict(row) for row in cursor.fetchall()]
     
+    def get_all_orders(self, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
+        """Получает все заказы с пагинацией"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM orders 
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?
+            ''', (limit, offset))
+            return [dict(row) for row in cursor.fetchall()]
+    
     def get_statistics(self) -> Dict[str, Any]:
-        """Получает статистику по заказам"""
+        """Получает базовую статистику по заказам"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
@@ -260,6 +279,79 @@ class Database:
                 'today': today_count,
                 'by_status': by_status
             }
+    
+    def get_detailed_stats(self) -> Dict[str, Any]:
+        """Расширенная статистика для дашборда"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # 1. Заказы по дням (последние 7 дней)
+            cursor.execute('''
+                SELECT date, COUNT(*) as count 
+                FROM orders 
+                WHERE date IS NOT NULL 
+                GROUP BY date 
+                ORDER BY date DESC 
+                LIMIT 7
+            ''')
+            orders_by_day = [dict(row) for row in cursor.fetchall()]
+            
+            # 2. Среднее время ремонта (в днях) для завершенных заказов
+            cursor.execute('''
+                SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+                FROM orders 
+                WHERE status IN ('Готово', 'Выдано (оплачено)', 'Выдано (не оплачено)')
+            ''')
+            avg_repair_time = cursor.fetchone()['avg_days'] or 0
+            
+            # 3. Топ-5 самых частых неисправностей
+            cursor.execute('''
+                SELECT problem, COUNT(*) as count 
+                FROM orders 
+                WHERE problem IS NOT NULL AND problem != ''
+                GROUP BY problem 
+                ORDER BY count DESC 
+                LIMIT 5
+            ''')
+            top_problems = [dict(row) for row in cursor.fetchall()]
+            
+            # 4. Статусы с количеством и процентами
+            cursor.execute('''
+                SELECT status, COUNT(*) as count 
+                FROM orders 
+                GROUP BY status
+            ''')
+            status_counts = [dict(row) for row in cursor.fetchall()]
+            total = sum(s['count'] for s in status_counts)
+            for s in status_counts:
+                s['percent'] = round((s['count'] / total * 100), 1) if total > 0 else 0
+
+            return {
+                "orders_by_day": orders_by_day,
+                "avg_repair_time": round(avg_repair_time, 1),
+                "top_problems": top_problems,
+                "status_counts": status_counts,
+                "total_orders": total
+            }
+    
+    def get_user_orders(self, user_id: str, role: str = 'user') -> List[Dict[str, Any]]:
+        """Получить заказы с учетом роли пользователя"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if role == 'admin':
+                # Админ видит все заказы
+                cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
+            else:
+                # Обычный пользователь видит только свои заказы (по номеру телефона или имени)
+                cursor.execute('''
+                    SELECT * FROM orders 
+                    WHERE phone LIKE ? OR client_name LIKE ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 200
+                ''', (f'%{user_id}%', f'%{user_id}%'))
+            
+            return [dict(row) for row in cursor.fetchall()]
 
 
 # Синглтон
