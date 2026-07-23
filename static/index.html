@@ -414,6 +414,31 @@
 
         .history-item .h-status { font-weight: 500; color: var(--text); }
 
+        /* ========== Contact Buttons ========== */
+        .contact-btn {
+            flex: 1;
+            min-width: 60px;
+            color: white;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #4f46e5;
+        }
+        .contact-btn:active { transform: scale(0.95); }
+        .contact-btn.call { background: #22c55e; }
+        .contact-btn.viber { background: #7360f2; }
+        .contact-btn.telegram { background: #0088cc; }
+
         /* ========== Telegram Theme Support ========== */
         @media (prefers-color-scheme: dark) {
             :root {
@@ -563,6 +588,40 @@
         }
 
         // ============================================================
+        // OPEN APP FUNCTIONS
+        // ============================================================
+        function openViber(phone) {
+            const clean = phone.replace(/[^0-9]/g, '');
+            const url = `viber://chat?number=${clean}`;
+            const win = window.open(url, '_blank');
+            if (!win || win.closed) {
+                // Если не открылось — показываем номер для копирования
+                alert(`Viber не установлен или не открылся.\nНомер: ${phone}\nСкопируйте номер и вставьте вручную.`);
+            }
+        }
+
+        function openTelegram(phone) {
+            const clean = phone.replace(/[^0-9]/g, '');
+            const url = `tg://resolve?phone=${clean}`;
+            const win = window.open(url, '_blank');
+            if (!win || win.closed) {
+                alert(`Telegram не открылся.\nНомер: ${phone}\nСкопируйте номер и вставьте в Telegram вручную.`);
+            }
+        }
+
+        function copyPhone(phone) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(phone).then(() => {
+                    alert(`📋 Номер скопирован: ${phone}`);
+                }).catch(() => {
+                    alert(`📱 Номер: ${phone}`);
+                });
+            } else {
+                alert(`📱 Номер: ${phone}`);
+            }
+        }
+
+        // ============================================================
         // LOAD ORDERS
         // ============================================================
         async function loadOrders() {
@@ -660,7 +719,7 @@
         }
 
         // ============================================================
-        // SHOW MODAL (with contacts — simplified, no checks)
+        // SHOW MODAL (with contacts)
         // ============================================================
         function showModal(order) {
             modalTitle.textContent = `#${order.order_number}`;
@@ -680,28 +739,26 @@
 
             if (cleanPhone && cleanPhone.length > 4) {
                 const telLink = `tel:${cleanPhone}`;
-                const viberNumber = cleanPhone.replace('+', '');
-                const viberLink = `viber://chat?number=${viberNumber}`;
-                const tgNumber = cleanPhone.replace('+', '');
-                const tgLink = `tg://resolve?phone=${tgNumber}`;
+                const displayPhone = phone;
 
                 contactsHtml = `
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
                         <a href="${telLink}" 
-                           style="flex:1;min-width:60px;background:#22c55e;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
+                           class="contact-btn call">
                             📞 Позвонить
                         </a>
-                        <a href="${viberLink}" 
-                           style="flex:1;min-width:60px;background:#7360f2;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
+                        <button class="contact-btn viber" onclick="openViber('${cleanPhone}')">
                             💬 Viber
-                        </a>
-                        <a href="${tgLink}" 
-                           style="flex:1;min-width:60px;background:#0088cc;color:white;text-decoration:none;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;transition:all 0.2s;">
+                        </button>
+                        <button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">
                             ✈️ Telegram
-                        </a>
+                        </button>
+                        <button class="contact-btn" style="background:#6b7280;flex:0.5;min-width:44px;" onclick="copyPhone('${displayPhone}')">
+                            📋
+                        </button>
                     </div>
                     <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">
-                        📱 ${phone}
+                        📱 ${displayPhone}
                     </div>
                 `;
             }
