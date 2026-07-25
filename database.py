@@ -19,8 +19,7 @@ class Database:
     def __init__(self, db_path: str = 'orders.db'):
         self.db_path = db_path
         self.init_database()
-        self.init_users_table()  # ⚡ ДОБАВЬТЕ ЭТУ СТРОКУ
-        self.init_users_table()  # ⚡ Добавляем инициализацию таблицы пользователей
+        self.init_users_table()
     
     def get_connection(self):
         """Получает соединение с БД"""
