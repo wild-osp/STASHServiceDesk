@@ -12,47 +12,111 @@
             --text-primary: #e8edf3;
             --text-secondary: #8ba0c7;
             --accent: #f5a623;
-            --shadow: 0 4px 20px rgba(0,0,0,0.4);
             --radius: 12px;
+            --nav-height: 64px;
+            --font-base: 16px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             padding: 16px;
             min-height: 100vh;
-            padding-bottom: 80px;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            font-size: var(--font-base);
+            line-height: 1.5;
         }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ===== ШАПКА ===== */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 0 16px;
             border-bottom: 2px solid var(--accent);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .header-left { display: flex; align-items: center; gap: 12px; }
         .header-icon { font-size: 28px; font-weight: 700; color: var(--accent); }
         .header-icon span { color: var(--text-primary); }
-        .header h1 { font-size: 18px; font-weight: 600; }
-        .header h1 small { display: block; font-size: 10px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; }
-        .header-badge { background: var(--accent); color: var(--bg-primary); font-weight: 700; padding: 4px 14px; border-radius: 20px; font-size: 14px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 14px 8px; text-align: center; border-bottom: 3px solid var(--accent); }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-badge { background: var(--accent); color: var(--bg-primary); font-weight: 700; padding: 4px 14px; border-radius: 20px; font-size: 15px; }
+        .back-btn { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+
+        /* ===== СТАТИСТИКА ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+        }
         .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
-        .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-        .search-wrapper { position: relative; margin-bottom: 16px; }
-        .search-wrapper input { width: 100%; padding: 12px 16px; border: 1px solid var(--bg-secondary); border-radius: var(--radius); font-size: 15px; background: var(--bg-secondary); color: var(--text-primary); outline: none; }
-        .search-wrapper input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2); }
-        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        .filter-btn { padding: 6px 16px; border: 1px solid var(--bg-secondary); border-radius: 20px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* ===== ПОИСК ===== */
+        .search-wrapper { margin-bottom: 14px; }
+        .search-wrapper input {
+            width: 100%; padding: 12px 16px;
+            border: 1px solid var(--bg-secondary); border-radius: var(--radius);
+            font-size: 16px; background: var(--bg-secondary); color: var(--text-primary); outline: none;
+        }
+        .search-wrapper input:focus { border-color: var(--accent); }
+
+        /* ===== ФИЛЬТРЫ ===== */
+        .filters {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--bg-secondary);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
-        .order-list { display: flex; flex-direction: column; gap: 12px; }
-        .order-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 16px; cursor: pointer; border-left: 4px solid var(--accent); }
-        .order-card .top-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .order-number { font-weight: 700; font-size: 16px; }
-        .order-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; }
+
+        /* ===== ЗАКАЗЫ ===== */
+        .order-list { display: flex; flex-direction: column; gap: 10px; }
+        .order-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            border-left: 4px solid var(--accent);
+        }
+        .order-card:active { transform: scale(0.98); }
+        .order-card .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .order-number { font-weight: 700; font-size: 17px; }
+        .order-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
         .status-new { background: #1e3a5f; color: #93bbfc; }
         .status-repair { background: #5f3a1e; color: #fbbf7c; }
         .status-consultation { background: #4a1e5f; color: #d8b4fe; }
@@ -62,101 +126,308 @@
         .status-notpaid { background: #4a1e1e; color: #fca5a5; }
         .status-paid { background: #1a3a2a; color: #86efac; }
         .status-default { background: #2d2d3f; color: #9ca3af; }
-        .order-card .info { margin-top: 8px; font-size: 13px; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 8px 16px; }
-        .order-card .device { margin-top: 6px; font-size: 14px; color: var(--text-primary); font-weight: 500; }
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
-        .loader { text-align: center; padding: 40px 0; color: var(--text-secondary); }
-        .spinner { width: 36px; height: 36px; border: 3px solid var(--bg-secondary); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; padding: 20px; align-items: flex-end; justify-content: center; }
-        .modal.active { display: flex; animation: modalIn 0.3s ease; }
-        @keyframes modalIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
-        .modal-header h2 { font-size: 18px; font-weight: 700; color: var(--accent); }
-        .modal-close { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; }
-        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+
+        .order-card .info {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+        }
+        .order-card .device {
+            margin-top: 6px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* ===== ДЕТАЛИ ===== */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 15px;
+        }
         .detail-row .label { color: var(--text-secondary); }
-        .detail-row .value { font-weight: 500; text-align: right; }
-        .contact-btn { flex: 1; min-width: 56px; color: white; padding: 10px 8px; border-radius: var(--radius); font-size: 13px; font-weight: 600; text-align: center; border: none; cursor: pointer; background: var(--bg-card); border-bottom: 3px solid transparent; }
+        .detail-row .value { font-weight: 500; text-align: right; max-width: 60%; }
+
+        /* ===== ИСТОРИЯ ===== */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 14px;
+            align-items: center;
+        }
+        .history-item .h-status { display: flex; align-items: center; gap: 8px; }
+        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .history-item .h-time { color: var(--text-secondary); font-size: 13px; }
+
+        /* ===== КОНТАКТЫ ===== */
+        .contact-btn {
+            flex: 1;
+            min-width: 48px;
+            color: white;
+            padding: 10px 8px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            background: var(--bg-card);
+            border-bottom: 3px solid transparent;
+        }
+        .contact-btn:active { transform: scale(0.95); }
         .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
         .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
         .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
-        .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.4; min-width: 44px; }
-        #dashboardPanel { background: var(--bg-secondary); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border-left: 4px solid var(--accent); }
-        #dashboardPanel h3 { color: var(--accent); margin-bottom: 12px; font-size: 16px; }
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .dashboard-item { background: var(--bg-card); padding: 10px; border-radius: 8px; }
-        .dashboard-item .value { font-size: 20px; font-weight: 700; color: var(--accent); }
-        .problem-item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .problem-item .count { color: var(--accent); }
-        .chart-bars { display: flex; gap: 4px; height: 40px; align-items: flex-end; }
-        .chart-bar { flex: 1; display: flex; flex-direction: column; align-items: center; }
-        .chart-bar .bar { background: var(--accent); width: 100%; border-radius: 4px; min-height: 4px; }
-        .chart-bar .day-label { font-size: 8px; color: var(--text-secondary); margin-top: 2px; }
-        .access-denied { text-align: center; padding: 60px 20px; }
-        .access-denied .icon { font-size: 64px; }
-        .access-denied h2 { color: var(--accent); }
-        .access-denied p { color: var(--text-secondary); }
-        @media (max-width: 480px) { body { padding: 12px; } .stats-grid { gap: 6px; } .stat-number { font-size: 20px; } }
-        @media (min-width: 600px) { .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } }
-        @media (min-width: 900px) { .order-list { grid-template-columns: 1fr 1fr 1fr; } body { max-width: 1100px; margin: 0 auto; } }
+        .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.3; min-width: 40px; }
+
+        .client-btn, .action-btn {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .action-btn.danger { border-color: #ef4444; color: #fca5a5; }
+
+        /* ===== КЛИЕНТ ===== */
+        .client-order-item {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .client-order-item:hover { background: var(--bg-card); }
+        .client-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        .client-stat-item {
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .client-stat-item .num { font-size: 20px; font-weight: 700; color: var(--accent); }
+        .client-stat-item .label { font-size: 11px; color: var(--text-secondary); }
+
+        /* ===== ПОЛЬЗОВАТЕЛИ ===== */
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+        .user-item .role-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+        .role-superadmin { background: #f5a623; color: #0b1a2f; }
+        .role-admin { background: #3b82f6; color: white; }
+        .role-user { background: #6b7280; color: white; }
+
+        /* ===== ОБЩИЕ ===== */
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+        .empty-state h3 { font-size: 18px; color: var(--text-primary); }
+        .loader { text-align: center; padding: 30px 0; color: var(--text-secondary); }
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--bg-secondary);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== НАВИГАЦИЯ ===== */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 8px;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-btn .icon { font-size: 20px; }
+        .nav-btn.active { color: var(--accent); background: rgba(245, 166, 35, 0.1); }
+        .nav-btn:active { transform: scale(0.95); }
+
+        /* ===== АДАПТИВНОСТЬ ===== */
+        @media (max-width: 480px) {
+            body { padding: 12px; padding-bottom: calc(var(--nav-height) + 16px); }
+            .header h1 { font-size: 17px; }
+            .stat-number { font-size: 22px; }
+            .order-number { font-size: 15px; }
+            .nav-btn { font-size: 10px; padding: 6px 10px; }
+            .nav-btn .icon { font-size: 18px; }
+        }
+        @media (min-width: 600px) {
+            .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        }
+        @media (min-width: 900px) {
+            .order-list { grid-template-columns: 1fr 1fr 1fr; }
+            body { max-width: 1100px; margin: 0 auto; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="loadingScreen" style="text-align:center;padding:60px 20px;">
-        <div class="spinner"></div>
-        <p>Проверка доступа...</p>
+    <!-- ===== НАВИГАЦИЯ ===== -->
+    <div class="nav" id="nav">
+        <button class="nav-btn active" data-page="orders" onclick="navigateTo('orders')">
+            <span class="icon">📋</span> Заказы
+        </button>
+        <button class="nav-btn" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <span class="icon">📊</span> Аналитика
+        </button>
+        <button class="nav-btn" data-page="users" onclick="navigateTo('users')">
+            <span class="icon">👥</span> Пользователи
+        </button>
+        <button class="nav-btn" data-page="profile" onclick="navigateTo('profile')">
+            <span class="icon">👤</span> Профиль
+        </button>
     </div>
 
-    <div id="accessDenied" class="access-denied" style="display:none;">
-        <div class="icon">🔒</div>
-        <h2>Доступ запрещен</h2>
-        <p id="errorMessage">Пользователь не найден</p>
-    </div>
-
-    <div id="app" style="display:none;">
+    <!-- ===== СТРАНИЦА: ЗАКАЗЫ ===== -->
+    <div class="page active" id="page-orders">
         <div class="header">
             <div class="header-left">
                 <div class="header-icon">ST<span>ASH</span></div>
-                <div>
-                    <h1 id="userGreeting">ServiceDesk <small>сервисный центр</small></h1>
-                </div>
+                <div><h1 id="userGreeting">ServiceDesk <small>сервисный центр</small></h1></div>
             </div>
             <span class="header-badge" id="totalBadge">0</span>
         </div>
-
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего заказов</div></div>
+            <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего</div></div>
             <div class="stat-card"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
             <div class="stat-card"><div class="stat-number" id="statStatuses">0</div><div class="stat-label">Статусов</div></div>
         </div>
-
-        <div id="dashboardPanel"><h3>📊 Аналитика</h3><div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка аналитики...</div></div></div>
-
         <div class="search-wrapper"><input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." /></div>
-
         <div class="filters" id="filters">
             <button class="filter-btn active" data-filter="all">Все</button>
             <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
             <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
-            <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
+            <button class="filter-btn" data-filter="Согласование">Соглас.</button>
             <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
             <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
             <button class="filter-btn" data-filter="Готово">Готово</button>
-            <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
-            <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
+            <button class="filter-btn" data-filter="Выдано (не оплачено)">Не опл.</button>
+            <button class="filter-btn" data-filter="Выдано (оплачено)">Опл.</button>
         </div>
+        <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+    </div>
 
-        <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка заказов...</div></div>
+    <!-- ===== СТРАНИЦА: ДЕТАЛИ ЗАКАЗА ===== -->
+    <div class="page" id="page-detail">
+        <div class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="navigateTo('orders')">‹</button>
+                <div><h1 id="detailTitle">Заказ</h1></div>
+            </div>
+            <div id="detailActions"></div>
+        </div>
+        <div id="detailContent"></div>
+    </div>
 
-        <div class="modal" id="modal">
-            <div class="modal-content">
-                <div class="modal-header"><h2 id="modalTitle">Заказ</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-                <div id="modalBody"></div>
+    <!-- ===== СТРАНИЦА: КЛИЕНТ ===== -->
+    <div class="page" id="page-client">
+        <div class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="navigateTo('orders')">‹</button>
+                <div><h1 id="clientTitle">Клиент</h1></div>
             </div>
         </div>
+        <div id="clientContent"></div>
+    </div>
+
+    <!-- ===== СТРАНИЦА: АНАЛИТИКА ===== -->
+    <div class="page" id="page-dashboard">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">📊</div>
+                <div><h1>Аналитика</h1></div>
+            </div>
+        </div>
+        <div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+    </div>
+
+    <!-- ===== СТРАНИЦА: ПОЛЬЗОВАТЕЛИ ===== -->
+    <div class="page" id="page-users">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">👥</div>
+                <div><h1>Пользователи</h1></div>
+            </div>
+            <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);">➕ Добавить</button>
+        </div>
+        <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+        <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
+            <h3 style="color:var(--accent);margin-bottom:8px;">Добавить пользователя</h3>
+            <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+                <option value="user">Сотрудник</option>
+                <option value="admin">Администратор</option>
+                <option value="superadmin">Суперадмин</option>
+            </select>
+            <div style="display:flex;gap:8px;">
+                <button onclick="addUser()" style="flex:1;padding:10px;background:var(--accent);border:none;border-radius:8px;color:var(--bg-primary);font-weight:700;cursor:pointer;font-size:15px;">Сохранить</button>
+                <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:10px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:15px;">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== СТРАНИЦА: ПРОФИЛЬ ===== -->
+    <div class="page" id="page-profile">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">👤</div>
+                <div><h1 id="profileName">Профиль</h1></div>
+            </div>
+        </div>
+        <div id="profileContent"></div>
     </div>
 
     <script>
@@ -165,205 +436,220 @@
         // ============================================================
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user_id');
+        let currentUser = null;
+        let USER_ROLE = 'user';
+        let allOrders = [], currentFilter = 'all', searchQuery = '';
+        let allUsers = [];
+
+        // ============================================================
+        // 2. ПРОВЕРКА ДОСТУПА
+        // ============================================================
+        function showAccessDenied(message) {
+            document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">' +
+                '<div style="font-size:64px;margin-bottom:16px;">🔒</div>' +
+                '<h2 style="color:var(--accent);font-size:24px;margin-bottom:8px;">Доступ запрещен</h2>' +
+                '<p style="color:var(--text-secondary);font-size:16px;max-width:400px;">' + message + '</p>' +
+                '<p style="color:var(--text-secondary);font-size:14px;margin-top:16px;opacity:0.7;">Пожалуйста, откройте приложение через кнопку в боте</p>' +
+                '</div>';
+        }
 
         if (!userId) {
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('accessDenied').style.display = 'block';
-            document.getElementById('errorMessage').textContent = 'Ошибка: не передан ID пользователя';
+            showAccessDenied('Ошибка: не передан ID пользователя');
         } else {
-            // ============================================================
-            // 2. ПРОВЕРЯЕМ ПОЛЬЗОВАТЕЛЯ
-            // ============================================================
-            fetch('/api/auth/check', {
-                headers: {
-                    'X-User-Id': userId
-                }
-            })
-            .then(response => response.json())
+            fetch('/api/auth/check', { headers: { 'X-User-Id': userId } })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('app').style.display = 'block';
-                    
-                    const user = data.user;
-                    const roleLabel = user.role === 'superadmin' ? '🌟 Суперадмин' : 
-                                      user.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник';
-                    document.getElementById('userGreeting').innerHTML = 
-                        `Привет, ${user.full_name}! <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">${roleLabel}</small>`;
-                    
-                    // Загружаем данные
+                    currentUser = data.user;
+                    USER_ROLE = currentUser.role;
+                    document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
+                    document.getElementById('profileName').textContent = currentUser.full_name;
+                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
                     loadOrders();
                     loadDashboard();
+                    loadUsers();
                 } else {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('accessDenied').style.display = 'block';
-                    document.getElementById('errorMessage').textContent = data.detail || 'Пользователь не найден';
+                    showAccessDenied(data.detail || 'Пользователь не найден');
                 }
             })
             .catch(() => {
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('accessDenied').style.display = 'block';
-                document.getElementById('errorMessage').textContent = 'Ошибка соединения с сервером';
+                showAccessDenied('Не удалось проверить доступ');
             });
         }
 
         // ============================================================
-        // 3. ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+        // 3. НАВИГАЦИЯ
         // ============================================================
-        const $ = id => document.getElementById(id);
-        const orderList = $('orderList');
-        const searchInput = $('searchInput');
-        const filtersEl = $('filters');
-        const modal = $('modal');
-        const modalTitle = $('modalTitle');
-        const modalBody = $('modalBody');
-        const dashboardPanel = $('dashboardPanel');
-        const dashboardContent = $('dashboardContent');
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const el = document.getElementById('page-' + page);
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector('.nav-btn[data-page="' + page + '"]');
+            if (btn) btn.classList.add('active');
+            window.scrollTo(0, 0);
+            if (page === 'users') loadUsers();
+        }
 
+        // ============================================================
+        // 4. API HELPER
+        // ============================================================
+        const API_BASE = window.location.origin + '/api';
+
+        async function apiFetch(endpoint, options = {}) {
+            const headers = { 'Content-Type': 'application/json', 'X-User-Id': userId || 'anonymous', ...options.headers };
+            const response = await fetch(API_BASE + endpoint, { ...options, headers });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.detail || 'Ошибка запроса');
+            }
+            return response.json();
+        }
+
+        // ============================================================
+        // 5. СТАТУСЫ
+        // ============================================================
         const statusMap = {
-            'Принят в ремонт': 'new',
-            'В ремонте': 'repair',
-            'Согласование с клиентом': 'consultation',
-            'Ожидание запчасти': 'waiting',
-            'Гарантия': 'warranty',
-            'Готово': 'ready',
-            'Выдано (не оплачено)': 'notpaid',
-            'Выдано (оплачено)': 'paid'
+            'Принят в ремонт': 'new', 'В ремонте': 'repair',
+            'Согласование с клиентом': 'consultation', 'Ожидание запчасти': 'waiting',
+            'Гарантия': 'warranty', 'Готово': 'ready',
+            'Выдано (не оплачено)': 'notpaid', 'Выдано (оплачено)': 'paid'
+        };
+        const statusColors = {
+            'Принят в ремонт': '#4f46e5', 'В ремонте': '#f59e0b',
+            'Согласование с клиентом': '#8b5cf6', 'Ожидание запчасти': '#f97316',
+            'Гарантия': '#14b8a6', 'Готово': '#22c55e',
+            'Выдано (не оплачено)': '#ef4444', 'Выдано (оплачено)': '#22d3ee'
         };
 
-        function getStatusClass(status) { return statusMap[status] || 'default'; }
-        function escapeHtml(text) { if (!text) return '—'; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+        function getStatusClass(s) { return statusMap[s] || 'default'; }
+        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-        function openViber(phone) {
-            const clean = phone.replace(/[^0-9]/g, '');
-            const win = window.open('viber://chat?number=' + clean, '_blank');
-            if (!win || win.closed) alert('Viber не установлен.\nНомер: ' + phone);
-        }
-        function openTelegram(phone) {
-            const clean = phone.replace(/[^0-9]/g, '');
-            const win = window.open('tg://resolve?phone=' + clean, '_blank');
-            if (!win || win.closed) alert('Telegram не открылся.\nНомер: ' + phone);
-        }
-        function copyPhone(phone) {
-            if (navigator.clipboard?.writeText) {
-                navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone));
-            } else { alert('📱 Номер: ' + phone); }
+        // ============================================================
+        // 6. КОНТАКТЫ
+        // ============================================================
+        function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('viber://chat?number=' + clean, '_blank'); }
+        function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
+        function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
+
+        // ============================================================
+        // 7. ЗАКАЗЫ
+        // ============================================================
+        function showDetail(order) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-detail').classList.add('active');
+            document.getElementById('detailTitle').textContent = 'Заказ #' + order.order_number;
+
+            let phone = order.phone || '';
+            let cleanPhone = phone.replace(/[^0-9+]/g, '');
+            if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
+            if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+
+            let contacts = '';
+            if (cleanPhone && cleanPhone.length > 4) {
+                contacts = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"><a href="tel:' + cleanPhone + '" class="contact-btn call">📞 Позвонить</a><button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬 Viber</button><button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️ Telegram</button><button class="contact-btn copy" onclick="copyPhone(\'' + phone + '\')">📋</button><button class="client-btn" onclick="showClient(\'' + phone + '\')">👤 Клиент</button></div><div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:6px;">📱 ' + phone + '</div>';
+            }
+
+            let history = '';
+            if (order.history && order.history.length > 0) {
+                history = '<div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:12px;">📜 История статусов</div>';
+                order.history.forEach(h => {
+                    let color = statusColors[h.status] || '#6b7280';
+                    let time = h.changed_at ? h.changed_at.slice(11, 16) : '';
+                    history += '<div class="history-item"><span class="h-status"><span class="status-dot" style="background:' + color + ';"></span>' + escapeHtml(h.status) + '</span><span class="h-time">' + time + '</span></div>';
+                });
+            } else {
+                history = '<div style="margin-top:8px;color:var(--text-secondary);font-size:14px;">Нет истории статусов</div>';
+            }
+
+            let actions = '';
+            if (USER_ROLE === 'superadmin') {
+                actions = '<button class="action-btn danger" onclick="deleteOrder(\'' + order.order_number + '\')">🗑️ Удалить заказ</button>';
+            }
+            document.getElementById('detailActions').innerHTML = actions;
+
+            document.getElementById('detailContent').innerHTML = contacts +
+                '<div class="detail-row"><span class="label">Статус</span><span class="value"><span class="order-status status-' + getStatusClass(order.status) + '">' + escapeHtml(order.status || 'Новый') + '</span></span></div>' +
+                '<div class="detail-row"><span class="label">Дата приема</span><span class="value">' + escapeHtml(order.date || '—') + '</span></div>' +
+                '<div class="detail-row"><span class="label">Приёмщик</span><span class="value">' + escapeHtml(order.receiver || '—') + '</span></div>' +
+                '<div class="detail-row"><span class="label">Клиент</span><span class="value">' + escapeHtml(order.client_name || '—') + '</span></div>' +
+                '<div class="detail-row"><span class="label">Телефон</span><span class="value">' + escapeHtml(order.phone || '—') + '</span></div>' +
+                '<div class="detail-row"><span class="label">Устройство</span><span class="value">' + escapeHtml(order.device || '—') + '</span></div>' +
+                '<div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">' + escapeHtml(order.problem || '—') + '</span></div>' +
+                history;
         }
 
-        let allOrders = [], currentFilter = 'all', searchQuery = '';
+        // ============================================================
+        // 8. КЛИЕНТ
+        // ============================================================
+        function showClient(phone) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-client').classList.add('active');
+            document.getElementById('clientTitle').textContent = 'Клиент';
 
+            let container = document.getElementById('clientContent');
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+
+            apiFetch('/orders?search=' + encodeURIComponent(phone)).then(r => {
+                if (r.success) {
+                    let orders = r.data;
+                    let total = orders.length;
+                    let statusCount = {};
+                    let devices = new Set();
+                    orders.forEach(o => {
+                        let s = o.status || 'Без статуса';
+                        statusCount[s] = (statusCount[s] || 0) + 1;
+                        if (o.device) devices.add(o.device);
+                    });
+                    let topStatus = Object.entries(statusCount).sort((a,b) => b[1]-a[1])[0];
+
+                    let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
+
+                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:14px;color:var(--text-secondary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                }
+            }).catch(() => {
+                container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+            });
+        }
+
+        // ============================================================
+        // 9. ЗАГРУЗКА ЗАКАЗОВ
+        // ============================================================
         async function loadOrders() {
             try {
-                const response = await fetch('/api/orders?limit=200');
-                const result = await response.json();
-                if (result.success) {
-                    allOrders = result.data;
-                    updateStats(result.pagination.total);
+                let r = await apiFetch('/orders?limit=200');
+                if (r.success) {
+                    allOrders = r.data;
+                    document.getElementById('totalBadge').textContent = r.pagination.total;
+                    document.getElementById('statTotal').textContent = r.pagination.total;
+                    let today = new Date().toISOString().slice(0,10);
+                    document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
+                    document.getElementById('statStatuses').textContent = new Set(allOrders.map(o => o.status).filter(Boolean)).size;
                     renderOrders();
                 }
-            } catch (e) { showError('Ошибка загрузки заказов'); }
-        }
-
-        function updateStats(total) {
-            $('totalBadge').textContent = total;
-            $('statTotal').textContent = total;
-            const today = new Date().toISOString().slice(0,10);
-            $('statToday').textContent = allOrders.filter(o => o.date === today).length;
-            $('statStatuses').textContent = new Set(allOrders.map(o => o.status).filter(Boolean)).size;
+            } catch(e) { console.error(e); }
         }
 
         function renderOrders() {
             let filtered = allOrders;
             if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
-            const q = searchQuery.trim().toLowerCase();
+            let q = searchQuery.trim().toLowerCase();
             if (q) {
-                filtered = filtered.filter(o =>
-                    (o.order_number || '').includes(q) ||
-                    (o.phone || '').includes(q) ||
-                    (o.client_name || '').toLowerCase().includes(q) ||
-                    (o.device || '').toLowerCase().includes(q) ||
-                    (o.problem || '').toLowerCase().includes(q)
-                );
+                filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
             }
-            if (filtered.length === 0) {
-                orderList.innerHTML = '<div class="empty-state"><div class="big-icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
+            let container = document.getElementById('orderList');
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
                 return;
             }
-            orderList.innerHTML = filtered.map(order => `
-                <div class="order-card" onclick="openOrder(${order.id})">
-                    <div class="top-row">
-                        <span class="order-number">#${escapeHtml(order.order_number)}</span>
-                        <span class="order-status status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span>
-                    </div>
-                    <div class="info">
-                        <span><span class="emoji">👤</span> ${escapeHtml(order.client_name) || 'Не указан'}</span>
-                        <span><span class="emoji">📱</span> ${escapeHtml(order.phone) || 'Не указан'}</span>
-                    </div>
-                    <div class="device">🖥️ ${escapeHtml(order.device) || 'Устройство не указано'}</div>
-                </div>
-            `).join('');
+            container.innerHTML = filtered.map(o => '<div class="order-card" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div class="top-row"><span class="order-number">#' + o.order_number + '</span><span class="order-status status-' + getStatusClass(o.status) + '">' + (o.status || 'Новый') + '</span></div><div class="info"><span>👤 ' + (o.client_name || 'Не указан') + '</span><span>📱 ' + (o.phone || 'Не указан') + '</span></div><div class="device">🖥️ ' + (o.device || 'Устройство не указано') + '</div></div>').join('');
         }
 
-        async function openOrder(orderId) {
-            try {
-                const response = await fetch('/api/orders/' + orderId);
-                const result = await response.json();
-                if (result.success) showModal(result.data);
-            } catch (e) { console.error(e); }
-        }
-
-        function showModal(order) {
-            modalTitle.textContent = '#' + order.order_number;
-            let contactsHtml = '';
-            const phone = order.phone || '';
-            let cleanPhone = phone.replace(/[^0-9+]/g, '');
-            if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
-            if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
-            if (cleanPhone && cleanPhone.length > 4) {
-                contactsHtml = `
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
-                        <a href="tel:${cleanPhone}" class="contact-btn call">📞 Позвонить</a>
-                        <button class="contact-btn viber" onclick="openViber('${cleanPhone}')">💬 Viber</button>
-                        <button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">✈️ Telegram</button>
-                        <button class="contact-btn copy" onclick="copyPhone('${phone}')">📋</button>
-                    </div>
-                    <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">📱 ${phone}</div>
-                `;
-            }
-            const historyHtml = order.history?.length > 0 ?
-                '<div class="history-title">📜 История статусов</div>' +
-                order.history.map(h => `
-                    <div class="history-item">
-                        <span class="h-status">${escapeHtml(h.status)}</span>
-                        <span>${h.changed_at ? h.changed_at.slice(0,16).replace('T',' ') : ''}</span>
-                    </div>
-                `).join('') :
-                '<div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">Нет истории статусов</div>';
-            
-            modalBody.innerHTML = contactsHtml + `
-                <div class="detail-row"><span class="label">Статус</span><span class="value"><span class="status-badge status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span></div>
-                <div class="detail-row"><span class="label">Дата приема</span><span class="value">${escapeHtml(order.date) || '—'}</span></div>
-                <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver) || '—'}</span></div>
-                <div class="detail-row"><span class="label">Клиент</span><span class="value">${escapeHtml(order.client_name) || '—'}</span></div>
-                <div class="detail-row"><span class="label">Телефон</span><span class="value">${escapeHtml(order.phone) || '—'}</span></div>
-                <div class="detail-row"><span class="label">Устройство</span><span class="value">${escapeHtml(order.device) || '—'}</span></div>
-                <div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">${escapeHtml(order.problem) || '—'}</span></div>
-                ${historyHtml}
-            `;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() { modal.classList.remove('active'); document.body.style.overflow = ''; }
-        modal.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-
-        function showError(msg) {
-            orderList.innerHTML = '<div class="empty-state"><div class="big-icon">⚠️</div><h3>Ошибка</h3><p>' + msg + '</p></div>';
-        }
-
-        searchInput.addEventListener('input', function() { searchQuery = this.value; renderOrders(); });
-        filtersEl.addEventListener('click', function(e) {
-            const btn = e.target.closest('.filter-btn');
+        document.getElementById('searchInput')?.addEventListener('input', function() { searchQuery = this.value; renderOrders(); });
+        document.getElementById('filters')?.addEventListener('click', function(e) {
+            let btn = e.target.closest('.filter-btn');
             if (!btn) return;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -371,41 +657,142 @@
             renderOrders();
         });
 
+        // ============================================================
+        // 10. ДАШБОРД
+        // ============================================================
         async function loadDashboard() {
-            if (!['admin', 'superadmin'].includes(window.USER_ROLE || '')) {
-                dashboardPanel.style.display = 'none';
+            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
+                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
                 return;
             }
             try {
-                const response = await fetch('/api/admin/dashboard');
-                const data = await response.json();
-                if (data.success) {
-                    const stats = data.data;
-                    const maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
-                    dashboardContent.innerHTML = `
-                        <div class="dashboard-grid">
-                            <div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Среднее время ремонта</div><div class="value">${stats.avg_repair_time} дн.</div></div>
-                            <div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Всего заказов</div><div class="value">${stats.total_orders}</div></div>
-                        </div>
-                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Топ-5 неисправностей</div>
-                        ${stats.top_problems.map(p => '<div class="problem-item"><span>' + (p.problem || 'Без описания') + '</span><span class="count">' + p.count + '</span></div>').join('')}
-                        <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;margin-bottom:4px;">Заказы по дням</div>
-                        <div class="chart-bars">${stats.orders_by_day.slice(0,7).reverse().map(d => `
-                            <div class="chart-bar"><div class="bar" style="height:${Math.max(4, (d.count / maxCount) * 40)}px;"></div><div class="day-label">${d.date || '—'}</div></div>
-                        `).join('')}</div>
-                    `;
+                let r = await apiFetch('/admin/dashboard');
+                if (r.success) {
+                    let stats = r.data;
+                    let maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
+                    document.getElementById('dashboardContent').innerHTML =
+                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.avg_repair_time + ' дн.</div></div><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.total_orders + '</div></div></div>' +
+                        '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>' +
+                        stats.top_problems.map(p => '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>' + (p.problem || 'Без описания') + '</span><span style="color:var(--accent);">' + p.count + '</span></div>').join('') +
+                        '<div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>' +
+                        '<div style="display:flex;gap:4px;height:40px;align-items:flex-end;">' +
+                        stats.orders_by_day.slice(0,7).reverse().map(d => '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + Math.max(4, (d.count / maxCount) * 40) + 'px;"></div><div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>').join('') +
+                        '</div>';
                 }
-            } catch (e) { dashboardContent.innerHTML = '<div class="empty-state">⚠️ Ошибка загрузки</div>'; }
+            } catch(e) {
+                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+            }
         }
 
-        // Сохраняем роль для dashboard
-        fetch('/api/auth/check', { headers: { 'X-User-Id': userId } })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    window.USER_ROLE = data.user.role;
+        // ============================================================
+        // 11. ПОЛЬЗОВАТЕЛИ
+        // ============================================================
+        async function loadUsers() {
+            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+                return;
+            }
+            try {
+                let r = await apiFetch('/users');
+                if (r.success) {
+                    allUsers = r.data;
+                    let html = '';
+                    allUsers.forEach(u => {
+                        let roleClass = u.role === 'superadmin' ? 'role-superadmin' : u.role === 'admin' ? 'role-admin' : 'role-user';
+                        let actions = '';
+                        if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
+                            actions = '<button class="action-btn danger" style="font-size:11px;padding:4px 10px;" onclick="deleteUser(\'' + u.telegram_id + '\')">🗑️</button>';
+                        }
+                        if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
+                            actions += ' <button class="action-btn" style="font-size:11px;padding:4px 10px;" onclick="changeUserRole(\'' + u.telegram_id + '\', \'' + (u.role === 'superadmin' ? 'admin' : u.role === 'admin' ? 'user' : 'admin') + '\')">⬆️</button>';
+                        }
+                        html += '<div class="user-item"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div>' + actions + '</div></div>';
+                    });
+                    document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3></div>';
                 }
-            });
+            } catch(e) {
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+            }
+        }
+
+        function showAddUserForm() {
+            document.getElementById('addUserForm').style.display = 'block';
+        }
+
+        async function addUser() {
+            const telegram_id = document.getElementById('newUserId').value.trim();
+            const full_name = document.getElementById('newUserName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim();
+            const role = document.getElementById('newUserRole').value;
+
+            if (!telegram_id || !full_name) {
+                alert('Заполните ID и Имя');
+                return;
+            }
+
+            try {
+                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&role=' + role, { method: 'POST' });
+                alert('✅ Пользователь добавлен');
+                document.getElementById('addUserForm').style.display = 'none';
+                document.getElementById('newUserId').value = '';
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserUsername').value = '';
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteUser(telegram_id) {
+            if (!confirm('Удалить пользователя?')) return;
+            try {
+                await apiFetch('/users/' + telegram_id, { method: 'DELETE' });
+                alert('✅ Пользователь удален');
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function changeUserRole(telegram_id, newRole) {
+            try {
+                await apiFetch('/users/' + telegram_id + '/role?new_role=' + newRole, { method: 'PUT' });
+                alert('✅ Роль изменена');
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // 12. УДАЛЕНИЕ ЗАКАЗА
+        // ============================================================
+        async function deleteOrder(orderNumber) {
+            if (!confirm('Удалить заказ #' + orderNumber + '?')) return;
+            try {
+                await apiFetch('/orders/by-number/' + orderNumber, { method: 'DELETE' });
+                alert('✅ Заказ удален');
+                loadOrders();
+                navigateTo('orders');
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // 13. АВТООБНОВЛЕНИЕ
+        // ============================================================
+        setInterval(() => {
+            if (document.getElementById('page-orders').classList.contains('active')) {
+                loadOrders();
+            }
+            if (document.getElementById('page-dashboard').classList.contains('active')) {
+                loadDashboard();
+            }
+            if (document.getElementById('page-users').classList.contains('active')) {
+                loadUsers();
+            }
+        }, 60000);
     </script>
 </body>
 </html>
