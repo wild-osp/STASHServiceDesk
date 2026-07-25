@@ -98,6 +98,47 @@
         .access-denied .icon { font-size: 64px; }
         .access-denied h2 { color: var(--accent); }
         .access-denied p { color: var(--text-secondary); }
+        /* ===== НОВЫЕ СТИЛИ ДЛЯ ИСТОРИИ ===== */
+        .history-timeline {
+            margin-top: 8px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            align-items: center;
+        }
+        .history-item .h-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .history-item .h-time {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        /* ===== КАРТОЧКА КЛИЕНТА ===== */
+        .client-order-item {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .client-order-item:hover {
+            background: var(--bg-card);
+        }
         @media (max-width: 480px) { body { padding: 12px; } .stats-grid { gap: 6px; } .stat-number { font-size: 20px; } }
         @media (min-width: 600px) { .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } }
         @media (min-width: 900px) { .order-list { grid-template-columns: 1fr 1fr 1fr; } body { max-width: 1100px; margin: 0 auto; } }
@@ -208,7 +249,7 @@
         }
 
         // ============================================================
-        // 3. API HELPER (исправленный)
+        // 3. API HELPER
         // ============================================================
         const API_BASE = window.location.origin + '/api';
 
@@ -223,7 +264,7 @@
         }
 
         // ============================================================
-        // 4. ОСТАЛЬНЫЕ ФУНКЦИИ
+        // 4. ОСНОВНЫЕ ФУНКЦИИ
         // ============================================================
         const $ = id => document.getElementById(id);
         const orderList = $('orderList');
@@ -249,22 +290,105 @@
         function getStatusClass(status) { return statusMap[status] || 'default'; }
         function escapeHtml(text) { if (!text) return '—'; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
+        // ===== ИСПРАВЛЕННЫЕ КОНТАКТЫ =====
         function openViber(phone) {
             const clean = phone.replace(/[^0-9]/g, '');
-            const win = window.open('viber://chat?number=' + clean, '_blank');
-            if (!win || win.closed) alert('Viber не установлен.\nНомер: ' + phone);
+            if (!clean) { alert('Номер телефона не указан'); return; }
+            window.open('viber://chat?number=' + clean, '_blank');
         }
+
         function openTelegram(phone) {
             const clean = phone.replace(/[^0-9]/g, '');
-            const win = window.open('tg://resolve?phone=' + clean, '_blank');
-            if (!win || win.closed) alert('Telegram не открылся.\nНомер: ' + phone);
+            if (!clean) { alert('Номер телефона не указан'); return; }
+            window.open('tg://resolve?phone=' + clean, '_blank');
         }
+
         function copyPhone(phone) {
             if (navigator.clipboard?.writeText) {
                 navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone));
             } else { alert('📱 Номер: ' + phone); }
         }
 
+        // ===== ЗАГРУЗКА ЗАКАЗОВ КЛИЕНТА =====
+        async function loadClientOrders(phone) {
+            const container = document.getElementById('clientOrdersList');
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            try {
+                const response = await apiFetch(`/orders?search=${phone}`);
+                if (response.success) {
+                    const orders = response.data;
+                    if (orders.length === 0) {
+                        container.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:12px;">Нет других заказов</div>';
+                        return;
+                    }
+                    container.innerHTML = orders.map(o => `
+                        <div class="client-order-item" onclick="openOrder(${o.id})">
+                            <div>
+                                <span style="font-weight:600;">#${o.order_number}</span>
+                                <span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">${o.device || '—'}</span>
+                            </div>
+                            <span class="order-status status-${getStatusClass(o.status)}" style="font-size:11px;">${o.status || 'Новый'}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:12px;">Ошибка загрузки</div>';
+            }
+        }
+
+        // ===== СТАТИСТИКА ПО КЛИЕНТУ =====
+        async function loadClientStats(phone) {
+            const container = document.getElementById('clientStats');
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            try {
+                const response = await apiFetch(`/orders?search=${phone}`);
+                if (response.success) {
+                    const orders = response.data;
+                    const total = orders.length;
+                    const statusCount = {};
+                    orders.forEach(o => {
+                        const s = o.status || 'Без статуса';
+                        statusCount[s] = (statusCount[s] || 0) + 1;
+                    });
+                    const topStatus = Object.entries(statusCount).sort((a,b) => b[1]-a[1])[0];
+                    
+                    container.innerHTML = `
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 0;">
+                            <div style="background:var(--bg-card);padding:8px;border-radius:8px;text-align:center;">
+                                <div style="font-size:11px;color:var(--text-secondary);">Всего заказов</div>
+                                <div style="font-size:18px;font-weight:700;color:var(--accent);">${total}</div>
+                            </div>
+                            <div style="background:var(--bg-card);padding:8px;border-radius:8px;text-align:center;">
+                                <div style="font-size:11px;color:var(--text-secondary);">Частый статус</div>
+                                <div style="font-size:14px;font-weight:600;color:var(--text-primary);">${topStatus ? topStatus[0] : '—'}</div>
+                            </div>
+                            <div style="background:var(--bg-card);padding:8px;border-radius:8px;text-align:center;">
+                                <div style="font-size:11px;color:var(--text-secondary);">Устройств</div>
+                                <div style="font-size:18px;font-weight:700;color:var(--accent);">${new Set(orders.map(o => o.device)).size}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:12px;">Ошибка загрузки</div>';
+            }
+        }
+
+        // ============================================================
+        // 5. ЗАГРУЗКА И ОТОБРАЖЕНИЕ ЗАКАЗОВ
+        // ============================================================
         let allOrders = [], currentFilter = 'all', searchQuery = '';
 
         async function loadOrders() {
@@ -322,6 +446,9 @@
             `).join('');
         }
 
+        // ============================================================
+        // 6. ОТКРЫТИЕ ЗАКАЗА И МОДАЛЬНОЕ ОКНО
+        // ============================================================
         async function openOrder(orderId) {
             try {
                 const response = await apiFetch('/orders/' + orderId);
@@ -331,11 +458,14 @@
 
         function showModal(order) {
             modalTitle.textContent = '#' + order.order_number;
+            
+            // ===== КОНТАКТЫ =====
             let contactsHtml = '';
             const phone = order.phone || '';
             let cleanPhone = phone.replace(/[^0-9+]/g, '');
             if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
             if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+            
             if (cleanPhone && cleanPhone.length > 4) {
                 contactsHtml = `
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
@@ -347,17 +477,54 @@
                     <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">📱 ${phone}</div>
                 `;
             }
-            const historyHtml = order.history?.length > 0 ?
-                '<div class="history-title">📜 История статусов</div>' +
-                order.history.map(h => `
-                    <div class="history-item">
-                        <span class="h-status">${escapeHtml(h.status)}</span>
-                        <span>${h.changed_at ? h.changed_at.slice(0,16).replace('T',' ') : ''}</span>
-                    </div>
-                `).join('') :
-                '<div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">Нет истории статусов</div>';
+
+            // ===== КНОПКИ КЛИЕНТА =====
+            const clientButtonsHtml = `
+                <div style="display:flex;gap:8px;margin:8px 0 4px;">
+                    <button onclick="loadClientOrders('${phone}')" style="flex:1;padding:10px;background:var(--bg-card);border:1px solid var(--accent);border-radius:var(--radius);color:var(--text-primary);font-size:13px;font-weight:600;cursor:pointer;transition:0.2s;">
+                        📋 Все заказы
+                    </button>
+                    <button onclick="loadClientStats('${phone}')" style="flex:1;padding:10px;background:var(--bg-card);border:1px solid var(--text-secondary);border-radius:var(--radius);color:var(--text-primary);font-size:13px;font-weight:600;cursor:pointer;transition:0.2s;">
+                        📊 Статистика
+                    </button>
+                </div>
+                <div id="clientOrdersList" style="display:none;margin-bottom:12px;"></div>
+                <div id="clientStats" style="display:none;margin-bottom:12px;"></div>
+            `;
+
+            // ===== ИСТОРИЯ СТАТУСОВ (цветная лента) =====
+            const statusColors = {
+                'Принят в ремонт': '#4f46e5',
+                'В ремонте': '#f59e0b',
+                'Согласование с клиентом': '#8b5cf6',
+                'Ожидание запчасти': '#f97316',
+                'Гарантия': '#14b8a6',
+                'Готово': '#22c55e',
+                'Выдано (не оплачено)': '#ef4444',
+                'Выдано (оплачено)': '#22d3ee'
+            };
             
-            modalBody.innerHTML = contactsHtml + `
+            const historyHtml = order.history?.length > 0 ?
+                `<div class="history-title">📜 История статусов</div>
+                <div class="history-timeline">
+                    ${order.history.map(h => {
+                        const color = statusColors[h.status] || '#6b7280';
+                        const time = h.changed_at ? h.changed_at.slice(11, 16) : '';
+                        return `
+                            <div class="history-item">
+                                <span class="h-status">
+                                    <span class="status-dot" style="background:${color};"></span>
+                                    ${escapeHtml(h.status)}
+                                </span>
+                                <span class="h-time">${time}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>`
+                : '<div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">Нет истории статусов</div>';
+
+            // ===== СБОРКА =====
+            modalBody.innerHTML = contactsHtml + clientButtonsHtml + `
                 <div class="detail-row"><span class="label">Статус</span><span class="value"><span class="status-badge status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span></div>
                 <div class="detail-row"><span class="label">Дата приема</span><span class="value">${escapeHtml(order.date) || '—'}</span></div>
                 <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver) || '—'}</span></div>
@@ -378,6 +545,9 @@
             orderList.innerHTML = '<div class="empty-state"><div class="big-icon">⚠️</div><h3>Ошибка</h3><p>' + msg + '</p></div>';
         }
 
+        // ============================================================
+        // 7. СОБЫТИЯ
+        // ============================================================
         searchInput.addEventListener('input', function() { searchQuery = this.value; renderOrders(); });
         filtersEl.addEventListener('click', function(e) {
             const btn = e.target.closest('.filter-btn');
@@ -388,6 +558,9 @@
             renderOrders();
         });
 
+        // ============================================================
+        // 8. ДАШБОРД
+        // ============================================================
         async function loadDashboard() {
             if (!['admin', 'superadmin'].includes(window.USER_ROLE || '')) {
                 dashboardPanel.style.display = 'none';
