@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Модуль для работы с базой данных SQLite
-С поддержкой синхронизации с GitHub
+С поддержкой синхронизации с GitHub и таблицей пользователей
 """
 
 import sqlite3
@@ -19,6 +19,7 @@ class Database:
     def __init__(self, db_path: str = 'orders.db'):
         self.db_path = db_path
         self.init_database()
+        self.init_users_table()  # ⚡ Добавляем инициализацию таблицы пользователей
     
     def get_connection(self):
         """Получает соединение с БД"""
@@ -77,6 +78,86 @@ class Database:
             count = cursor.fetchone()['count']
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
+    # ============================================================
+    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ
+    # ============================================================
+    def init_users_table(self):
+        """Создает таблицу пользователей"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT UNIQUE NOT NULL,
+                    username TEXT,
+                    full_name TEXT,
+                    role TEXT DEFAULT 'user',
+                    created_at TEXT,
+                    updated_at TEXT
+                )
+            ''')
+            conn.commit()
+            print("✅ Таблица пользователей создана")
+
+    def get_user(self, telegram_id: str) -> Optional[Dict[str, Any]]:
+        """Получает пользователя по Telegram ID"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        """Получает всех пользователей"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM users ORDER BY role DESC, full_name')
+            return [dict(row) for row in cursor.fetchall()]
+
+    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user') -> bool:
+        """Добавляет нового пользователя"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute('''
+                    INSERT INTO users (telegram_id, username, full_name, role, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (telegram_id, username, full_name, role, datetime.now().isoformat(), datetime.now().isoformat()))
+                conn.commit()
+                print(f"✅ Пользователь {full_name} добавлен с ролью {role}")
+                return True
+            except sqlite3.IntegrityError:
+                print(f"⚠️ Пользователь {telegram_id} уже существует")
+                return False
+
+    def update_user_role(self, telegram_id: str, new_role: str) -> bool:
+        """Обновляет роль пользователя"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE users SET role = ?, updated_at = ?
+                WHERE telegram_id = ?
+            ''', (new_role, datetime.now().isoformat(), telegram_id))
+            conn.commit()
+            if cursor.rowcount > 0:
+                print(f"✅ Роль пользователя {telegram_id} изменена на {new_role}")
+                return True
+            return False
+
+    def delete_user(self, telegram_id: str) -> bool:
+        """Удаляет пользователя"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM users WHERE telegram_id = ?', (telegram_id,))
+            conn.commit()
+            if cursor.rowcount > 0:
+                print(f"✅ Пользователь {telegram_id} удален")
+                return True
+            return False
+    
+    # ============================================================
+    # МЕТОДЫ ДЛЯ ЗАКАЗОВ
+    # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
         """Сохраняет или обновляет заказ и синхронизирует с GitHub"""
         with self.get_connection() as conn:
@@ -339,8 +420,8 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            if role == 'admin':
-                # Админ видит все заказы
+            if role == 'admin' or role == 'superadmin':
+                # Админ и суперадмин видят все заказы
                 cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
             else:
                 # Обычный пользователь видит только свои заказы (по номеру телефона или имени)
