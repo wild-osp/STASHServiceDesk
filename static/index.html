@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STASHServiceDesk</title>
     <style>
-        /* ============================================================
-           БАЗОВЫЕ СТИЛИ
-           ============================================================ */
         :root {
             --bg-primary: #0b1a2f;
             --bg-secondary: #112240;
@@ -16,93 +13,91 @@
             --text-secondary: #8ba0c7;
             --accent: #f5a623;
             --radius: 12px;
-            --nav-height: 60px;
+            --nav-height: 64px;
+            --font-base: 16px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            padding: 12px;
+            padding: 16px;
             min-height: 100vh;
-            padding-bottom: calc(var(--nav-height) + 16px);
+            padding-bottom: calc(var(--nav-height) + 20px);
+            font-size: var(--font-base);
+            line-height: 1.5;
         }
         .page { display: none; }
         .page.active { display: block; }
 
-        /* ============================================================
-           ШАПКА
-           ============================================================ */
+        /* ===== ШАПКА ===== */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0 12px;
+            padding: 12px 0 16px;
             border-bottom: 2px solid var(--accent);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
-        .header-left { display: flex; align-items: center; gap: 8px; }
-        .header-icon { font-size: 22px; font-weight: 700; color: var(--accent); }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-icon { font-size: 28px; font-weight: 700; color: var(--accent); }
         .header-icon span { color: var(--text-primary); }
-        .header h1 { font-size: 15px; font-weight: 600; }
-        .header h1 small { display: block; font-size: 8px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; }
-        .header-badge { background: var(--accent); color: var(--bg-primary); font-weight: 700; padding: 2px 10px; border-radius: 16px; font-size: 12px; }
-        .back-btn { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 2px 6px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-badge { background: var(--accent); color: var(--bg-primary); font-weight: 700; padding: 4px 14px; border-radius: 20px; font-size: 15px; }
+        .back-btn { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; padding: 4px 8px; }
 
-        /* ============================================================
-           СТАТИСТИКА
-           ============================================================ */
+        /* ===== СТАТИСТИКА ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 16px;
         }
         .stat-card {
             background: var(--bg-secondary);
             border-radius: var(--radius);
-            padding: 8px 4px;
+            padding: 12px 8px;
             text-align: center;
             border-bottom: 3px solid var(--accent);
         }
-        .stat-number { font-size: 20px; font-weight: 700; color: var(--accent); }
-        .stat-label { font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-        /* ============================================================
-           ПОИСК И ФИЛЬТРЫ
-           ============================================================ */
-        .search-wrapper { margin-bottom: 10px; }
+        /* ===== ПОИСК ===== */
+        .search-wrapper { margin-bottom: 14px; }
         .search-wrapper input {
-            width: 100%; padding: 8px 12px;
+            width: 100%; padding: 12px 16px;
             border: 1px solid var(--bg-secondary); border-radius: var(--radius);
-            font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); outline: none;
+            font-size: 16px; background: var(--bg-secondary); color: var(--text-primary); outline: none;
         }
+        .search-wrapper input:focus { border-color: var(--accent); }
+
+        /* ===== ФИЛЬТРЫ ===== */
         .filters {
             display: flex;
-            gap: 4px;
+            gap: 6px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
         }
         .filter-btn {
-            padding: 3px 10px;
+            padding: 6px 14px;
             border: 1px solid var(--bg-secondary);
-            border-radius: 14px;
+            border-radius: 20px;
             background: transparent;
             color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
         }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
 
-        /* ============================================================
-           СПИСОК ЗАКАЗОВ
-           ============================================================ */
-        .order-list { display: flex; flex-direction: column; gap: 8px; }
+        /* ===== ЗАКАЗЫ ===== */
+        .order-list { display: flex; flex-direction: column; gap: 10px; }
         .order-card {
             background: var(--bg-secondary);
             border-radius: var(--radius);
-            padding: 12px;
+            padding: 16px;
             cursor: pointer;
             border-left: 4px solid var(--accent);
         }
@@ -111,14 +106,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
-        .order-number { font-weight: 700; font-size: 14px; }
+        .order-number { font-weight: 700; font-size: 17px; }
         .order-status {
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 4px 12px;
+            border-radius: 12px;
             text-transform: uppercase;
             white-space: nowrap;
         }
@@ -133,58 +128,52 @@
         .status-default { background: #2d2d3f; color: #9ca3af; }
 
         .order-card .info {
-            margin-top: 4px;
-            font-size: 11px;
+            margin-top: 8px;
+            font-size: 14px;
             color: var(--text-secondary);
             display: flex;
             flex-wrap: wrap;
-            gap: 4px 10px;
+            gap: 6px 16px;
         }
         .order-card .device {
-            margin-top: 4px;
-            font-size: 12px;
+            margin-top: 6px;
+            font-size: 15px;
             color: var(--text-primary);
             font-weight: 500;
         }
 
-        /* ============================================================
-           ДЕТАЛИ ЗАКАЗА
-           ============================================================ */
+        /* ===== ДЕТАЛИ ===== */
         .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 12px;
+            font-size: 15px;
         }
         .detail-row .label { color: var(--text-secondary); }
         .detail-row .value { font-weight: 500; text-align: right; max-width: 60%; }
 
-        /* ============================================================
-           ИСТОРИЯ СТАТУСОВ
-           ============================================================ */
+        /* ===== ИСТОРИЯ ===== */
         .history-item {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
+            padding: 5px 0;
             border-bottom: 1px solid rgba(255,255,255,0.03);
-            font-size: 12px;
+            font-size: 14px;
             align-items: center;
         }
-        .history-item .h-status { display: flex; align-items: center; gap: 6px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .history-item .h-time { color: var(--text-secondary); font-size: 11px; }
+        .history-item .h-status { display: flex; align-items: center; gap: 8px; }
+        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .history-item .h-time { color: var(--text-secondary); font-size: 13px; }
 
-        /* ============================================================
-           КОНТАКТНЫЕ КНОПКИ
-           ============================================================ */
+        /* ===== КОНТАКТЫ ===== */
         .contact-btn {
             flex: 1;
-            min-width: 40px;
+            min-width: 48px;
             color: white;
-            padding: 6px 6px;
+            padding: 10px 8px;
             border-radius: var(--radius);
-            font-size: 11px;
+            font-size: 14px;
             font-weight: 600;
             text-align: center;
             border: none;
@@ -196,90 +185,82 @@
         .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
         .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
         .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
-        .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.3; min-width: 32px; }
+        .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.3; min-width: 40px; }
 
         .client-btn, .action-btn {
-            padding: 6px 10px;
+            padding: 8px 14px;
             background: var(--bg-card);
             border: 1px solid var(--accent);
             border-radius: var(--radius);
             color: var(--text-primary);
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
         }
-        .client-btn:active, .action-btn:active { transform: scale(0.95); }
         .action-btn.danger { border-color: #ef4444; color: #fca5a5; }
 
-        /* ============================================================
-           КЛИЕНТ
-           ============================================================ */
+        /* ===== КЛИЕНТ ===== */
         .client-order-item {
             cursor: pointer;
-            padding: 5px 8px;
+            padding: 8px 12px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 12px;
+            font-size: 14px;
         }
         .client-order-item:hover { background: var(--bg-card); }
         .client-stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 6px;
-            padding: 6px 0;
+            gap: 8px;
+            padding: 8px 0;
         }
         .client-stat-item {
             background: var(--bg-card);
-            padding: 6px;
+            padding: 10px;
             border-radius: 8px;
             text-align: center;
         }
-        .client-stat-item .num { font-size: 16px; font-weight: 700; color: var(--accent); }
-        .client-stat-item .label { font-size: 8px; color: var(--text-secondary); }
+        .client-stat-item .num { font-size: 20px; font-weight: 700; color: var(--accent); }
+        .client-stat-item .label { font-size: 11px; color: var(--text-secondary); }
 
-        /* ============================================================
-           ПОЛЬЗОВАТЕЛИ
-           ============================================================ */
+        /* ===== ПОЛЬЗОВАТЕЛИ ===== */
         .user-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 13px;
+            font-size: 14px;
         }
         .user-item .role-badge {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 3px 10px;
+            border-radius: 12px;
             text-transform: uppercase;
         }
         .role-superadmin { background: #f5a623; color: #0b1a2f; }
         .role-admin { background: #3b82f6; color: white; }
         .role-user { background: #6b7280; color: white; }
 
-        /* ============================================================
-           ОБЩИЕ
-           ============================================================ */
-        .empty-state { text-align: center; padding: 30px 16px; color: var(--text-secondary); }
-        .empty-state .icon { font-size: 32px; margin-bottom: 6px; }
-        .loader { text-align: center; padding: 20px 0; color: var(--text-secondary); }
+        /* ===== ОБЩИЕ ===== */
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+        .empty-state h3 { font-size: 18px; color: var(--text-primary); }
+        .loader { text-align: center; padding: 30px 0; color: var(--text-secondary); }
         .spinner {
-            width: 24px; height: 24px;
-            border: 2px solid var(--bg-secondary);
-            border-top: 2px solid var(--accent);
+            width: 32px; height: 32px;
+            border: 3px solid var(--bg-secondary);
+            border-top: 3px solid var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin: 0 auto 8px;
+            margin: 0 auto 10px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ============================================================
-           НАВИГАЦИЯ
-           ============================================================ */
+        /* ===== НАВИГАЦИЯ ===== */
         .nav {
             position: fixed;
             bottom: 0;
@@ -291,41 +272,38 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 4px;
+            padding: 0 8px;
             z-index: 100;
-            overflow-x: auto;
         }
         .nav-btn {
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 8px;
+            padding: 8px 14px;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1px;
-            white-space: nowrap;
+            gap: 2px;
         }
-        .nav-btn .icon { font-size: 16px; }
+        .nav-btn .icon { font-size: 20px; }
         .nav-btn.active { color: var(--accent); background: rgba(245, 166, 35, 0.1); }
         .nav-btn:active { transform: scale(0.95); }
 
-        /* ============================================================
-           АДАПТИВНОСТЬ
-           ============================================================ */
+        /* ===== АДАПТИВНОСТЬ ===== */
         @media (max-width: 480px) {
-            body { padding: 8px; padding-bottom: calc(var(--nav-height) + 12px); }
-            .stat-number { font-size: 16px; }
-            .header h1 { font-size: 13px; }
-            .nav-btn { font-size: 8px; padding: 4px 6px; }
-            .nav-btn .icon { font-size: 14px; }
+            body { padding: 12px; padding-bottom: calc(var(--nav-height) + 16px); }
+            .header h1 { font-size: 17px; }
+            .stat-number { font-size: 22px; }
+            .order-number { font-size: 15px; }
+            .nav-btn { font-size: 10px; padding: 6px 10px; }
+            .nav-btn .icon { font-size: 18px; }
         }
         @media (min-width: 600px) {
-            .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         }
         @media (min-width: 900px) {
             .order-list { grid-template-columns: 1fr 1fr 1fr; }
@@ -335,9 +313,7 @@
 </head>
 <body>
 
-    <!-- ============================================================
-    НАВИГАЦИЯ
-    ============================================================ -->
+    <!-- ===== НАВИГАЦИЯ ===== -->
     <div class="nav" id="nav">
         <button class="nav-btn active" data-page="orders" onclick="navigateTo('orders')">
             <span class="icon">📋</span> Заказы
@@ -353,9 +329,7 @@
         </button>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: ЗАКАЗЫ
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: ЗАКАЗЫ ===== -->
     <div class="page active" id="page-orders">
         <div class="header">
             <div class="header-left">
@@ -384,9 +358,7 @@
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: ДЕТАЛИ ЗАКАЗА
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: ДЕТАЛИ ЗАКАЗА ===== -->
     <div class="page" id="page-detail">
         <div class="header">
             <div class="header-left">
@@ -398,9 +370,7 @@
         <div id="detailContent"></div>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: КЛИЕНТ
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: КЛИЕНТ ===== -->
     <div class="page" id="page-client">
         <div class="header">
             <div class="header-left">
@@ -411,9 +381,7 @@
         <div id="clientContent"></div>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: АНАЛИТИКА
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: АНАЛИТИКА ===== -->
     <div class="page" id="page-dashboard">
         <div class="header">
             <div class="header-left">
@@ -424,9 +392,7 @@
         <div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: ПОЛЬЗОВАТЕЛИ
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: ПОЛЬЗОВАТЕЛИ ===== -->
     <div class="page" id="page-users">
         <div class="header">
             <div class="header-left">
@@ -438,24 +404,22 @@
         <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
         <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
             <h3 style="color:var(--accent);margin-bottom:8px;">Добавить пользователя</h3>
-            <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:8px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:6px;">
-            <input id="newUserName" placeholder="Имя" style="width:100%;padding:8px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:6px;">
-            <input id="newUserUsername" placeholder="Username" style="width:100%;padding:8px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:6px;">
-            <select id="newUserRole" style="width:100%;padding:8px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:6px;">
+            <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
                 <option value="user">Сотрудник</option>
                 <option value="admin">Администратор</option>
                 <option value="superadmin">Суперадмин</option>
             </select>
             <div style="display:flex;gap:8px;">
-                <button onclick="addUser()" style="flex:1;padding:8px;background:var(--accent);border:none;border-radius:8px;color:var(--bg-primary);font-weight:700;cursor:pointer;">Сохранить</button>
-                <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:8px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;">Отмена</button>
+                <button onclick="addUser()" style="flex:1;padding:10px;background:var(--accent);border:none;border-radius:8px;color:var(--bg-primary);font-weight:700;cursor:pointer;font-size:15px;">Сохранить</button>
+                <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:10px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:15px;">Отмена</button>
             </div>
         </div>
     </div>
 
-    <!-- ============================================================
-    СТРАНИЦА: ПРОФИЛЬ
-    ============================================================ -->
+    <!-- ===== СТРАНИЦА: ПРОФИЛЬ ===== -->
     <div class="page" id="page-profile">
         <div class="header">
             <div class="header-left">
@@ -466,9 +430,6 @@
         <div id="profileContent"></div>
     </div>
 
-    <!-- ============================================================
-    СКРИПТЫ
-    ============================================================ -->
     <script>
         // ============================================================
         // 1. ПОЛУЧАЕМ USER_ID ИЗ URL
@@ -480,8 +441,20 @@
         let allOrders = [], currentFilter = 'all', searchQuery = '';
         let allUsers = [];
 
+        // ============================================================
+        // 2. ПРОВЕРКА ДОСТУПА
+        // ============================================================
+        function showAccessDenied(message) {
+            document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">' +
+                '<div style="font-size:64px;margin-bottom:16px;">🔒</div>' +
+                '<h2 style="color:var(--accent);font-size:24px;margin-bottom:8px;">Доступ запрещен</h2>' +
+                '<p style="color:var(--text-secondary);font-size:16px;max-width:400px;">' + message + '</p>' +
+                '<p style="color:var(--text-secondary);font-size:14px;margin-top:16px;opacity:0.7;">Пожалуйста, откройте приложение через кнопку в боте</p>' +
+                '</div>';
+        }
+
         if (!userId) {
-            document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;">🔒</div><h2>Доступ запрещен</h2><p>Ошибка: не передан ID пользователя</p></div>';
+            showAccessDenied('Ошибка: не передан ID пользователя');
         } else {
             fetch('/api/auth/check', { headers: { 'X-User-Id': userId } })
             .then(r => r.json())
@@ -489,23 +462,23 @@
                 if (data.success) {
                     currentUser = data.user;
                     USER_ROLE = currentUser.role;
-                    document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:8px;color:var(--text-secondary);text-transform:uppercase;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
+                    document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
                     document.getElementById('profileName').textContent = currentUser.full_name;
-                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;"><div style="display:flex;gap:12px;align-items:center;"><div style="font-size:40px;">👤</div><div><div style="font-size:16px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:12px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:11px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
+                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
                     loadOrders();
                     loadDashboard();
                     loadUsers();
                 } else {
-                    document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;">🔒</div><h2>Доступ запрещен</h2><p>' + (data.detail || 'Пользователь не найден') + '</p></div>';
+                    showAccessDenied(data.detail || 'Пользователь не найден');
                 }
             })
             .catch(() => {
-                document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;">⚠️</div><h2>Ошибка</h2><p>Не удалось проверить доступ</p></div>';
+                showAccessDenied('Не удалось проверить доступ');
             });
         }
 
         // ============================================================
-        // 2. НАВИГАЦИЯ
+        // 3. НАВИГАЦИЯ
         // ============================================================
         function navigateTo(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -519,7 +492,7 @@
         }
 
         // ============================================================
-        // 3. API HELPER
+        // 4. API HELPER
         // ============================================================
         const API_BASE = window.location.origin + '/api';
 
@@ -534,7 +507,7 @@
         }
 
         // ============================================================
-        // 4. СТАТУСЫ
+        // 5. СТАТУСЫ
         // ============================================================
         const statusMap = {
             'Принят в ремонт': 'new', 'В ремонте': 'repair',
@@ -553,14 +526,14 @@
         function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
         // ============================================================
-        // 5. КОНТАКТЫ
+        // 6. КОНТАКТЫ
         // ============================================================
         function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('viber://chat?number=' + clean, '_blank'); }
         function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
         function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
 
         // ============================================================
-        // 6. ЗАКАЗЫ
+        // 7. ЗАКАЗЫ
         // ============================================================
         function showDetail(order) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -574,22 +547,21 @@
 
             let contacts = '';
             if (cleanPhone && cleanPhone.length > 4) {
-                contacts = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;"><a href="tel:' + cleanPhone + '" class="contact-btn call">📞</a><button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬</button><button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️</button><button class="contact-btn copy" onclick="copyPhone(\'' + phone + '\')">📋</button><button class="client-btn" onclick="showClient(\'' + phone + '\')">👤 Клиент</button></div><div style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">📱 ' + phone + '</div>';
+                contacts = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"><a href="tel:' + cleanPhone + '" class="contact-btn call">📞 Позвонить</a><button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬 Viber</button><button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️ Telegram</button><button class="contact-btn copy" onclick="copyPhone(\'' + phone + '\')">📋</button><button class="client-btn" onclick="showClient(\'' + phone + '\')">👤 Клиент</button></div><div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:6px;">📱 ' + phone + '</div>';
             }
 
             let history = '';
             if (order.history && order.history.length > 0) {
-                history = '<div style="font-weight:600;font-size:12px;color:var(--accent);margin-top:8px;">📜 История статусов</div>';
+                history = '<div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:12px;">📜 История статусов</div>';
                 order.history.forEach(h => {
                     let color = statusColors[h.status] || '#6b7280';
                     let time = h.changed_at ? h.changed_at.slice(11, 16) : '';
                     history += '<div class="history-item"><span class="h-status"><span class="status-dot" style="background:' + color + ';"></span>' + escapeHtml(h.status) + '</span><span class="h-time">' + time + '</span></div>';
                 });
             } else {
-                history = '<div style="margin-top:8px;color:var(--text-secondary);font-size:12px;">Нет истории статусов</div>';
+                history = '<div style="margin-top:8px;color:var(--text-secondary);font-size:14px;">Нет истории статусов</div>';
             }
 
-            // Кнопки действий (только для суперадмина)
             let actions = '';
             if (USER_ROLE === 'superadmin') {
                 actions = '<button class="action-btn danger" onclick="deleteOrder(\'' + order.order_number + '\')">🗑️ Удалить заказ</button>';
@@ -608,7 +580,7 @@
         }
 
         // ============================================================
-        // 7. КЛИЕНТ
+        // 8. КЛИЕНТ
         // ============================================================
         function showClient(phone) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -631,9 +603,9 @@
                     });
                     let topStatus = Object.entries(statusCount).sort((a,b) => b[1]-a[1])[0];
 
-                    let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:11px;margin-left:6px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:9px;">' + (o.status || 'Новый') + '</span></div>').join('');
+                    let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
 
-                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;margin-bottom:8px;"><div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><div style="font-size:32px;">👤</div><div><div style="font-size:14px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:12px;color:var(--text-secondary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:12px;color:var(--accent);margin-bottom:4px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
+                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:14px;color:var(--text-secondary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
                 } else {
                     container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
                 }
@@ -643,7 +615,7 @@
         }
 
         // ============================================================
-        // 8. ЗАГРУЗКА ЗАКАЗОВ
+        // 9. ЗАГРУЗКА ЗАКАЗОВ
         // ============================================================
         async function loadOrders() {
             try {
@@ -669,7 +641,7 @@
             }
             let container = document.getElementById('orderList');
             if (!filtered.length) {
-                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Заказов не найдено</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
                 return;
             }
             container.innerHTML = filtered.map(o => '<div class="order-card" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div class="top-row"><span class="order-number">#' + o.order_number + '</span><span class="order-status status-' + getStatusClass(o.status) + '">' + (o.status || 'Новый') + '</span></div><div class="info"><span>👤 ' + (o.client_name || 'Не указан') + '</span><span>📱 ' + (o.phone || 'Не указан') + '</span></div><div class="device">🖥️ ' + (o.device || 'Устройство не указано') + '</div></div>').join('');
@@ -686,11 +658,11 @@
         });
 
         // ============================================================
-        // 9. ДАШБОРД
+        // 10. ДАШБОРД
         // ============================================================
         async function loadDashboard() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>Доступен только администраторам</p></div>';
+                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
                 return;
             }
             try {
@@ -699,25 +671,25 @@
                     let stats = r.data;
                     let maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
                     document.getElementById('dashboardContent').innerHTML =
-                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><div style="background:var(--bg-card);padding:10px;border-radius:8px;"><div style="font-size:11px;color:var(--text-secondary);">Среднее время ремонта</div><div style="font-size:18px;font-weight:700;color:var(--accent);">' + stats.avg_repair_time + ' дн.</div></div><div style="background:var(--bg-card);padding:10px;border-radius:8px;"><div style="font-size:11px;color:var(--text-secondary);">Всего заказов</div><div style="font-size:18px;font-weight:700;color:var(--accent);">' + stats.total_orders + '</div></div></div>' +
-                        '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Топ-5 неисправностей</div>' +
-                        stats.top_problems.map(p => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>' + (p.problem || 'Без описания') + '</span><span style="color:var(--accent);">' + p.count + '</span></div>').join('') +
-                        '<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;margin-bottom:4px;">Заказы по дням</div>' +
-                        '<div style="display:flex;gap:4px;height:36px;align-items:flex-end;">' +
-                        stats.orders_by_day.slice(0,7).reverse().map(d => '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + Math.max(4, (d.count / maxCount) * 36) + 'px;"></div><div style="font-size:7px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>').join('') +
+                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.avg_repair_time + ' дн.</div></div><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.total_orders + '</div></div></div>' +
+                        '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>' +
+                        stats.top_problems.map(p => '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>' + (p.problem || 'Без описания') + '</span><span style="color:var(--accent);">' + p.count + '</span></div>').join('') +
+                        '<div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>' +
+                        '<div style="display:flex;gap:4px;height:40px;align-items:flex-end;">' +
+                        stats.orders_by_day.slice(0,7).reverse().map(d => '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + Math.max(4, (d.count / maxCount) * 40) + 'px;"></div><div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>').join('') +
                         '</div>';
                 }
             } catch(e) {
-                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
             }
         }
 
         // ============================================================
-        // 10. ПОЛЬЗОВАТЕЛИ (ТОЛЬКО ДЛЯ АДМИНОВ)
+        // 11. ПОЛЬЗОВАТЕЛИ
         // ============================================================
         async function loadUsers() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>Доступен только администраторам</p></div>';
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
                 return;
             }
             try {
@@ -729,17 +701,17 @@
                         let roleClass = u.role === 'superadmin' ? 'role-superadmin' : u.role === 'admin' ? 'role-admin' : 'role-user';
                         let actions = '';
                         if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
-                            actions = '<button class="action-btn danger" style="font-size:10px;padding:2px 8px;" onclick="deleteUser(\'' + u.telegram_id + '\')">🗑️</button>';
+                            actions = '<button class="action-btn danger" style="font-size:11px;padding:4px 10px;" onclick="deleteUser(\'' + u.telegram_id + '\')">🗑️</button>';
                         }
                         if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
-                            actions += ' <button class="action-btn" style="font-size:10px;padding:2px 8px;" onclick="changeUserRole(\'' + u.telegram_id + '\', \'' + (u.role === 'superadmin' ? 'admin' : u.role === 'admin' ? 'user' : 'admin') + '\')">⬆️</button>';
+                            actions += ' <button class="action-btn" style="font-size:11px;padding:4px 10px;" onclick="changeUserRole(\'' + u.telegram_id + '\', \'' + (u.role === 'superadmin' ? 'admin' : u.role === 'admin' ? 'user' : 'admin') + '\')">⬆️</button>';
                         }
-                        html += '<div class="user-item"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:11px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div>' + actions + '</div></div>';
+                        html += '<div class="user-item"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div>' + actions + '</div></div>';
                     });
-                    document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><p>Нет пользователей</p></div>';
+                    document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3></div>';
                 }
             } catch(e) {
-                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
             }
         }
 
@@ -793,12 +765,11 @@
         }
 
         // ============================================================
-        // 11. УДАЛЕНИЕ ЗАКАЗА (ТОЛЬКО СУПЕРАДМИН)
+        // 12. УДАЛЕНИЕ ЗАКАЗА
         // ============================================================
         async function deleteOrder(orderNumber) {
             if (!confirm('Удалить заказ #' + orderNumber + '?')) return;
             try {
-                // Эндпоинт для удаления заказа (нужно добавить в api.py)
                 await apiFetch('/orders/by-number/' + orderNumber, { method: 'DELETE' });
                 alert('✅ Заказ удален');
                 loadOrders();
@@ -809,7 +780,7 @@
         }
 
         // ============================================================
-        // 12. ОБНОВЛЕНИЕ
+        // 13. АВТООБНОВЛЕНИЕ
         // ============================================================
         setInterval(() => {
             if (document.getElementById('page-orders').classList.contains('active')) {
