@@ -52,7 +52,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 db = get_db()
 
 # ============================================================
-# API-КЛЮЧ ДЛЯ ЗАЩИТЫ ЭНДПОИНТА
+# API-КЛЮЧ ДЛЯ ЗАЩИТЫ ЭНДПОИНТА (1С)
 # ============================================================
 API_KEY = os.getenv('API_KEY', 'STASH2024SecretKey!')
 
@@ -73,17 +73,28 @@ class OrderFrom1C(BaseModel):
     notes: Optional[str] = None
 
 # ============================================================
-# АВТОРИЗАЦИЯ (упрощенная модель)
+# АВТОРИЗАЦИЯ (полная проверка через БД)
 # ============================================================
 async def get_current_user(
-    x_user_role: str = Header(default='user'),
     x_user_id: str = Header(default='anonymous')
 ):
     """
-    Проверяем роль пользователя.
-    В реальном проекте тут должна быть JWT или проверка по Telegram ID.
+    Проверяет пользователя по Telegram ID в БД.
+    Возвращает данные пользователя или ошибку 401/403.
     """
-    return {"role": x_user_role, "user_id": x_user_id}
+    if x_user_id == 'anonymous':
+        raise HTTPException(status_code=401, detail="Не авторизован")
+    
+    user = db.get_user(x_user_id)
+    if not user:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    return {
+        "user_id": user['telegram_id'],
+        "username": user['username'] or '',
+        "full_name": user['full_name'] or '',
+        "role": user['role'] or 'user'
+    }
 
 # ============================================================
 # ЭНДПОИНТЫ
@@ -96,7 +107,117 @@ async def root():
 async def serve_app():
     return FileResponse("static/index.html")
 
-# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С ----------
+# ---------- ПРОВЕРКА АВТОРИЗАЦИИ ----------
+@app.get("/api/auth/check")
+async def check_user(
+    x_user_id: str = Header(default='anonymous'),
+    x_username: str = Header(default=''),
+    x_full_name: str = Header(default='')
+):
+    """
+    Проверяет, есть ли пользователь в системе.
+    Если нет — возвращает 403.
+    Если есть — возвращает данные пользователя.
+    """
+    if x_user_id == 'anonymous':
+        raise HTTPException(status_code=401, detail="Не авторизован")
+    
+    user = db.get_user(x_user_id)
+    if not user:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    return JSONResponse({
+        "success": True,
+        "user": {
+            "id": user['telegram_id'],
+            "username": user['username'] or '',
+            "full_name": user['full_name'] or '',
+            "role": user['role'] or 'user'
+        }
+    })
+
+# ---------- УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (только админы) ----------
+@app.get("/api/users")
+async def get_users(current_user: dict = Depends(get_current_user)):
+    """Получить список всех пользователей (только для админов и суперадминов)"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    users = db.get_all_users()
+    return JSONResponse({"success": True, "data": users})
+
+@app.post("/api/users")
+async def add_user(
+    telegram_id: str,
+    username: str = "",
+    full_name: str = "",
+    role: str = "user",
+    current_user: dict = Depends(get_current_user)
+):
+    """Добавить нового пользователя (только для админов и суперадминов)"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    # Суперадмин может назначать любую роль, админ — только user
+    if current_user["role"] == 'admin' and role != 'user':
+        raise HTTPException(status_code=403, detail="Админ может назначать только роль 'user'")
+    
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id обязателен")
+    
+    # Проверяем, что пользователь не существует
+    existing = db.get_user(telegram_id)
+    if existing:
+        raise HTTPException(status_code=400, detail="Пользователь уже существует")
+    
+    success = db.add_user(telegram_id, username, full_name, role)
+    if success:
+        return JSONResponse({"success": True, "message": "Пользователь добавлен"})
+    else:
+        raise HTTPException(status_code=400, detail="Не удалось добавить пользователя")
+
+@app.put("/api/users/{telegram_id}/role")
+async def update_user_role(
+    telegram_id: str,
+    new_role: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Изменить роль пользователя (только для суперадминов)"""
+    if current_user["role"] != 'superadmin':
+        raise HTTPException(status_code=403, detail="Только суперадмин может менять роли")
+    
+    if not new_role in ['superadmin', 'admin', 'user']:
+        raise HTTPException(status_code=400, detail="Недопустимая роль")
+    
+    # Нельзя изменить роль самого себя
+    if telegram_id == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Нельзя изменить свою роль")
+    
+    success = db.update_user_role(telegram_id, new_role)
+    if success:
+        return JSONResponse({"success": True, "message": "Роль обновлена"})
+    else:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+@app.delete("/api/users/{telegram_id}")
+async def delete_user(
+    telegram_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Удалить пользователя (только для суперадминов)"""
+    if current_user["role"] != 'superadmin':
+        raise HTTPException(status_code=403, detail="Только суперадмин может удалять пользователей")
+    
+    if telegram_id == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
+    
+    success = db.delete_user(telegram_id)
+    if success:
+        return JSONResponse({"success": True, "message": "Пользователь удален"})
+    else:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С (без авторизации, с API-ключом) ----------
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
     order_data: OrderFrom1C,
@@ -159,7 +280,7 @@ async def get_orders(
 ):
     """Получить список заказов с учетом прав пользователя"""
     try:
-        if current_user["role"] == "admin":
+        if current_user["role"] in ['admin', 'superadmin']:
             if search:
                 results = db.search_orders(search)
                 total = len(results)
@@ -208,7 +329,7 @@ async def get_order(order_id: int, current_user: dict = Depends(get_current_user
                 raise HTTPException(status_code=404, detail="Заказ не найден")
             
             # Проверка прав: если не админ, проверяем, что заказ принадлежит пользователю
-            if current_user["role"] != "admin":
+            if current_user["role"] not in ['admin', 'superadmin']:
                 user_id = current_user["user_id"]
                 phone = order['phone'] or ''
                 client_name = order['client_name'] or ''
@@ -247,7 +368,7 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
                 raise HTTPException(status_code=404, detail="Заказ не найден")
             
             # Проверка прав
-            if current_user["role"] != "admin":
+            if current_user["role"] not in ['admin', 'superadmin']:
                 user_id = current_user["user_id"]
                 phone = order['phone'] or ''
                 client_name = order['client_name'] or ''
@@ -280,7 +401,7 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
 async def get_statistics(current_user: dict = Depends(get_current_user)):
     """Базовая статистика (доступна всем)"""
     try:
-        if current_user["role"] == "admin":
+        if current_user["role"] in ['admin', 'superadmin']:
             stats = db.get_statistics()
         else:
             # Для пользователя — статистика только по его заказам
@@ -307,7 +428,7 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
 @app.get("/api/admin/dashboard")
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     """Расширенная аналитика — только для администраторов"""
-    if current_user["role"] != "admin":
+    if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен. Требуются права администратора.")
     
     try:
@@ -328,7 +449,7 @@ async def search_orders(
 ):
     """Поиск заказов по всем полям"""
     try:
-        if current_user["role"] == "admin":
+        if current_user["role"] in ['admin', 'superadmin']:
             results = db.search_orders(q)
             total = len(results)
             results = results[:limit]
