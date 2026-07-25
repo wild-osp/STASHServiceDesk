@@ -102,9 +102,17 @@ async def get_current_user(
 async def root():
     return {"name": "STASHServiceDesk API", "status": "running", "timestamp": datetime.now().isoformat()}
 
-@app.get("/app")
+from fastapi.responses import HTMLResponse
+
+@app.get("/app", response_class=HTMLResponse)
 async def serve_app():
-    return FileResponse("static/index.html")
+    with open("static/index.html", "r", encoding="utf-8") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content, headers={
+        "Content-Security-Policy": "default-src 'self' https:; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:;",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY"
+    })
 
 # ---------- ПРОВЕРКА АВТОРИЗАЦИИ ----------
 @app.get("/api/auth/check")
