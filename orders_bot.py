@@ -91,23 +91,37 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     logger.info(f"✅ Команда /start получена от {user.full_name} в чате {chat.id} ({chat.type})")
     
+    # Проверяем, есть ли пользователь в БД
+    user_data = db.get_user(str(user.id))
+    if not user_data:
+        await update.message.reply_text(
+            f"👋 Привет, {user.full_name}!\n\n"
+            "❌ У вас нет доступа к этому приложению.\n"
+            "Обратитесь к администратору для получения прав."
+        )
+        return
+    
     stats = db.get_statistics()
+    
+    # ⚡ ГЛАВНОЕ ИЗМЕНЕНИЕ: передаём user_id в URL
+    user_id = str(user.id)
+    app_url = f"https://bot-1784782201-8409-wild-osp.bothost.tech/app?user_id={user_id}"
     
     # Создаем кнопку для открытия Mini App
     keyboard = [[
         InlineKeyboardButton(
             "📦 Открыть заказы", 
-            web_app={"url": APP_URL}
+            web_app={"url": app_url}
         )
     ]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🤖 STASHServiceDesk Orders Bot\n"
-        f"📦 Система учета заказов\n\n"
+        f"👋 Привет, {user.full_name}!\n"
+        f"🎭 Ваша роль: {user_data['role']}\n\n"
         f"📊 Всего заказов: {stats['total']}\n"
         f"📅 Сегодня: {stats['today']}\n\n"
-        "Нажмите кнопку ниже, чтобы открыть интерфейс заказов:",
+        "Нажмите кнопку ниже, чтобы открыть интерфейс:",
         reply_markup=reply_markup
     )
 
