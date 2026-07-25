@@ -14,7 +14,6 @@
             --accent: #f5a623;
             --shadow: 0 4px 20px rgba(0,0,0,0.4);
             --radius: 12px;
-            --transition: all 0.2s ease;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -25,36 +24,6 @@
             min-height: 100vh;
             padding-bottom: 80px;
         }
-        .access-denied {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            text-align: center;
-            padding: 20px;
-        }
-        .access-denied .icon { font-size: 64px; margin-bottom: 16px; }
-        .access-denied h2 { font-size: 24px; margin-bottom: 8px; color: var(--accent); }
-        .access-denied p { color: var(--text-secondary); max-width: 400px; }
-        .access-denied .sub { font-size: 13px; margin-top: 16px; opacity: 0.7; }
-        #debugInfo {
-            background: #1a1a2e;
-            border: 1px solid var(--accent);
-            border-radius: var(--radius);
-            padding: 12px;
-            margin-bottom: 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        #debugInfo .ok { color: #4ade80; }
-        #debugInfo .error { color: #f87171; }
-        #debugInfo .info { color: #60a5fa; }
         .header {
             display: flex;
             justify-content: space-between;
@@ -67,26 +36,23 @@
         .header-icon { font-size: 28px; font-weight: 700; color: var(--accent); }
         .header-icon span { color: var(--text-primary); }
         .header h1 { font-size: 18px; font-weight: 600; }
-        .header h1 small { display: block; font-size: 10px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        .header h1 small { display: block; font-size: 10px; font-weight: 400; color: var(--text-secondary); text-transform: uppercase; }
         .header-badge { background: var(--accent); color: var(--bg-primary); font-weight: 700; padding: 4px 14px; border-radius: 20px; font-size: 14px; }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 14px 8px; text-align: center; border-bottom: 3px solid var(--accent); }
         .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
         .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
         .search-wrapper { position: relative; margin-bottom: 16px; }
-        .search-wrapper .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 16px; }
-        .search-wrapper input { width: 100%; padding: 12px 16px 12px 44px; border: 1px solid var(--bg-secondary); border-radius: var(--radius); font-size: 15px; background: var(--bg-secondary); color: var(--text-primary); outline: none; }
+        .search-wrapper input { width: 100%; padding: 12px 16px; border: 1px solid var(--bg-secondary); border-radius: var(--radius); font-size: 15px; background: var(--bg-secondary); color: var(--text-primary); outline: none; }
         .search-wrapper input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2); }
         .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        .filter-btn { padding: 6px 16px; border: 1px solid var(--bg-secondary); border-radius: 20px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); text-transform: uppercase; }
-        .filter-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+        .filter-btn { padding: 6px 16px; border: 1px solid var(--bg-secondary); border-radius: 20px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
         .order-list { display: flex; flex-direction: column; gap: 12px; }
-        .order-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: var(--transition); border-left: 4px solid var(--accent); }
-        .order-card:active { transform: scale(0.98); }
+        .order-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 16px; cursor: pointer; border-left: 4px solid var(--accent); }
         .order-card .top-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .order-number { font-weight: 700; font-size: 16px; }
-        .order-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; white-space: nowrap; }
+        .order-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; }
         .status-new { background: #1e3a5f; color: #93bbfc; }
         .status-repair { background: #5f3a1e; color: #fbbf7c; }
         .status-consultation { background: #4a1e5f; color: #d8b4fe; }
@@ -99,24 +65,20 @@
         .order-card .info { margin-top: 8px; font-size: 13px; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 8px 16px; }
         .order-card .device { margin-top: 6px; font-size: 14px; color: var(--text-primary); font-weight: 500; }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
-        .empty-state .big-icon { font-size: 48px; margin-bottom: 12px; }
-        .empty-state h3 { font-size: 18px; color: var(--text-primary); margin-bottom: 4px; }
         .loader { text-align: center; padding: 40px 0; color: var(--text-secondary); }
         .spinner { width: 36px; height: 36px; border: 3px solid var(--bg-secondary); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 999; padding: 20px; align-items: flex-end; justify-content: center; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; padding: 20px; align-items: flex-end; justify-content: center; }
         .modal.active { display: flex; animation: modalIn 0.3s ease; }
         @keyframes modalIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
         .modal-header h2 { font-size: 18px; font-weight: 700; color: var(--accent); }
-        .modal-close { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; padding: 0 4px; }
+        .modal-close { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; }
         .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-        .detail-row .label { color: var(--text-secondary); font-weight: 500; }
-        .detail-row .value { font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
-        .history-title { font-weight: 600; margin-top: 16px; margin-bottom: 8px; font-size: 14px; color: var(--accent); }
-        .history-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .contact-btn { flex: 1; min-width: 56px; color: white; text-decoration: none; padding: 10px 8px; border-radius: var(--radius); font-size: 13px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; background: var(--bg-card); border-bottom: 3px solid transparent; }
+        .detail-row .label { color: var(--text-secondary); }
+        .detail-row .value { font-weight: 500; text-align: right; }
+        .contact-btn { flex: 1; min-width: 56px; color: white; padding: 10px 8px; border-radius: var(--radius); font-size: 13px; font-weight: 600; text-align: center; border: none; cursor: pointer; background: var(--bg-card); border-bottom: 3px solid transparent; }
         .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
         .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
         .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
@@ -132,14 +94,29 @@
         .chart-bar { flex: 1; display: flex; flex-direction: column; align-items: center; }
         .chart-bar .bar { background: var(--accent); width: 100%; border-radius: 4px; min-height: 4px; }
         .chart-bar .day-label { font-size: 8px; color: var(--text-secondary); margin-top: 2px; }
+        .access-denied { text-align: center; padding: 60px 20px; }
+        .access-denied .icon { font-size: 64px; }
+        .access-denied h2 { color: var(--accent); }
+        .access-denied p { color: var(--text-secondary); }
         @media (max-width: 480px) { body { padding: 12px; } .stats-grid { gap: 6px; } .stat-number { font-size: 20px; } }
         @media (min-width: 600px) { .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } }
         @media (min-width: 900px) { .order-list { grid-template-columns: 1fr 1fr 1fr; } body { max-width: 1100px; margin: 0 auto; } }
     </style>
 </head>
 <body>
+
+    <div id="loadingScreen" style="text-align:center;padding:60px 20px;">
+        <div class="spinner"></div>
+        <p>Проверка доступа...</p>
+    </div>
+
+    <div id="accessDenied" class="access-denied" style="display:none;">
+        <div class="icon">🔒</div>
+        <h2>Доступ запрещен</h2>
+        <p id="errorMessage">Пользователь не найден</p>
+    </div>
+
     <div id="app" style="display:none;">
-        <div id="debugInfo"></div>
         <div class="header">
             <div class="header-left">
                 <div class="header-icon">ST<span>ASH</span></div>
@@ -149,13 +126,17 @@
             </div>
             <span class="header-badge" id="totalBadge">0</span>
         </div>
+
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего заказов</div></div>
             <div class="stat-card"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
             <div class="stat-card"><div class="stat-number" id="statStatuses">0</div><div class="stat-label">Статусов</div></div>
         </div>
+
         <div id="dashboardPanel"><h3>📊 Аналитика</h3><div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка аналитики...</div></div></div>
-        <div class="search-wrapper"><span class="icon">🔍</span><input type="text" id="searchInput" placeholder="Поиск..." /></div>
+
+        <div class="search-wrapper"><input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." /></div>
+
         <div class="filters" id="filters">
             <button class="filter-btn active" data-filter="all">Все</button>
             <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
@@ -167,7 +148,9 @@
             <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
             <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
         </div>
+
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка заказов...</div></div>
+
         <div class="modal" id="modal">
             <div class="modal-content">
                 <div class="modal-header"><h2 id="modalTitle">Заказ</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
@@ -175,97 +158,58 @@
             </div>
         </div>
     </div>
-    <div id="accessDenied" class="access-denied" style="display:none;">
-        <div class="icon">🔒</div>
-        <h2>Доступ запрещен</h2>
-        <p id="accessDeniedMessage">У вас нет прав для просмотра этого приложения.</p>
-        <p class="sub">Обратитесь к администратору для получения доступа.</p>
-    </div>
-    <div id="loadingScreen" class="access-denied">
-        <div class="icon">⏳</div>
-        <h2>Загрузка...</h2>
-        <p>Проверка прав доступа</p>
-    </div>
+
     <script>
-        function debugLog(message, type = 'info') {
-            const el = document.getElementById('debugInfo');
-            if (!el) return;
-            const colors = { ok: '#4ade80', error: '#f87171', info: '#60a5fa' };
-            const time = new Date().toLocaleTimeString();
-            el.innerHTML += `<div style="color:${colors[type] || '#fff'}">[${time}] ${message}</div>`;
-            el.scrollTop = el.scrollHeight;
-        }
-        let currentUser = null;
-        let USER_ROLE = 'user';
-        async function checkAuth() {
-            debugLog('🔍 Начинаем проверку авторизации...', 'info');
-            const tg = window.Telegram?.WebApp;
-            if (!tg) {
-                debugLog('❌ Telegram WebApp не найден!', 'error');
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('accessDenied').style.display = 'flex';
-                document.getElementById('accessDeniedMessage').textContent = 'Пожалуйста, откройте это приложение через Telegram.';
-                return false;
-            }
-            if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-                debugLog('❌ Данные пользователя не найдены!', 'error');
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('accessDenied').style.display = 'flex';
-                document.getElementById('accessDeniedMessage').textContent = 'Не удалось получить данные пользователя.';
-                return false;
-            }
-            const user = tg.initDataUnsafe.user;
-            debugLog(`👤 Пользователь: ${user.first_name} (ID: ${user.id})`, 'info');
-            const headers = {
-                'X-User-Id': String(user.id),
-                'X-Username': user.username || '',
-                'X-Full-Name': user.first_name + (user.last_name ? ' ' + user.last_name : '')
-            };
-            try {
-                debugLog('📡 Отправка запроса на /api/auth/check...', 'info');
-                const response = await fetch('/api/auth/check', { headers });
-                debugLog(`📡 Ответ: ${response.status} ${response.statusText}`, 'info');
-                if (response.status === 403) {
-                    debugLog('❌ Доступ запрещен (403)', 'error');
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('accessDenied').style.display = 'flex';
-                    document.getElementById('accessDeniedMessage').textContent = 'У вас нет прав. Обратитесь к администратору.';
-                    return false;
+        // ============================================================
+        // 1. ПОЛУЧАЕМ USER_ID ИЗ URL
+        // ============================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+
+        if (!userId) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('accessDenied').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Ошибка: не передан ID пользователя';
+        } else {
+            // ============================================================
+            // 2. ПРОВЕРЯЕМ ПОЛЬЗОВАТЕЛЯ
+            // ============================================================
+            fetch('/api/auth/check', {
+                headers: {
+                    'X-User-Id': userId
                 }
-                if (response.status === 401) {
-                    debugLog('❌ Не авторизован (401)', 'error');
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('accessDenied').style.display = 'flex';
-                    document.getElementById('accessDeniedMessage').textContent = 'Ошибка авторизации.';
-                    return false;
-                }
-                if (!response.ok) {
-                    debugLog(`❌ Ошибка: ${response.status}`, 'error');
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                debugLog(`📦 Ответ API: ${JSON.stringify(data)}`, 'info');
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.success) {
-                    currentUser = data.user;
-                    USER_ROLE = currentUser.role;
-                    debugLog(`✅ Авторизация успешна! Роль: ${USER_ROLE}`, 'ok');
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
-                    const roleLabel = currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник';
-                    document.getElementById('userGreeting').innerHTML = `Привет, ${currentUser.full_name}! <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">${roleLabel}</small>`;
-                    return true;
+                    
+                    const user = data.user;
+                    const roleLabel = user.role === 'superadmin' ? '🌟 Суперадмин' : 
+                                      user.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник';
+                    document.getElementById('userGreeting').innerHTML = 
+                        `Привет, ${user.full_name}! <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">${roleLabel}</small>`;
+                    
+                    // Загружаем данные
+                    loadOrders();
+                    loadDashboard();
                 } else {
-                    debugLog('❌ API вернул success: false', 'error');
-                    throw new Error('API вернул ошибку');
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('accessDenied').style.display = 'block';
+                    document.getElementById('errorMessage').textContent = data.detail || 'Пользователь не найден';
                 }
-            } catch (e) {
-                debugLog(`❌ Исключение: ${e.message}`, 'error');
+            })
+            .catch(() => {
                 document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('accessDenied').style.display = 'flex';
-                document.getElementById('accessDeniedMessage').textContent = 'Не удалось проверить права доступа.';
-                return false;
-            }
+                document.getElementById('accessDenied').style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Ошибка соединения с сервером';
+            });
         }
+
+        // ============================================================
+        // 3. ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+        // ============================================================
         const $ = id => document.getElementById(id);
         const orderList = $('orderList');
         const searchInput = $('searchInput');
@@ -275,56 +219,99 @@
         const modalBody = $('modalBody');
         const dashboardPanel = $('dashboardPanel');
         const dashboardContent = $('dashboardContent');
-        async function apiFetch(endpoint, options = {}) {
-            const tg = window.Telegram?.WebApp;
-            const user = tg?.initDataUnsafe?.user;
-            const headers = { 'Content-Type': 'application/json', 'X-User-Id': user ? String(user.id) : 'anonymous', ...options.headers };
-            const response = await fetch(window.location.origin + '/api' + endpoint, { ...options, headers });
-            return response.json();
-        }
-        const statusMap = { 'Принят в ремонт': 'new', 'В ремонте': 'repair', 'Согласование с клиентом': 'consultation', 'Ожидание запчасти': 'waiting', 'Гарантия': 'warranty', 'Готово': 'ready', 'Выдано (не оплачено)': 'notpaid', 'Выдано (оплачено)': 'paid' };
+
+        const statusMap = {
+            'Принят в ремонт': 'new',
+            'В ремонте': 'repair',
+            'Согласование с клиентом': 'consultation',
+            'Ожидание запчасти': 'waiting',
+            'Гарантия': 'warranty',
+            'Готово': 'ready',
+            'Выдано (не оплачено)': 'notpaid',
+            'Выдано (оплачено)': 'paid'
+        };
+
         function getStatusClass(status) { return statusMap[status] || 'default'; }
         function escapeHtml(text) { if (!text) return '—'; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
-        function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); const win = window.open('viber://chat?number=' + clean, '_blank'); if (!win || win.closed) { alert('Viber не установлен.\nНомер: ' + phone); } }
-        function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); const win = window.open('tg://resolve?phone=' + clean, '_blank'); if (!win || win.closed) { alert('Telegram не открылся.\nНомер: ' + phone); } }
-        function copyPhone(phone) { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
-        let allOrders = [], currentFilter = 'all', searchQuery = '';
-        async function loadDashboard() {
-            if (USER_ROLE !== 'admin' && USER_ROLE !== 'superadmin') { dashboardPanel.style.display = 'none'; return; }
-            dashboardPanel.style.display = 'block';
-            try {
-                const data = await apiFetch('/admin/dashboard');
-                if (data.success) {
-                    const stats = data.data;
-                    const maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
-                    dashboardContent.innerHTML = `<div class="dashboard-grid"><div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Среднее время ремонта</div><div class="value">${stats.avg_repair_time} дн.</div></div><div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Всего заказов</div><div class="value">${stats.total_orders}</div></div></div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Топ-5 неисправностей</div>${stats.top_problems.map(p => '<div class="problem-item"><span>' + (p.problem || 'Без описания') + '</span><span class="count">' + p.count + '</span></div>').join('')}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;margin-top:8px;">Заказы по дням</div><div class="chart-bars">${stats.orders_by_day.slice(0,7).reverse().map(d => '<div class="chart-bar"><div class="bar" style="height:' + Math.max(4, (d.count / maxCount) * 40) + 'px;"></div><div class="day-label">' + (d.date || '—') + '</div></div>').join('')}</div>`;
-                }
-            } catch (e) { dashboardContent.innerHTML = '<div class="empty-state">⚠️ Ошибка загрузки</div>'; }
+
+        function openViber(phone) {
+            const clean = phone.replace(/[^0-9]/g, '');
+            const win = window.open('viber://chat?number=' + clean, '_blank');
+            if (!win || win.closed) alert('Viber не установлен.\nНомер: ' + phone);
         }
+        function openTelegram(phone) {
+            const clean = phone.replace(/[^0-9]/g, '');
+            const win = window.open('tg://resolve?phone=' + clean, '_blank');
+            if (!win || win.closed) alert('Telegram не открылся.\nНомер: ' + phone);
+        }
+        function copyPhone(phone) {
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone));
+            } else { alert('📱 Номер: ' + phone); }
+        }
+
+        let allOrders = [], currentFilter = 'all', searchQuery = '';
+
         async function loadOrders() {
             try {
-                const result = await apiFetch('/orders?limit=200');
+                const response = await fetch('/api/orders?limit=200');
+                const result = await response.json();
                 if (result.success) {
                     allOrders = result.data;
-                    const total = result.pagination.total;
-                    $('totalBadge').textContent = total;
-                    $('statTotal').textContent = total;
-                    const today = new Date().toISOString().slice(0,10);
-                    $('statToday').textContent = allOrders.filter(o => o.date === today).length;
-                    $('statStatuses').textContent = new Set(allOrders.map(o => o.status).filter(Boolean)).size;
+                    updateStats(result.pagination.total);
                     renderOrders();
-                } else { showError('Не удалось загрузить заказы'); }
-            } catch (e) { showError('Ошибка соединения'); }
+                }
+            } catch (e) { showError('Ошибка загрузки заказов'); }
         }
+
+        function updateStats(total) {
+            $('totalBadge').textContent = total;
+            $('statTotal').textContent = total;
+            const today = new Date().toISOString().slice(0,10);
+            $('statToday').textContent = allOrders.filter(o => o.date === today).length;
+            $('statStatuses').textContent = new Set(allOrders.map(o => o.status).filter(Boolean)).size;
+        }
+
         function renderOrders() {
             let filtered = allOrders;
             if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
             const q = searchQuery.trim().toLowerCase();
-            if (q) filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
-            if (filtered.length === 0) { orderList.innerHTML = '<div class="empty-state"><div class="big-icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>'; return; }
-            orderList.innerHTML = filtered.map(order => `<div class="order-card" onclick="openOrder(${order.id})"><div class="top-row"><span class="order-number">#${escapeHtml(order.order_number)}</span><span class="order-status status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></div><div class="info"><span><span class="emoji">👤</span> ${escapeHtml(order.client_name) || 'Не указан'}</span><span><span class="emoji">📱</span> ${escapeHtml(order.phone) || 'Не указан'}</span></div><div class="device">🖥️ ${escapeHtml(order.device) || 'Устройство не указано'}</div></div>`).join('');
+            if (q) {
+                filtered = filtered.filter(o =>
+                    (o.order_number || '').includes(q) ||
+                    (o.phone || '').includes(q) ||
+                    (o.client_name || '').toLowerCase().includes(q) ||
+                    (o.device || '').toLowerCase().includes(q) ||
+                    (o.problem || '').toLowerCase().includes(q)
+                );
+            }
+            if (filtered.length === 0) {
+                orderList.innerHTML = '<div class="empty-state"><div class="big-icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
+                return;
+            }
+            orderList.innerHTML = filtered.map(order => `
+                <div class="order-card" onclick="openOrder(${order.id})">
+                    <div class="top-row">
+                        <span class="order-number">#${escapeHtml(order.order_number)}</span>
+                        <span class="order-status status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span>
+                    </div>
+                    <div class="info">
+                        <span><span class="emoji">👤</span> ${escapeHtml(order.client_name) || 'Не указан'}</span>
+                        <span><span class="emoji">📱</span> ${escapeHtml(order.phone) || 'Не указан'}</span>
+                    </div>
+                    <div class="device">🖥️ ${escapeHtml(order.device) || 'Устройство не указано'}</div>
+                </div>
+            `).join('');
         }
-        async function openOrder(orderId) { try { const result = await apiFetch('/orders/' + orderId); if (result.success) showModal(result.data); } catch (e) { console.error(e); } }
+
+        async function openOrder(orderId) {
+            try {
+                const response = await fetch('/api/orders/' + orderId);
+                const result = await response.json();
+                if (result.success) showModal(result.data);
+            } catch (e) { console.error(e); }
+        }
+
         function showModal(order) {
             modalTitle.textContent = '#' + order.order_number;
             let contactsHtml = '';
@@ -333,16 +320,47 @@
             if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
             if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
             if (cleanPhone && cleanPhone.length > 4) {
-                contactsHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;"><a href="tel:${cleanPhone}" class="contact-btn call">📞 Позвонить</a><button class="contact-btn viber" onclick="openViber('${cleanPhone}')">💬 Viber</button><button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">✈️ Telegram</button><button class="contact-btn copy" onclick="copyPhone('${phone}')">📋</button></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">📱 ${phone}</div>`;
+                contactsHtml = `
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;">
+                        <a href="tel:${cleanPhone}" class="contact-btn call">📞 Позвонить</a>
+                        <button class="contact-btn viber" onclick="openViber('${cleanPhone}')">💬 Viber</button>
+                        <button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">✈️ Telegram</button>
+                        <button class="contact-btn copy" onclick="copyPhone('${phone}')">📋</button>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">📱 ${phone}</div>
+                `;
             }
-            const historyHtml = order.history && order.history.length > 0 ? '<div class="history-title">📜 История статусов</div>' + order.history.map(h => '<div class="history-item"><span class="h-status">' + escapeHtml(h.status) + '</span><span>' + (h.changed_at ? h.changed_at.slice(0,16).replace('T',' ') : '') + '</span></div>').join('') : '<div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">Нет истории статусов</div>';
-            modalBody.innerHTML = contactsHtml + `<div class="detail-row"><span class="label">Статус</span><span class="value"><span class="status-badge status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span></div><div class="detail-row"><span class="label">Дата приема</span><span class="value">${escapeHtml(order.date) || '—'}</span></div><div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver) || '—'}</span></div><div class="detail-row"><span class="label">Клиент</span><span class="value">${escapeHtml(order.client_name) || '—'}</span></div><div class="detail-row"><span class="label">Телефон</span><span class="value">${escapeHtml(order.phone) || '—'}</span></div><div class="detail-row"><span class="label">Устройство</span><span class="value">${escapeHtml(order.device) || '—'}</span></div><div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">${escapeHtml(order.problem) || '—'}</span></div>${historyHtml}`;
+            const historyHtml = order.history?.length > 0 ?
+                '<div class="history-title">📜 История статусов</div>' +
+                order.history.map(h => `
+                    <div class="history-item">
+                        <span class="h-status">${escapeHtml(h.status)}</span>
+                        <span>${h.changed_at ? h.changed_at.slice(0,16).replace('T',' ') : ''}</span>
+                    </div>
+                `).join('') :
+                '<div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">Нет истории статусов</div>';
+            
+            modalBody.innerHTML = contactsHtml + `
+                <div class="detail-row"><span class="label">Статус</span><span class="value"><span class="status-badge status-${getStatusClass(order.status)}">${escapeHtml(order.status) || 'Новый'}</span></span></div>
+                <div class="detail-row"><span class="label">Дата приема</span><span class="value">${escapeHtml(order.date) || '—'}</span></div>
+                <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver) || '—'}</span></div>
+                <div class="detail-row"><span class="label">Клиент</span><span class="value">${escapeHtml(order.client_name) || '—'}</span></div>
+                <div class="detail-row"><span class="label">Телефон</span><span class="value">${escapeHtml(order.phone) || '—'}</span></div>
+                <div class="detail-row"><span class="label">Устройство</span><span class="value">${escapeHtml(order.device) || '—'}</span></div>
+                <div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">${escapeHtml(order.problem) || '—'}</span></div>
+                ${historyHtml}
+            `;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
+
         function closeModal() { modal.classList.remove('active'); document.body.style.overflow = ''; }
         modal.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-        function showError(msg) { orderList.innerHTML = '<div class="empty-state"><div class="big-icon">⚠️</div><h3>Ошибка</h3><p>' + msg + '</p></div>'; }
+
+        function showError(msg) {
+            orderList.innerHTML = '<div class="empty-state"><div class="big-icon">⚠️</div><h3>Ошибка</h3><p>' + msg + '</p></div>';
+        }
+
         searchInput.addEventListener('input', function() { searchQuery = this.value; renderOrders(); });
         filtersEl.addEventListener('click', function(e) {
             const btn = e.target.closest('.filter-btn');
@@ -352,20 +370,42 @@
             currentFilter = btn.dataset.filter;
             renderOrders();
         });
-        async function init() {
-            debugLog('🚀 Инициализация приложения...', 'info');
-            const authorized = await checkAuth();
-            if (authorized) {
-                debugLog('✅ Авторизация пройдена, загружаем данные...', 'ok');
-                await loadDashboard();
-                await loadOrders();
-                setInterval(loadOrders, 30000);
-                setInterval(loadDashboard, 60000);
-            } else {
-                debugLog('❌ Авторизация не пройдена.', 'error');
+
+        async function loadDashboard() {
+            if (!['admin', 'superadmin'].includes(window.USER_ROLE || '')) {
+                dashboardPanel.style.display = 'none';
+                return;
             }
+            try {
+                const response = await fetch('/api/admin/dashboard');
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data;
+                    const maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
+                    dashboardContent.innerHTML = `
+                        <div class="dashboard-grid">
+                            <div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Среднее время ремонта</div><div class="value">${stats.avg_repair_time} дн.</div></div>
+                            <div class="dashboard-item"><div style="font-size:11px;color:var(--text-secondary);">Всего заказов</div><div class="value">${stats.total_orders}</div></div>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Топ-5 неисправностей</div>
+                        ${stats.top_problems.map(p => '<div class="problem-item"><span>' + (p.problem || 'Без описания') + '</span><span class="count">' + p.count + '</span></div>').join('')}
+                        <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;margin-bottom:4px;">Заказы по дням</div>
+                        <div class="chart-bars">${stats.orders_by_day.slice(0,7).reverse().map(d => `
+                            <div class="chart-bar"><div class="bar" style="height:${Math.max(4, (d.count / maxCount) * 40)}px;"></div><div class="day-label">${d.date || '—'}</div></div>
+                        `).join('')}</div>
+                    `;
+                }
+            } catch (e) { dashboardContent.innerHTML = '<div class="empty-state">⚠️ Ошибка загрузки</div>'; }
         }
-        init();
+
+        // Сохраняем роль для dashboard
+        fetch('/api/auth/check', { headers: { 'X-User-Id': userId } })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    window.USER_ROLE = data.user.role;
+                }
+            });
     </script>
 </body>
 </html>
