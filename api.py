@@ -20,9 +20,8 @@ from database import get_db
 from models import Order
 
 # ============================================================
-# ЗАПУСК БОТА ИЗ API
+# ЗАПУСК БОТА ОТКЛЮЧЕН (запускаем вручную)
 # ============================================================
-# ⚡ ОТКЛЮЧАЕМ АВТОЗАПУСК БОТА (запускаем вручную)
 # def run_bot():
 #     time.sleep(3)
 #     try:
@@ -30,7 +29,6 @@ from models import Order
 #         print("🚀 Бот запущен из API")
 #     except Exception as e:
 #         print(f"❌ Ошибка запуска бота: {e}")
-# 
 # bot_thread = threading.Thread(target=run_bot, daemon=True)
 # bot_thread.start()
 
@@ -72,15 +70,11 @@ class OrderFrom1C(BaseModel):
     notes: Optional[str] = None
 
 # ============================================================
-# АВТОРИЗАЦИЯ (полная проверка через БД)
+# АВТОРИЗАЦИЯ
 # ============================================================
 async def get_current_user(
     x_user_id: str = Header(default='anonymous')
 ):
-    """
-    Проверяет пользователя по Telegram ID в БД.
-    Возвращает данные пользователя или ошибку 401/403.
-    """
     if x_user_id == 'anonymous':
         raise HTTPException(status_code=401, detail="Не авторизован")
     
@@ -102,37 +96,36 @@ async def get_current_user(
 async def root():
     return {"name": "STASHServiceDesk API", "status": "running", "timestamp": datetime.now().isoformat()}
 
-from fastapi.responses import HTMLResponse
-
-@app.get("/app", response_class=HTMLResponse)
+@app.get("/app")
 async def serve_app():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content, headers={
-        "Content-Security-Policy": "default-src 'self' https:; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:;",
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY"
-    })
+    try:
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(
+            content=html_content,
+            status_code=200,
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "Content-Security-Policy": "default-src 'self' https:; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:;",
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "DENY",
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
+        )
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Ошибка</h1><p>{str(e)}</p>", status_code=500)
 
-# ---------- ПРОВЕРКА АВТОРИЗАЦИИ ----------
 @app.get("/api/auth/check")
 async def check_user(
     x_user_id: str = Header(default='anonymous'),
     x_username: str = Header(default=''),
     x_full_name: str = Header(default='')
 ):
-    """
-    Проверяет, есть ли пользователь в системе.
-    Если нет — возвращает 403.
-    Если есть — возвращает данные пользователя.
-    """
     if x_user_id == 'anonymous':
         raise HTTPException(status_code=401, detail="Не авторизован")
-    
     user = db.get_user(x_user_id)
     if not user:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
     return JSONResponse({
         "success": True,
         "user": {
@@ -143,13 +136,11 @@ async def check_user(
         }
     })
 
-# ---------- УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (только админы) ----------
+# ---------- УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ----------
 @app.get("/api/users")
 async def get_users(current_user: dict = Depends(get_current_user)):
-    """Получить список всех пользователей (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
     users = db.get_all_users()
     return JSONResponse({"success": True, "data": users})
 
@@ -161,22 +152,15 @@ async def add_user(
     role: str = "user",
     current_user: dict = Depends(get_current_user)
 ):
-    """Добавить нового пользователя (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
-    # Суперадмин может назначать любую роль, админ — только user
     if current_user["role"] == 'admin' and role != 'user':
         raise HTTPException(status_code=403, detail="Админ может назначать только роль 'user'")
-    
     if not telegram_id:
         raise HTTPException(status_code=400, detail="telegram_id обязателен")
-    
-    # Проверяем, что пользователь не существует
     existing = db.get_user(telegram_id)
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
-    
     success = db.add_user(telegram_id, username, full_name, role)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
@@ -189,17 +173,12 @@ async def update_user_role(
     new_role: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Изменить роль пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может менять роли")
-    
     if not new_role in ['superadmin', 'admin', 'user']:
         raise HTTPException(status_code=400, detail="Недопустимая роль")
-    
-    # Нельзя изменить роль самого себя
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя изменить свою роль")
-    
     success = db.update_user_role(telegram_id, new_role)
     if success:
         return JSONResponse({"success": True, "message": "Роль обновлена"})
@@ -211,40 +190,26 @@ async def delete_user(
     telegram_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Удалить пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может удалять пользователей")
-    
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
-    
     success = db.delete_user(telegram_id)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь удален"})
     else:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С (без авторизации, с API-ключом) ----------
+# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С ----------
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
     order_data: OrderFrom1C,
     x_api_key: str = Header(...)
 ):
-    """
-    Принимает заказ из 1С через HTTP-запрос.
-    Адрес: POST /api/orders/from-1c
-    Заголовок: X-API-Key: ваш-ключ
-    Тело: JSON с данными заказа
-    """
-    # Проверка API-ключа
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Неверный API-ключ")
-    
     try:
-        # Проверяем, существует ли заказ
         existing = db.get_order(order_data.order_number)
-        
-        # Создаем объект Order
         order = Order(
             order_number=order_data.order_number,
             date=order_data.date,
@@ -259,25 +224,20 @@ async def receive_order_from_1c(
             telegram_message_date=datetime.now().isoformat(),
             raw_message_text=f"Отправлено из 1С через API: {order_data.order_number}"
         )
-        
-        # Сохраняем/обновляем в БД
         order_id = db.save_order(order)
-        
         action = "обновлен" if existing else "создан"
         print(f"✅ Заказ #{order_data.order_number} {action} из 1С (API)")
-        
         return JSONResponse({
             "success": True,
             "message": f"Заказ #{order_data.order_number} {action}",
             "order_id": order_id,
             "action": action
         })
-        
     except Exception as e:
         print(f"❌ Ошибка при приеме заказа из 1С: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- ЗАКАЗЫ (с проверкой роли) ----------
+# ---------- ЗАКАЗЫ ----------
 @app.get("/api/orders")
 async def get_orders(
     limit: int = Query(50, ge=1, le=200),
@@ -285,7 +245,6 @@ async def get_orders(
     search: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Получить список заказов с учетом прав пользователя"""
     try:
         if current_user["role"] in ['admin', 'superadmin']:
             if search:
@@ -299,64 +258,40 @@ async def get_orders(
                     cursor.execute('SELECT COUNT(*) as total FROM orders')
                     total = cursor.fetchone()['total']
         else:
-            # Обычный пользователь — только свои заказы
             results = db.get_user_orders(current_user["user_id"], "user")
             total = len(results)
             if search:
                 search_lower = search.lower()
-                results = [o for o in results if 
-                          search_lower in (o.get('order_number') or '').lower() or
-                          search_lower in (o.get('client_name') or '').lower() or
-                          search_lower in (o.get('phone') or '').lower()]
+                results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
             results = results[offset:offset + limit]
-        
         return JSONResponse({
             "success": True,
             "data": results,
-            "pagination": {
-                "limit": limit,
-                "offset": offset,
-                "total": total,
-                "role": current_user["role"]
-            }
+            "pagination": {"limit": limit, "offset": offset, "total": total, "role": current_user["role"]}
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/orders/{order_id}")
 async def get_order(order_id: int, current_user: dict = Depends(get_current_user)):
-    """Получить заказ по ID с историей статусов"""
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM orders WHERE id = ?', (order_id,))
             order = cursor.fetchone()
-            
             if not order:
                 raise HTTPException(status_code=404, detail="Заказ не найден")
-            
-            # Проверка прав: если не админ, проверяем, что заказ принадлежит пользователю
             if current_user["role"] not in ['admin', 'superadmin']:
                 user_id = current_user["user_id"]
                 phone = order['phone'] or ''
                 client_name = order['client_name'] or ''
                 if user_id not in phone and user_id not in client_name:
                     raise HTTPException(status_code=403, detail="Доступ запрещен")
-            
-            cursor.execute('''
-                SELECT * FROM order_history 
-                WHERE order_id = ? 
-                ORDER BY changed_at DESC
-            ''', (order_id,))
+            cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
             history = [dict(row) for row in cursor.fetchall()]
-            
             result = dict(order)
             result['history'] = history
-            
-            return JSONResponse({
-                "success": True,
-                "data": result
-            })
+            return JSONResponse({"success": True, "data": result})
     except HTTPException:
         raise
     except Exception as e:
@@ -364,40 +299,25 @@ async def get_order(order_id: int, current_user: dict = Depends(get_current_user
 
 @app.get("/api/orders/by-number/{order_number}")
 async def get_order_by_number(order_number: str, current_user: dict = Depends(get_current_user)):
-    """Получить заказ по номеру"""
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
             order = cursor.fetchone()
-            
             if not order:
                 raise HTTPException(status_code=404, detail="Заказ не найден")
-            
-            # Проверка прав
             if current_user["role"] not in ['admin', 'superadmin']:
                 user_id = current_user["user_id"]
                 phone = order['phone'] or ''
                 client_name = order['client_name'] or ''
                 if user_id not in phone and user_id not in client_name:
                     raise HTTPException(status_code=403, detail="Доступ запрещен")
-            
             order_id = order['id']
-            
-            cursor.execute('''
-                SELECT * FROM order_history 
-                WHERE order_id = ? 
-                ORDER BY changed_at DESC
-            ''', (order_id,))
+            cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
             history = [dict(row) for row in cursor.fetchall()]
-            
             result = dict(order)
             result['history'] = history
-            
-            return JSONResponse({
-                "success": True,
-                "data": result
-            })
+            return JSONResponse({"success": True, "data": result})
     except HTTPException:
         raise
     except Exception as e:
@@ -406,12 +326,10 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
 # ---------- СТАТИСТИКА ----------
 @app.get("/api/statistics")
 async def get_statistics(current_user: dict = Depends(get_current_user)):
-    """Базовая статистика (доступна всем)"""
     try:
         if current_user["role"] in ['admin', 'superadmin']:
             stats = db.get_statistics()
         else:
-            # Для пользователя — статистика только по его заказам
             user_orders = db.get_user_orders(current_user["user_id"], "user")
             stats = {
                 'total': len(user_orders),
@@ -423,27 +341,18 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
                 s = o.get('status', 'Без статуса')
                 status_count[s] = status_count.get(s, 0) + 1
             stats['by_status'] = [{'status': k, 'count': v} for k, v in status_count.items()]
-        
-        return JSONResponse({
-            "success": True,
-            "data": stats
-        })
+        return JSONResponse({"success": True, "data": stats})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # ---------- АДМИНСКАЯ АНАЛИТИКА ----------
 @app.get("/api/admin/dashboard")
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
-    """Расширенная аналитика — только для администраторов"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен. Требуются права администратора.")
-    
     try:
         stats = db.get_detailed_stats()
-        return JSONResponse({
-            "success": True,
-            "data": stats
-        })
+        return JSONResponse({"success": True, "data": stats})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -454,30 +363,18 @@ async def search_orders(
     limit: int = Query(50, ge=1, le=100),
     current_user: dict = Depends(get_current_user)
 ):
-    """Поиск заказов по всем полям"""
     try:
         if current_user["role"] in ['admin', 'superadmin']:
             results = db.search_orders(q)
             total = len(results)
             results = results[:limit]
         else:
-            # Поиск только среди своих заказов
             user_orders = db.get_user_orders(current_user["user_id"], "user")
             search_lower = q.lower()
-            results = [o for o in user_orders if 
-                      search_lower in (o.get('order_number') or '').lower() or
-                      search_lower in (o.get('client_name') or '').lower() or
-                      search_lower in (o.get('phone') or '').lower() or
-                      search_lower in (o.get('device') or '').lower()]
+            results = [o for o in user_orders if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower() or search_lower in (o.get('device') or '').lower()]
             total = len(results)
             results = results[:limit]
-        
-        return JSONResponse({
-            "success": True,
-            "data": results,
-            "total": total,
-            "limit": limit
-        })
+        return JSONResponse({"success": True, "data": results, "total": total, "limit": limit})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
