@@ -16,7 +16,9 @@ from db_sync import db_sync
 class Database:
     """Класс для управления базой данных заказов"""
     
-    def __init__(self, db_path: str = 'orders.db'):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            db_path = os.getenv('DB_PATH', '/app/data/orders.db')
         self.db_path = db_path
         self.init_database()
         self.init_users_table()
