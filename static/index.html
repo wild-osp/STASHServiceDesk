@@ -31,6 +31,22 @@
             padding-bottom: 80px;
         }
 
+        /* ---------- ACCESS DENIED ---------- */
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .access-denied .icon { font-size: 64px; margin-bottom: 16px; }
+        .access-denied h2 { font-size: 24px; margin-bottom: 8px; color: var(--accent); }
+        .access-denied p { color: var(--text-secondary); max-width: 400px; }
+        .access-denied .sub { font-size: 13px; margin-top: 16px; opacity: 0.7; }
+
+        /* ---------- HEADER ---------- */
         .header {
             display: flex;
             justify-content: space-between;
@@ -73,6 +89,7 @@
             font-size: 14px;
         }
 
+        /* ---------- STATS ---------- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -100,6 +117,7 @@
             margin-top: 4px;
         }
 
+        /* ---------- SEARCH ---------- */
         .search-wrapper {
             position: relative;
             margin-bottom: 16px;
@@ -127,11 +145,8 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
         }
-        .search-wrapper input::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.7;
-        }
 
+        /* ---------- FILTERS ---------- */
         .filters {
             display: flex;
             gap: 8px;
@@ -151,16 +166,14 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .filter-btn:hover {
-            border-color: var(--accent);
-            color: var(--text-primary);
-        }
+        .filter-btn:hover { border-color: var(--accent); color: var(--text-primary); }
         .filter-btn.active {
             background: var(--accent);
             border-color: var(--accent);
             color: var(--bg-primary);
         }
 
+        /* ---------- ORDER LIST ---------- */
         .order-list {
             display: flex;
             flex-direction: column;
@@ -221,6 +234,7 @@
             font-weight: 500;
         }
 
+        /* ---------- EMPTY STATE ---------- */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -230,6 +244,7 @@
         .empty-state h3 { font-size: 18px; color: var(--text-primary); margin-bottom: 4px; }
         .empty-state p { font-size: 14px; opacity: 0.7; }
 
+        /* ---------- LOADER ---------- */
         .loader { text-align: center; padding: 40px 0; color: var(--text-secondary); }
         .spinner {
             width: 36px;
@@ -242,6 +257,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ---------- MODAL ---------- */
         .modal {
             display: none;
             position: fixed;
@@ -322,6 +338,7 @@
         }
         .history-item .h-status { font-weight: 500; color: var(--text-primary); }
 
+        /* ---------- CONTACT BUTTONS ---------- */
         .contact-btn {
             flex: 1;
             min-width: 56px;
@@ -348,7 +365,7 @@
         .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
         .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.4; min-width: 44px; }
 
-        /* ---------- ДАШБОРД ---------- */
+        /* ---------- DASHBOARD ---------- */
         #dashboardPanel {
             background: var(--bg-secondary);
             border-radius: var(--radius);
@@ -381,9 +398,7 @@
             font-weight: 700;
             color: var(--accent);
         }
-        .problem-list {
-            margin-bottom: 8px;
-        }
+        .problem-list { margin-bottom: 8px; }
         .problem-item {
             display: flex;
             justify-content: space-between;
@@ -391,9 +406,7 @@
             padding: 4px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .problem-item .count {
-            color: var(--accent);
-        }
+        .problem-item .count { color: var(--accent); }
         .chart-bars {
             display: flex;
             gap: 4px;
@@ -418,6 +431,7 @@
             margin-top: 2px;
         }
 
+        /* ---------- RESPONSIVE ---------- */
         @media (max-width: 480px) {
             body { padding: 12px; }
             .stats-grid { gap: 6px; }
@@ -439,97 +453,168 @@
 </head>
 <body>
 
-    <!-- ==================== HEADER ==================== -->
-    <div class="header">
-        <div class="header-left">
-            <div class="header-icon">ST<span>ASH</span></div>
-            <div>
-                <h1>ServiceDesk <small>сервисный центр</small></h1>
+    <!-- ==================== APP CONTENT ==================== -->
+    <div id="app" style="display:none;">
+
+        <!-- ==================== HEADER ==================== -->
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">ST<span>ASH</span></div>
+                <div>
+                    <h1 id="userGreeting">ServiceDesk <small>сервисный центр</small></h1>
+                </div>
+            </div>
+            <span class="header-badge" id="totalBadge">0</span>
+        </div>
+
+        <!-- ==================== STATS ==================== -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="statTotal">0</div>
+                <div class="stat-label">Всего заказов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statToday">0</div>
+                <div class="stat-label">Сегодня</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statStatuses">0</div>
+                <div class="stat-label">Статусов</div>
             </div>
         </div>
-        <span class="header-badge" id="totalBadge">0</span>
-    </div>
 
-    <!-- ==================== STATS ==================== -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number" id="statTotal">0</div>
-            <div class="stat-label">Всего заказов</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="statToday">0</div>
-            <div class="stat-label">Сегодня</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="statStatuses">0</div>
-            <div class="stat-label">Статусов</div>
-        </div>
-    </div>
-
-    <!-- ==================== ДАШБОРД (только для админов) ==================== -->
-    <div id="dashboardPanel">
-        <h3>📊 Аналитика</h3>
-        <div id="dashboardContent">
-            <div class="loader"><div class="spinner"></div>Загрузка аналитики...</div>
-        </div>
-    </div>
-
-    <!-- ==================== SEARCH ==================== -->
-    <div class="search-wrapper">
-        <span class="icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Поиск по номеру, телефону, ФИО, устройству..." />
-    </div>
-
-    <!-- ==================== FILTERS ==================== -->
-    <div class="filters" id="filters">
-        <button class="filter-btn active" data-filter="all">Все</button>
-        <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
-        <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
-        <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
-        <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
-        <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
-        <button class="filter-btn" data-filter="Готово">Готово</button>
-        <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
-        <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
-    </div>
-
-    <!-- ==================== ORDER LIST ==================== -->
-    <div class="order-list" id="orderList">
-        <div class="loader"><div class="spinner"></div>Загрузка заказов...</div>
-    </div>
-
-    <!-- ==================== MODAL ==================== -->
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Заказ</h2>
-                <button class="modal-close" onclick="closeModal()">✕</button>
+        <!-- ==================== DASHBOARD ==================== -->
+        <div id="dashboardPanel">
+            <h3>📊 Аналитика</h3>
+            <div id="dashboardContent">
+                <div class="loader"><div class="spinner"></div>Загрузка аналитики...</div>
             </div>
-            <div id="modalBody"></div>
         </div>
+
+        <!-- ==================== SEARCH ==================== -->
+        <div class="search-wrapper">
+            <span class="icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Поиск по номеру, телефону, ФИО, устройству..." />
+        </div>
+
+        <!-- ==================== FILTERS ==================== -->
+        <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">Все</button>
+            <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
+            <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
+            <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
+            <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
+            <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
+            <button class="filter-btn" data-filter="Готово">Готово</button>
+            <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
+            <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
+        </div>
+
+        <!-- ==================== ORDER LIST ==================== -->
+        <div class="order-list" id="orderList">
+            <div class="loader"><div class="spinner"></div>Загрузка заказов...</div>
+        </div>
+
+        <!-- ==================== MODAL ==================== -->
+        <div class="modal" id="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Заказ</h2>
+                    <button class="modal-close" onclick="closeModal()">✕</button>
+                </div>
+                <div id="modalBody"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================== ACCESS DENIED ==================== -->
+    <div id="accessDenied" class="access-denied" style="display:none;">
+        <div class="icon">🔒</div>
+        <h2>Доступ запрещен</h2>
+        <p>У вас нет прав для просмотра этого приложения.</p>
+        <p class="sub">Обратитесь к администратору для получения доступа.</p>
+    </div>
+
+    <!-- ==================== LOADING ==================== -->
+    <div id="loadingScreen" class="access-denied">
+        <div class="icon">⏳</div>
+        <h2>Загрузка...</h2>
+        <p>Проверка прав доступа</p>
     </div>
 
     <!-- ==================== SCRIPTS ==================== -->
     <script>
         // ============================================================
-        // 1. НАСТРОЙКИ РОЛЕЙ
+        // 0. АВТОРИЗАЦИЯ
         // ============================================================
-        // Для теста: можно задать роль через переменную.
-        // В реальном проекте роль получаем из Telegram WebApp User.
-        let USER_ROLE = 'admin'; // 'admin' или 'user'
-        let USER_ID = 'user123';
+        let currentUser = null;
+        let USER_ROLE = 'user';
 
-        // Попытка получить данные пользователя из Telegram WebApp
-        const tg = window.Telegram?.WebApp;
-        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            USER_ID = String(tg.initDataUnsafe.user.id);
-            // Роль можно определить по списку разрешенных ID
-            // const ADMIN_IDS = ['123456', '789012'];
-            // USER_ROLE = ADMIN_IDS.includes(USER_ID) ? 'admin' : 'user';
+        async function checkAuth() {
+            const tg = window.Telegram?.WebApp;
+            if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'flex';
+                document.getElementById('accessDenied').querySelector('p').textContent = 
+                    'Пожалуйста, откройте это приложение через Telegram.';
+                return false;
+            }
+
+            const user = tg.initDataUnsafe.user;
+            const headers = {
+                'X-User-Id': String(user.id),
+                'X-Username': user.username || '',
+                'X-Full-Name': user.first_name + (user.last_name ? ' ' + user.last_name : '')
+            };
+
+            try {
+                const response = await fetch('/api/auth/check', { headers });
+                
+                if (response.status === 403) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('accessDenied').style.display = 'flex';
+                    return false;
+                }
+                
+                if (response.status === 401 || !response.ok) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('accessDenied').style.display = 'flex';
+                    document.getElementById('accessDenied').querySelector('p').textContent = 
+                        'Ошибка авторизации. Попробуйте перезапустить приложение.';
+                    return false;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    currentUser = data.user;
+                    USER_ROLE = currentUser.role;
+                    
+                    // Показываем приложение
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    
+                    // Приветствие
+                    const roleLabel = currentUser.role === 'superadmin' ? '🌟 Суперадмин' :
+                                      currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник';
+                    document.getElementById('userGreeting').innerHTML = 
+                        `Привет, ${currentUser.full_name}! <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">${roleLabel}</small>`;
+                    
+                    return true;
+                }
+            } catch (e) {
+                console.error('Ошибка авторизации:', e);
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'flex';
+                document.getElementById('accessDenied').querySelector('p').textContent = 
+                    'Не удалось проверить права доступа. Проверьте соединение.';
+                return false;
+            }
+            return false;
         }
 
         // ============================================================
-        // 2. DOM
+        // 1. DOM REFS
         // ============================================================
         const $ = id => document.getElementById(id);
         const orderList = $('orderList');
@@ -542,15 +627,17 @@
         const dashboardContent = $('dashboardContent');
 
         // ============================================================
-        // 3. API HELPER
+        // 2. API HELPER
         // ============================================================
         const API_BASE = window.location.origin + '/api';
 
         async function apiFetch(endpoint, options = {}) {
+            const tg = window.Telegram?.WebApp;
+            const user = tg?.initDataUnsafe?.user;
+            
             const headers = {
                 'Content-Type': 'application/json',
-                'X-User-Role': USER_ROLE,
-                'X-User-Id': USER_ID,
+                'X-User-Id': user ? String(user.id) : 'anonymous',
                 ...options.headers
             };
             const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
@@ -558,7 +645,7 @@
         }
 
         // ============================================================
-        // 4. СТАТУСЫ
+        // 3. СТАТУСЫ
         // ============================================================
         const statusMap = {
             'Принят в ремонт': 'new',
@@ -583,7 +670,7 @@
         }
 
         // ============================================================
-        // 5. КОНТАКТЫ
+        // 4. КОНТАКТЫ
         // ============================================================
         function openViber(phone) {
             const clean = phone.replace(/[^0-9]/g, '');
@@ -616,10 +703,10 @@
         }
 
         // ============================================================
-        // 6. ЗАГРУЗКА ДАШБОРДА
+        // 5. ДАШБОРД
         // ============================================================
         async function loadDashboard() {
-            if (USER_ROLE !== 'admin') {
+            if (USER_ROLE !== 'admin' && USER_ROLE !== 'superadmin') {
                 dashboardPanel.style.display = 'none';
                 return;
             }
@@ -672,7 +759,7 @@
         }
 
         // ============================================================
-        // 7. ЗАГРУЗКА ЗАКАЗОВ
+        // 6. ЗАГРУЗКА ЗАКАЗОВ
         // ============================================================
         let allOrders = [];
         let currentFilter = 'all';
@@ -695,7 +782,7 @@
         }
 
         // ============================================================
-        // 8. UPDATE STATS
+        // 7. UPDATE STATS
         // ============================================================
         function updateStats(total) {
             $('totalBadge').textContent = total;
@@ -710,7 +797,7 @@
         }
 
         // ============================================================
-        // 9. RENDER ORDERS
+        // 8. RENDER ORDERS
         // ============================================================
         function renderOrders() {
             let filtered = allOrders;
@@ -757,7 +844,7 @@
         }
 
         // ============================================================
-        // 10. OPEN ORDER DETAIL
+        // 9. OPEN ORDER DETAIL
         // ============================================================
         async function openOrder(orderId) {
             try {
@@ -771,7 +858,7 @@
         }
 
         // ============================================================
-        // 11. SHOW MODAL
+        // 10. SHOW MODAL
         // ============================================================
         function showModal(order) {
             modalTitle.textContent = `#${order.order_number}`;
@@ -855,7 +942,7 @@
         }
 
         // ============================================================
-        // 12. CLOSE MODAL
+        // 11. CLOSE MODAL
         // ============================================================
         function closeModal() {
             modal.classList.remove('active');
@@ -866,7 +953,7 @@
         });
 
         // ============================================================
-        // 13. ERROR
+        // 12. ERROR
         // ============================================================
         function showError(msg) {
             orderList.innerHTML = `
@@ -879,7 +966,7 @@
         }
 
         // ============================================================
-        // 14. EVENT LISTENERS
+        // 13. EVENT LISTENERS
         // ============================================================
         searchInput.addEventListener('input', function() {
             searchQuery = this.value;
@@ -896,12 +983,20 @@
         });
 
         // ============================================================
-        // 15. INIT
+        // 14. ИНИЦИАЛИЗАЦИЯ
         // ============================================================
-        loadDashboard();
-        loadOrders();
-        setInterval(loadOrders, 30000);
-        setInterval(loadDashboard, 60000);
+        async function init() {
+            const authorized = await checkAuth();
+            if (authorized) {
+                await loadDashboard();
+                await loadOrders();
+                setInterval(loadOrders, 30000);
+                setInterval(loadDashboard, 60000);
+            }
+        }
+
+        // Запускаем
+        init();
     </script>
 </body>
 </html>
