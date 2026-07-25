@@ -139,9 +139,12 @@ async def check_user(
         }
     })
 
-# ---------- УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ----------
+# ============================================================
+# УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (только для админов)
+# ============================================================
 @app.get("/api/users")
 async def get_users(current_user: dict = Depends(get_current_user)):
+    """Получить список всех пользователей (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     users = db.get_all_users()
@@ -155,15 +158,20 @@ async def add_user(
     role: str = "user",
     current_user: dict = Depends(get_current_user)
 ):
+    """Добавить нового пользователя (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
     if current_user["role"] == 'admin' and role != 'user':
         raise HTTPException(status_code=403, detail="Админ может назначать только роль 'user'")
+    
     if not telegram_id:
         raise HTTPException(status_code=400, detail="telegram_id обязателен")
+    
     existing = db.get_user(telegram_id)
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
+    
     success = db.add_user(telegram_id, username, full_name, role)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
@@ -176,12 +184,16 @@ async def update_user_role(
     new_role: str,
     current_user: dict = Depends(get_current_user)
 ):
+    """Изменить роль пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может менять роли")
+    
     if not new_role in ['superadmin', 'admin', 'user']:
         raise HTTPException(status_code=400, detail="Недопустимая роль")
+    
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя изменить свою роль")
+    
     success = db.update_user_role(telegram_id, new_role)
     if success:
         return JSONResponse({"success": True, "message": "Роль обновлена"})
@@ -193,17 +205,48 @@ async def delete_user(
     telegram_id: str,
     current_user: dict = Depends(get_current_user)
 ):
+    """Удалить пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может удалять пользователей")
+    
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
+    
     success = db.delete_user(telegram_id)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь удален"})
     else:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С ----------
+# ============================================================
+# УДАЛЕНИЕ ЗАКАЗА (только для суперадмина)
+# ============================================================
+@app.delete("/api/orders/by-number/{order_number}")
+async def delete_order_by_number(
+    order_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Удаляет заказ по номеру (только суперадмин)"""
+    if current_user["role"] != 'superadmin':
+        raise HTTPException(status_code=403, detail="Только суперадмин может удалять заказы")
+    
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        # Сначала удаляем историю статусов (из-за внешнего ключа)
+        cursor.execute('''
+            DELETE FROM order_history 
+            WHERE order_id IN (SELECT id FROM orders WHERE order_number = ?)
+        ''', (order_number,))
+        cursor.execute('DELETE FROM orders WHERE order_number = ?', (order_number,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Заказ не найден")
+        conn.commit()
+    
+    return JSONResponse({"success": True, "message": f"Заказ #{order_number} удален"})
+
+# ============================================================
+# ПРИЕМ ЗАКАЗОВ ИЗ 1С
+# ============================================================
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
     order_data: OrderFrom1C,
@@ -240,7 +283,9 @@ async def receive_order_from_1c(
         print(f"❌ Ошибка при приеме заказа из 1С: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- ЗАКАЗЫ ----------
+# ============================================================
+# ЗАКАЗЫ
+# ============================================================
 @app.get("/api/orders")
 async def get_orders(
     limit: int = Query(50, ge=1, le=200),
@@ -326,7 +371,9 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- СТАТИСТИКА ----------
+# ============================================================
+# СТАТИСТИКА
+# ============================================================
 @app.get("/api/statistics")
 async def get_statistics(current_user: dict = Depends(get_current_user)):
     try:
@@ -348,7 +395,9 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- АДМИНСКАЯ АНАЛИТИКА ----------
+# ============================================================
+# АДМИНСКАЯ АНАЛИТИКА
+# ============================================================
 @app.get("/api/admin/dashboard")
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ['admin', 'superadmin']:
@@ -359,7 +408,9 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- ПОИСК ----------
+# ============================================================
+# ПОИСК
+# ============================================================
 @app.get("/api/search")
 async def search_orders(
     q: str = Query(..., min_length=1),
@@ -381,7 +432,9 @@ async def search_orders(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- HEALTH ----------
+# ============================================================
+# HEALTH
+# ============================================================
 @app.get("/health")
 async def health_check():
     try:
