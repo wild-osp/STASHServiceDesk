@@ -34,6 +34,8 @@ if not BOT_TOKEN:
     sys.exit(1)
 
 # Инициализация компонентов
+import os
+os.environ['DB_PATH'] = os.getenv('DB_PATH', '/app/data/orders.db')
 db = get_db()
 parser = OrderParser()
 
