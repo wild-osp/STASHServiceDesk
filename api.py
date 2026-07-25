@@ -9,12 +9,15 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 from typing import Optional
+from pydantic import BaseModel
+import json
 
 DATA_DIR = os.getenv('DATA_DIR', '/app/data')
 os.makedirs(DATA_DIR, exist_ok=True)
 os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
 from database import get_db
+from models import Order
 
 # ============================================================
 # ЗАПУСК БОТА ИЗ API
@@ -49,6 +52,27 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 db = get_db()
 
 # ============================================================
+# API-КЛЮЧ ДЛЯ ЗАЩИТЫ ЭНДПОИНТА
+# ============================================================
+API_KEY = os.getenv('API_KEY', 'STASH2024SecretKey!')
+
+# ============================================================
+# МОДЕЛЬ ДЛЯ ПРИЕМА ЗАКАЗА ИЗ 1С
+# ============================================================
+class OrderFrom1C(BaseModel):
+    order_number: str
+    date: Optional[str] = None
+    status: str
+    receiver: Optional[str] = None
+    phone: Optional[str] = None
+    client_name: Optional[str] = None
+    device: Optional[str] = None
+    problem: Optional[str] = None
+    serial_number: Optional[str] = None
+    cost: Optional[float] = None
+    notes: Optional[str] = None
+
+# ============================================================
 # АВТОРИЗАЦИЯ (упрощенная модель)
 # ============================================================
 async def get_current_user(
@@ -71,6 +95,59 @@ async def root():
 @app.get("/app")
 async def serve_app():
     return FileResponse("static/index.html")
+
+# ---------- ПРИЕМ ЗАКАЗОВ ИЗ 1С ----------
+@app.post("/api/orders/from-1c")
+async def receive_order_from_1c(
+    order_data: OrderFrom1C,
+    x_api_key: str = Header(...)
+):
+    """
+    Принимает заказ из 1С через HTTP-запрос.
+    Адрес: POST /api/orders/from-1c
+    Заголовок: X-API-Key: ваш-ключ
+    Тело: JSON с данными заказа
+    """
+    # Проверка API-ключа
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Неверный API-ключ")
+    
+    try:
+        # Проверяем, существует ли заказ
+        existing = db.get_order(order_data.order_number)
+        
+        # Создаем объект Order
+        order = Order(
+            order_number=order_data.order_number,
+            date=order_data.date,
+            status=order_data.status,
+            receiver=order_data.receiver,
+            phone=order_data.phone,
+            client_name=order_data.client_name,
+            device=order_data.device,
+            problem=order_data.problem,
+            telegram_chat_id="from_1c_api",
+            telegram_message_id=0,
+            telegram_message_date=datetime.now().isoformat(),
+            raw_message_text=f"Отправлено из 1С через API: {order_data.order_number}"
+        )
+        
+        # Сохраняем/обновляем в БД
+        order_id = db.save_order(order)
+        
+        action = "обновлен" if existing else "создан"
+        print(f"✅ Заказ #{order_data.order_number} {action} из 1С (API)")
+        
+        return JSONResponse({
+            "success": True,
+            "message": f"Заказ #{order_data.order_number} {action}",
+            "order_id": order_id,
+            "action": action
+        })
+        
+    except Exception as e:
+        print(f"❌ Ошибка при приеме заказа из 1С: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ---------- ЗАКАЗЫ (с проверкой роли) ----------
 @app.get("/api/orders")
