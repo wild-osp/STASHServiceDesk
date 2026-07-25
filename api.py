@@ -20,17 +20,20 @@ from database import get_db
 from models import Order
 
 # ============================================================
-# ЗАПУСК БОТА ОТКЛЮЧЕН (запускаем вручную)
+# АВТОЗАПУСК БОТА ИЗ API
 # ============================================================
-# def run_bot():
-#     time.sleep(3)
-#     try:
-#         subprocess.Popen(["python", "orders_bot.py"])
-#         print("🚀 Бот запущен из API")
-#     except Exception as e:
-#         print(f"❌ Ошибка запуска бота: {e}")
-# bot_thread = threading.Thread(target=run_bot, daemon=True)
-# bot_thread.start()
+def run_bot():
+    """Запускает бота в отдельном процессе при старте API"""
+    time.sleep(5)
+    try:
+        subprocess.Popen(["python", "orders_bot.py"])
+        print("🚀 Бот автоматически запущен из API")
+    except Exception as e:
+        print(f"❌ Ошибка запуска бота: {e}")
+
+# Запускаем бота в фоновом потоке
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
 
 # ============================================================
 # FASTAPI APP
