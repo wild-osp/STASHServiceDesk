@@ -208,7 +208,22 @@
         }
 
         // ============================================================
-        // 3. ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+        // 3. API HELPER (исправленный)
+        // ============================================================
+        const API_BASE = window.location.origin + '/api';
+
+        async function apiFetch(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId || 'anonymous',
+                ...options.headers
+            };
+            const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+            return response.json();
+        }
+
+        // ============================================================
+        // 4. ОСТАЛЬНЫЕ ФУНКЦИИ
         // ============================================================
         const $ = id => document.getElementById(id);
         const orderList = $('orderList');
@@ -254,14 +269,17 @@
 
         async function loadOrders() {
             try {
-                const response = await fetch('/api/orders?limit=200');
-                const result = await response.json();
-                if (result.success) {
-                    allOrders = result.data;
-                    updateStats(result.pagination.total);
+                const response = await apiFetch('/orders?limit=200');
+                if (response.success) {
+                    allOrders = response.data;
+                    updateStats(response.pagination.total);
                     renderOrders();
+                } else {
+                    showError('Не удалось загрузить заказы: ' + (response.detail || ''));
                 }
-            } catch (e) { showError('Ошибка загрузки заказов'); }
+            } catch (e) {
+                showError('Ошибка загрузки заказов');
+            }
         }
 
         function updateStats(total) {
@@ -306,9 +324,8 @@
 
         async function openOrder(orderId) {
             try {
-                const response = await fetch('/api/orders/' + orderId);
-                const result = await response.json();
-                if (result.success) showModal(result.data);
+                const response = await apiFetch('/orders/' + orderId);
+                if (response.success) showModal(response.data);
             } catch (e) { console.error(e); }
         }
 
@@ -377,10 +394,9 @@
                 return;
             }
             try {
-                const response = await fetch('/api/admin/dashboard');
-                const data = await response.json();
-                if (data.success) {
-                    const stats = data.data;
+                const response = await apiFetch('/admin/dashboard');
+                if (response.success) {
+                    const stats = response.data;
                     const maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
                     dashboardContent.innerHTML = `
                         <div class="dashboard-grid">
