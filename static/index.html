@@ -45,6 +45,23 @@
         .access-denied h2 { font-size: 24px; margin-bottom: 8px; color: var(--accent); }
         .access-denied p { color: var(--text-secondary); max-width: 400px; }
         .access-denied .sub { font-size: 13px; margin-top: 16px; opacity: 0.7; }
+        
+        /* ---------- ОТЛАДОЧНЫЙ БЛОК ---------- */
+        #debugInfo {
+            background: #1a1a2e;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        #debugInfo .ok { color: #4ade80; }
+        #debugInfo .error { color: #f87171; }
+        #debugInfo .info { color: #60a5fa; }
 
         /* ---------- HEADER ---------- */
         .header {
@@ -456,6 +473,9 @@
     <!-- ==================== APP CONTENT ==================== -->
     <div id="app" style="display:none;">
 
+        <!-- ==================== ОТЛАДОЧНАЯ ПАНЕЛЬ ==================== -->
+        <div id="debugInfo"></div>
+
         <!-- ==================== HEADER ==================== -->
         <div class="header">
             <div class="header-left">
@@ -532,7 +552,7 @@
     <div id="accessDenied" class="access-denied" style="display:none;">
         <div class="icon">🔒</div>
         <h2>Доступ запрещен</h2>
-        <p>У вас нет прав для просмотра этого приложения.</p>
+        <p id="accessDeniedMessage">У вас нет прав для просмотра этого приложения.</p>
         <p class="sub">Обратитесь к администратору для получения доступа.</p>
     </div>
 
@@ -546,22 +566,52 @@
     <!-- ==================== SCRIPTS ==================== -->
     <script>
         // ============================================================
-        // 0. АВТОРИЗАЦИЯ
+        // 0. ОТЛАДКА
+        // ============================================================
+        function debugLog(message, type = 'info') {
+            const el = document.getElementById('debugInfo');
+            if (!el) return;
+            const colors = {
+                ok: '#4ade80',
+                error: '#f87171',
+                info: '#60a5fa'
+            };
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML += `<div style="color:${colors[type] || '#fff'}">[${time}] ${message}</div>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        // ============================================================
+        // 1. АВТОРИЗАЦИЯ
         // ============================================================
         let currentUser = null;
         let USER_ROLE = 'user';
 
         async function checkAuth() {
+            debugLog('🔍 Начинаем проверку авторизации...', 'info');
+
             const tg = window.Telegram?.WebApp;
-            if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+            if (!tg) {
+                debugLog('❌ Telegram WebApp не найден!', 'error');
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('accessDenied').style.display = 'flex';
-                document.getElementById('accessDenied').querySelector('p').textContent = 
+                document.getElementById('accessDeniedMessage').textContent = 
                     'Пожалуйста, откройте это приложение через Telegram.';
                 return false;
             }
 
+            if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+                debugLog('❌ Данные пользователя не найдены!', 'error');
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'flex';
+                document.getElementById('accessDeniedMessage').textContent = 
+                    'Не удалось получить данные пользователя из Telegram.';
+                return false;
+            }
+
             const user = tg.initDataUnsafe.user;
+            debugLog(`👤 Пользователь: ${user.first_name} ${user.last_name || ''} (ID: ${user.id})`, 'info');
+
             const headers = {
                 'X-User-Id': String(user.id),
                 'X-Username': user.username || '',
@@ -569,52 +619,67 @@
             };
 
             try {
+                debugLog('📡 Отправка запроса на /api/auth/check...', 'info');
                 const response = await fetch('/api/auth/check', { headers });
-                
+                debugLog(`📡 Ответ: ${response.status} ${response.statusText}`, 'info');
+
                 if (response.status === 403) {
+                    debugLog('❌ Доступ запрещен (403)', 'error');
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('accessDenied').style.display = 'flex';
+                    document.getElementById('accessDeniedMessage').textContent = 
+                        'У вас нет прав для просмотра этого приложения.';
                     return false;
                 }
-                
-                if (response.status === 401 || !response.ok) {
+
+                if (response.status === 401) {
+                    debugLog('❌ Не авторизован (401)', 'error');
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('accessDenied').style.display = 'flex';
-                    document.getElementById('accessDenied').querySelector('p').textContent = 
+                    document.getElementById('accessDeniedMessage').textContent = 
                         'Ошибка авторизации. Попробуйте перезапустить приложение.';
                     return false;
                 }
 
+                if (!response.ok) {
+                    debugLog(`❌ Ошибка: ${response.status} ${response.statusText}`, 'error');
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
                 const data = await response.json();
+                debugLog(`📦 Ответ API: ${JSON.stringify(data)}`, 'info');
+
                 if (data.success) {
                     currentUser = data.user;
                     USER_ROLE = currentUser.role;
-                    
-                    // Показываем приложение
+                    debugLog(`✅ Авторизация успешна! Роль: ${USER_ROLE}`, 'ok');
+
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
-                    
-                    // Приветствие
+
                     const roleLabel = currentUser.role === 'superadmin' ? '🌟 Суперадмин' :
                                       currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник';
                     document.getElementById('userGreeting').innerHTML = 
                         `Привет, ${currentUser.full_name}! <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">${roleLabel}</small>`;
-                    
+
                     return true;
+                } else {
+                    debugLog('❌ API вернул success: false', 'error');
+                    throw new Error('API вернул ошибку');
                 }
+
             } catch (e) {
-                console.error('Ошибка авторизации:', e);
+                debugLog(`❌ Исключение: ${e.message}`, 'error');
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('accessDenied').style.display = 'flex';
-                document.getElementById('accessDenied').querySelector('p').textContent = 
+                document.getElementById('accessDeniedMessage').textContent = 
                     'Не удалось проверить права доступа. Проверьте соединение.';
                 return false;
             }
-            return false;
         }
 
         // ============================================================
-        // 1. DOM REFS
+        // 2. DOM REFS
         // ============================================================
         const $ = id => document.getElementById(id);
         const orderList = $('orderList');
@@ -627,7 +692,7 @@
         const dashboardContent = $('dashboardContent');
 
         // ============================================================
-        // 2. API HELPER
+        // 3. API HELPER
         // ============================================================
         const API_BASE = window.location.origin + '/api';
 
@@ -645,7 +710,7 @@
         }
 
         // ============================================================
-        // 3. СТАТУСЫ
+        // 4. СТАТУСЫ
         // ============================================================
         const statusMap = {
             'Принят в ремонт': 'new',
@@ -670,7 +735,7 @@
         }
 
         // ============================================================
-        // 4. КОНТАКТЫ
+        // 5. КОНТАКТЫ
         // ============================================================
         function openViber(phone) {
             const clean = phone.replace(/[^0-9]/g, '');
@@ -703,7 +768,7 @@
         }
 
         // ============================================================
-        // 5. ДАШБОРД
+        // 6. ДАШБОРД
         // ============================================================
         async function loadDashboard() {
             if (USER_ROLE !== 'admin' && USER_ROLE !== 'superadmin') {
@@ -759,7 +824,7 @@
         }
 
         // ============================================================
-        // 6. ЗАГРУЗКА ЗАКАЗОВ
+        // 7. ЗАГРУЗКА ЗАКАЗОВ
         // ============================================================
         let allOrders = [];
         let currentFilter = 'all';
@@ -782,7 +847,7 @@
         }
 
         // ============================================================
-        // 7. UPDATE STATS
+        // 8. UPDATE STATS
         // ============================================================
         function updateStats(total) {
             $('totalBadge').textContent = total;
@@ -797,7 +862,7 @@
         }
 
         // ============================================================
-        // 8. RENDER ORDERS
+        // 9. RENDER ORDERS
         // ============================================================
         function renderOrders() {
             let filtered = allOrders;
@@ -844,7 +909,7 @@
         }
 
         // ============================================================
-        // 9. OPEN ORDER DETAIL
+        // 10. OPEN ORDER DETAIL
         // ============================================================
         async function openOrder(orderId) {
             try {
@@ -858,7 +923,7 @@
         }
 
         // ============================================================
-        // 10. SHOW MODAL
+        // 11. SHOW MODAL
         // ============================================================
         function showModal(order) {
             modalTitle.textContent = `#${order.order_number}`;
@@ -942,7 +1007,7 @@
         }
 
         // ============================================================
-        // 11. CLOSE MODAL
+        // 12. CLOSE MODAL
         // ============================================================
         function closeModal() {
             modal.classList.remove('active');
@@ -953,7 +1018,7 @@
         });
 
         // ============================================================
-        // 12. ERROR
+        // 13. ERROR
         // ============================================================
         function showError(msg) {
             orderList.innerHTML = `
@@ -966,7 +1031,7 @@
         }
 
         // ============================================================
-        // 13. EVENT LISTENERS
+        // 14. EVENT LISTENERS
         // ============================================================
         searchInput.addEventListener('input', function() {
             searchQuery = this.value;
@@ -983,15 +1048,19 @@
         });
 
         // ============================================================
-        // 14. ИНИЦИАЛИЗАЦИЯ
+        // 15. ИНИЦИАЛИЗАЦИЯ
         // ============================================================
         async function init() {
+            debugLog('🚀 Инициализация приложения...', 'info');
             const authorized = await checkAuth();
             if (authorized) {
+                debugLog('✅ Авторизация пройдена, загружаем данные...', 'ok');
                 await loadDashboard();
                 await loadOrders();
                 setInterval(loadOrders, 30000);
                 setInterval(loadDashboard, 60000);
+            } else {
+                debugLog('❌ Авторизация не пройдена.', 'error');
             }
         }
 
