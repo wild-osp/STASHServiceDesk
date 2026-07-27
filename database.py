@@ -81,10 +81,10 @@ class Database:
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
     # ============================================================
-    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ
+    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (добавлено поле master)
     # ============================================================
     def init_users_table(self):
-        """Создает таблицу пользователей"""
+        """Создает таблицу пользователей с полем master"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -94,6 +94,7 @@ class Database:
                     username TEXT,
                     full_name TEXT,
                     role TEXT DEFAULT 'user',
+                    master TEXT,
                     created_at TEXT,
                     updated_at TEXT
                 )
@@ -116,24 +117,24 @@ class Database:
             cursor.execute('SELECT * FROM users ORDER BY role DESC, full_name')
             return [dict(row) for row in cursor.fetchall()]
 
-    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user') -> bool:
-        """Добавляет нового пользователя"""
+    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user', master: str = '') -> bool:
+        """Добавляет нового пользователя (с поддержкой мастера)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute('''
-                    INSERT INTO users (telegram_id, username, full_name, role, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (telegram_id, username, full_name, role, datetime.now().isoformat(), datetime.now().isoformat()))
+                    INSERT INTO users (telegram_id, username, full_name, role, master, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (telegram_id, username, full_name, role, master, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.commit()
-                print(f"✅ Пользователь {full_name} добавлен с ролью {role}")
+                print(f"✅ Пользователь {full_name} добавлен с ролью {role} и мастером {master}")
                 return True
             except sqlite3.IntegrityError:
                 print(f"⚠️ Пользователь {telegram_id} уже существует")
                 return False
 
     def update_user(self, telegram_id: str, updates: Dict[str, Any]) -> bool:
-        """Обновляет данные пользователя"""
+        """Обновляет данные пользователя (включая master)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
