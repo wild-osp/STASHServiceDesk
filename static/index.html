@@ -129,12 +129,13 @@
 
         .order-card .info {
             margin-top: 8px;
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-secondary);
             display: flex;
             flex-wrap: wrap;
             gap: 6px 16px;
         }
+        .order-card .phone { font-weight: 600; font-size: 16px; color: var(--text-primary); }
         .order-card .device {
             margin-top: 6px;
             font-size: 15px;
@@ -259,6 +260,20 @@
             margin: 0 auto 10px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* ===== СОРТИРОВКА ===== */
+        .sort-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--bg-secondary);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
 
         /* ===== НАВИГАЦИЯ ===== */
         .nav {
@@ -301,6 +316,7 @@
             .order-number { font-size: 15px; }
             .nav-btn { font-size: 10px; padding: 6px 10px; }
             .nav-btn .icon { font-size: 18px; }
+            .order-card .phone { font-size: 14px; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -343,17 +359,22 @@
             <div class="stat-card"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
             <div class="stat-card"><div class="stat-number" id="statStatuses">0</div><div class="stat-label">Статусов</div></div>
         </div>
-        <div class="search-wrapper"><input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." /></div>
-        <div class="filters" id="filters">
-            <button class="filter-btn active" data-filter="all">Все</button>
-            <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
-            <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
-            <button class="filter-btn" data-filter="Согласование">Соглас.</button>
-            <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
-            <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
-            <button class="filter-btn" data-filter="Готово">Готово</button>
-            <button class="filter-btn" data-filter="Выдано (не оплачено)">Не опл.</button>
-            <button class="filter-btn" data-filter="Выдано (оплачено)">Опл.</button>
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+            <div class="filters" id="filters" style="margin-bottom:0; flex:1;">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
+                <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
+                <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
+                <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
+                <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
+                <button class="filter-btn" data-filter="Готово">Готово</button>
+                <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
+                <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
+            </div>
+            <button class="sort-btn" id="sortBtn" onclick="toggleSort()">📅 По дате</button>
         </div>
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
@@ -399,7 +420,7 @@
                 <div class="header-icon">👥</div>
                 <div><h1>Пользователи</h1></div>
             </div>
-            <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);">➕ Добавить</button>
+            <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);" id="addUserBtn">➕ Добавить</button>
         </div>
         <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
         <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
@@ -440,6 +461,7 @@
         let USER_ROLE = 'user';
         let allOrders = [], currentFilter = 'all', searchQuery = '';
         let allUsers = [];
+        let sortAsc = false; // false = новые сверху
 
         // ============================================================
         // 2. ПРОВЕРКА ДОСТУПА
@@ -465,6 +487,13 @@
                     document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
                     document.getElementById('profileName').textContent = currentUser.full_name;
                     document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
+                    
+                    // Скрыть кнопку добавления пользователя для админа
+                    if (USER_ROLE !== 'superadmin') {
+                        const addBtn = document.getElementById('addUserBtn');
+                        if (addBtn) addBtn.style.display = 'none';
+                    }
+                    
                     loadOrders();
                     loadDashboard();
                     loadUsers();
@@ -533,7 +562,16 @@
         function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
 
         // ============================================================
-        // 7. ЗАКАЗЫ
+        // 7. СОРТИРОВКА
+        // ============================================================
+        function toggleSort() {
+            sortAsc = !sortAsc;
+            document.getElementById('sortBtn').textContent = sortAsc ? '📅 По старым' : '📅 По дате';
+            renderOrders();
+        }
+
+        // ============================================================
+        // 8. ЗАКАЗЫ
         // ============================================================
         function showDetail(order) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -547,7 +585,13 @@
 
             let contacts = '';
             if (cleanPhone && cleanPhone.length > 4) {
-                contacts = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"><a href="tel:' + cleanPhone + '" class="contact-btn call">📞 Позвонить</a><button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬 Viber</button><button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️ Telegram</button><button class="contact-btn copy" onclick="copyPhone(\'' + phone + '\')">📋</button><button class="client-btn" onclick="showClient(\'' + phone + '\')">👤 Клиент</button></div><div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:6px;">📱 ' + phone + '</div>';
+                contacts = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
+                    '<a href="tel:' + cleanPhone + '" class="contact-btn call">📞 Позвонить</a>' +
+                    '<button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬 Viber</button>' +
+                    '<button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️ Telegram</button>' +
+                    '<button class="contact-btn copy" onclick="copyPhone(\'' + cleanPhone + '\')">📋 Копировать</button>' +
+                    '<button class="client-btn" onclick="showClient(\'' + cleanPhone + '\')">👤 О клиенте</button>' +
+                    '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:6px;">📱 ' + cleanPhone + '</div>';
             }
 
             let history = '';
@@ -563,7 +607,7 @@
             }
 
             let actions = '';
-            if (USER_ROLE === 'superadmin') {
+            if (USER_ROLE === 'superadmin' || USER_ROLE === 'admin') {
                 actions = '<button class="action-btn danger" onclick="deleteOrder(\'' + order.order_number + '\')">🗑️ Удалить заказ</button>';
             }
             document.getElementById('detailActions').innerHTML = actions;
@@ -573,14 +617,14 @@
                 '<div class="detail-row"><span class="label">Дата приема</span><span class="value">' + escapeHtml(order.date || '—') + '</span></div>' +
                 '<div class="detail-row"><span class="label">Приёмщик</span><span class="value">' + escapeHtml(order.receiver || '—') + '</span></div>' +
                 '<div class="detail-row"><span class="label">Клиент</span><span class="value">' + escapeHtml(order.client_name || '—') + '</span></div>' +
-                '<div class="detail-row"><span class="label">Телефон</span><span class="value">' + escapeHtml(order.phone || '—') + '</span></div>' +
+                '<div class="detail-row"><span class="label">Телефон</span><span class="value"><span style="font-size:16px;font-weight:600;">' + escapeHtml(cleanPhone || order.phone || '—') + '</span></span></div>' +
                 '<div class="detail-row"><span class="label">Устройство</span><span class="value">' + escapeHtml(order.device || '—') + '</span></div>' +
                 '<div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">' + escapeHtml(order.problem || '—') + '</span></div>' +
                 history;
         }
 
         // ============================================================
-        // 8. КЛИЕНТ
+        // 9. КЛИЕНТ
         // ============================================================
         function showClient(phone) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -605,7 +649,7 @@
 
                     let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
 
-                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:14px;color:var(--text-secondary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
+                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
                 } else {
                     container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
                 }
@@ -615,7 +659,7 @@
         }
 
         // ============================================================
-        // 9. ЗАГРУЗКА ЗАКАЗОВ
+        // 10. ЗАГРУЗКА ЗАКАЗОВ
         // ============================================================
         async function loadOrders() {
             try {
@@ -639,12 +683,26 @@
             if (q) {
                 filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
             }
+            
+            // Сортировка
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.date);
+                const dateB = new Date(b.created_at || b.date);
+                return sortAsc ? dateA - dateB : dateB - dateA;
+            });
+
             let container = document.getElementById('orderList');
             if (!filtered.length) {
                 container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
                 return;
             }
-            container.innerHTML = filtered.map(o => '<div class="order-card" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div class="top-row"><span class="order-number">#' + o.order_number + '</span><span class="order-status status-' + getStatusClass(o.status) + '">' + (o.status || 'Новый') + '</span></div><div class="info"><span>👤 ' + (o.client_name || 'Не указан') + '</span><span>📱 ' + (o.phone || 'Не указан') + '</span></div><div class="device">🖥️ ' + (o.device || 'Устройство не указано') + '</div></div>').join('');
+            container.innerHTML = filtered.map(o => {
+                let phone = o.phone || '';
+                let cleanPhone = phone.replace(/[^0-9+]/g, '');
+                if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
+                if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+                return '<div class="order-card" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div class="top-row"><span class="order-number">#' + o.order_number + '</span><span class="order-status status-' + getStatusClass(o.status) + '">' + (o.status || 'Новый') + '</span></div><div class="info"><span>👤 ' + (o.client_name || 'Не указан') + '</span><span class="phone">📱 ' + cleanPhone + '</span></div><div class="device">🖥️ ' + (o.device || 'Устройство не указано') + '</div></div>';
+            }).join('');
         }
 
         document.getElementById('searchInput')?.addEventListener('input', function() { searchQuery = this.value; renderOrders(); });
@@ -658,7 +716,7 @@
         });
 
         // ============================================================
-        // 10. ДАШБОРД
+        // 11. ДАШБОРД
         // ============================================================
         async function loadDashboard() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
@@ -685,11 +743,11 @@
         }
 
         // ============================================================
-        // 11. ПОЛЬЗОВАТЕЛИ
+        // 12. ПОЛЬЗОВАТЕЛИ (только для суперадмина)
         // ============================================================
         async function loadUsers() {
-            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+            if (USER_ROLE !== 'superadmin') {
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Только суперадмин может управлять пользователями</h3></div>';
                 return;
             }
             try {
@@ -700,13 +758,11 @@
                     allUsers.forEach(u => {
                         let roleClass = u.role === 'superadmin' ? 'role-superadmin' : u.role === 'admin' ? 'role-admin' : 'role-user';
                         let actions = '';
-                        if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
+                        if (u.telegram_id !== userId) {
                             actions = '<button class="action-btn danger" style="font-size:11px;padding:4px 10px;" onclick="deleteUser(\'' + u.telegram_id + '\')">🗑️</button>';
-                        }
-                        if (USER_ROLE === 'superadmin' && u.telegram_id !== userId) {
                             actions += ' <button class="action-btn" style="font-size:11px;padding:4px 10px;" onclick="changeUserRole(\'' + u.telegram_id + '\', \'' + (u.role === 'superadmin' ? 'admin' : u.role === 'admin' ? 'user' : 'admin') + '\')">⬆️</button>';
                         }
-                        html += '<div class="user-item"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div>' + actions + '</div></div>';
+                        html += '<div class="user-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:14px;"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div style="display:flex;gap:4px;flex-shrink:0;">' + actions + '</div></div>';
                     });
                     document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3></div>';
                 }
@@ -716,10 +772,18 @@
         }
 
         function showAddUserForm() {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может добавлять пользователей');
+                return;
+            }
             document.getElementById('addUserForm').style.display = 'block';
         }
 
         async function addUser() {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может добавлять пользователей');
+                return;
+            }
             const telegram_id = document.getElementById('newUserId').value.trim();
             const full_name = document.getElementById('newUserName').value.trim();
             const username = document.getElementById('newUserUsername').value.trim();
@@ -744,6 +808,10 @@
         }
 
         async function deleteUser(telegram_id) {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может удалять пользователей');
+                return;
+            }
             if (!confirm('Удалить пользователя?')) return;
             try {
                 await apiFetch('/users/' + telegram_id, { method: 'DELETE' });
@@ -755,6 +823,10 @@
         }
 
         async function changeUserRole(telegram_id, newRole) {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может менять роли');
+                return;
+            }
             try {
                 await apiFetch('/users/' + telegram_id + '/role?new_role=' + newRole, { method: 'PUT' });
                 alert('✅ Роль изменена');
@@ -765,9 +837,13 @@
         }
 
         // ============================================================
-        // 12. УДАЛЕНИЕ ЗАКАЗА
+        // 13. УДАЛЕНИЕ ЗАКАЗА (админ и суперадмин)
         // ============================================================
         async function deleteOrder(orderNumber) {
+            if (USER_ROLE !== 'superadmin' && USER_ROLE !== 'admin') {
+                alert('Только администратор может удалять заказы');
+                return;
+            }
             if (!confirm('Удалить заказ #' + orderNumber + '?')) return;
             try {
                 await apiFetch('/orders/by-number/' + orderNumber, { method: 'DELETE' });
@@ -780,7 +856,7 @@
         }
 
         // ============================================================
-        // 13. АВТООБНОВЛЕНИЕ
+        // 14. АВТООБНОВЛЕНИЕ
         // ============================================================
         setInterval(() => {
             if (document.getElementById('page-orders').classList.contains('active')) {
