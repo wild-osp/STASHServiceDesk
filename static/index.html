@@ -822,16 +822,17 @@
                 `;
             }
 
-            let history = '';
+            // ===== ИСТОРИЯ СТАТУСОВ =====
+            let historyHtml = '';
             if (order.history && order.history.length > 0) {
-                history = '<div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:12px;">📜 История статусов</div>';
+                historyHtml = '<div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);">📜 История статусов</div>';
                 order.history.forEach(h => {
                     let color = statusColors[h.status] || '#6b7280';
                     let time = h.changed_at ? h.changed_at.slice(11, 16) : '';
-                    history += '<div class="history-item"><span class="h-status"><span class="status-dot" style="background:' + color + ';"></span>' + escapeHtml(h.status) + '</span><span class="h-time">' + time + '</span></div>';
+                    historyHtml += '<div class="history-item"><span class="h-status"><span class="status-dot" style="background:' + color + ';"></span>' + escapeHtml(h.status) + '</span><span class="h-time">' + time + '</span></div>';
                 });
             } else {
-                history = '<div style="margin-top:8px;color:var(--text-secondary);font-size:14px;">Нет истории статусов</div>';
+                historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);color:var(--text-secondary);font-size:14px;">📜 Нет истории статусов</div>';
             }
 
             let actions = '';
@@ -849,7 +850,7 @@
                 '<div class="detail-row"><span class="label">Телефон</span><span class="value"><span style="font-size:16px;font-weight:600;">' + escapeHtml(cleanPhone || order.phone || '—') + '</span></span></div>' +
                 '<div class="detail-row"><span class="label">Устройство</span><span class="value">' + escapeHtml(order.device || '—') + '</span></div>' +
                 '<div class="detail-row" style="border-bottom:none;"><span class="label">Неисправность</span><span class="value">' + escapeHtml(order.problem || '—') + '</span></div>' +
-                history;
+                historyHtml;
         }
 
         // ===== КЛИЕНТ =====
