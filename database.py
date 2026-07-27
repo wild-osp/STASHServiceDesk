@@ -183,6 +183,7 @@ class Database:
                         date = ?,
                         status = ?,
                         receiver = ?,
+                        master = ?,  -- ⬅️ ДОБАВИТЬ
                         phone = ?,
                         client_name = ?,
                         device = ?,
@@ -197,6 +198,7 @@ class Database:
                     order.date,
                     order.status,
                     order.receiver,
+                    order.master,  # ⬅️ ДОБАВИТЬ
                     order.phone,
                     order.client_name,
                     order.device,
@@ -230,17 +232,18 @@ class Database:
                 # Создаем новый
                 cursor.execute('''
                     INSERT INTO orders (
-                        order_number, date, status, receiver, phone,
-                        client_name, device, problem,
+                        order_number, date, status, receiver, master,  -- ⬅️ master ДОБАВИТЬ
+                        phone, client_name, device, problem,
                         telegram_chat_id, telegram_message_id,
                         telegram_message_date, raw_message_text,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     order.order_number,
                     order.date,
                     order.status,
                     order.receiver,
+                    order.master,  # ⬅️ ДОБАВИТЬ
                     order.phone,
                     order.client_name,
                     order.device,
@@ -251,8 +254,7 @@ class Database:
                     order.raw_message_text,
                     datetime.now().isoformat(),
                     datetime.now().isoformat()
-                ))
-                
+                ))                
                 order_id = cursor.lastrowid
                 
                 if order.status:
@@ -441,24 +443,23 @@ class Database:
     # НОВЫЕ МЕТОДЫ ДЛЯ АНАЛИТИКИ ПО МАСТЕРАМ
     # ============================================================
     def get_masters(self) -> List[str]:
-        """Получает список всех мастеров (приёмщиков)"""
+        """Получает список всех мастеров из поля master"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT DISTINCT receiver as name 
+                SELECT DISTINCT master as name 
                 FROM orders 
-                WHERE receiver IS NOT NULL AND receiver != ''
-                ORDER BY receiver
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
             ''')
             return [row['name'] for row in cursor.fetchall()]
     
     def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
-        """Получает заказы по мастеру"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT * FROM orders 
-                WHERE receiver = ? 
+                WHERE master = ? 
                 ORDER BY created_at DESC
             ''', (master,))
             return [dict(row) for row in cursor.fetchall()]
