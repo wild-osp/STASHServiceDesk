@@ -43,6 +43,7 @@ class Database:
                     date TEXT,
                     status TEXT,
                     receiver TEXT,
+                    master TEXT,  -- ⬅️ ДОБАВИТЬ
                     phone TEXT,
                     client_name TEXT,
                     device TEXT,
@@ -54,8 +55,7 @@ class Database:
                     created_at TEXT,
                     updated_at TEXT
                 )
-            ''')
-            
+            ''')            
             # Таблица истории статусов
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS order_history (
