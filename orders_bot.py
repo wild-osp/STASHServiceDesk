@@ -33,14 +33,15 @@ if not BOT_TOKEN:
     logger.error("❌ BOT_TOKEN не найден в переменных окружения!")
     sys.exit(1)
 
-# Инициализация компонентов
-import os
+# Устанавливаем путь к БД
 os.environ['DB_PATH'] = os.getenv('DB_PATH', '/app/data/orders.db')
+
+# Инициализация компонентов
 db = get_db()
 parser = OrderParser()
 
-# ⚡ ВАЖНО: Укажите ВАШ URL Mini App
-APP_URL = "https://bot-1784782201-8409-wild-osp.bothost.tech/app"
+# URL Mini App (без user_id в URL — он добавляется динамически)
+APP_URL_BASE = "https://bot-1784782201-8409-wild-osp.bothost.tech/app"
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,11 +106,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     stats = db.get_statistics()
     
-    # ⚡ ГЛАВНОЕ ИЗМЕНЕНИЕ: передаём user_id в URL
+    # Передаём user_id в URL
     user_id = str(user.id)
-    app_url = f"https://bot-1784782201-8409-wild-osp.bothost.tech/app?user_id={user_id}"
+    app_url = f"{APP_URL_BASE}?user_id={user_id}"
     
-    # Создаем кнопку для открытия Mini App
     keyboard = [[
         InlineKeyboardButton(
             "📦 Открыть заказы", 
@@ -236,10 +236,14 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /help с кнопкой Mini App"""
+    user = update.effective_user
+    user_id = str(user.id)
+    app_url = f"{APP_URL_BASE}?user_id={user_id}"
+    
     keyboard = [[
         InlineKeyboardButton(
             "📦 Открыть заказы", 
-            web_app={"url": APP_URL}
+            web_app={"url": app_url}
         )
     ]]
     reply_markup = InlineKeyboardMarkup(keyboard)
