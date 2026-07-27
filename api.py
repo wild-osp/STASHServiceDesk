@@ -140,11 +140,10 @@ async def check_user(
     })
 
 # ============================================================
-# УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (только для админов)
+# УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ
 # ============================================================
 @app.get("/api/users")
 async def get_users(current_user: dict = Depends(get_current_user)):
-    """Получить список всех пользователей (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     users = db.get_all_users()
@@ -158,7 +157,6 @@ async def add_user(
     role: str = "user",
     current_user: dict = Depends(get_current_user)
 ):
-    """Добавить нового пользователя (только для админов и суперадминов)"""
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     
@@ -184,7 +182,6 @@ async def update_user_role(
     new_role: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Изменить роль пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может менять роли")
     
@@ -205,7 +202,6 @@ async def delete_user(
     telegram_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Удалить пользователя (только для суперадминов)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может удалять пользователей")
     
@@ -219,20 +215,18 @@ async def delete_user(
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
 # ============================================================
-# УДАЛЕНИЕ ЗАКАЗА (только для суперадмина)
+# УДАЛЕНИЕ ЗАКАЗА
 # ============================================================
 @app.delete("/api/orders/by-number/{order_number}")
 async def delete_order_by_number(
     order_number: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Удаляет заказ по номеру (только суперадмин)"""
-    if current_user["role"] != 'superadmin':
-        raise HTTPException(status_code=403, detail="Только суперадмин может удалять заказы")
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Только администратор может удалять заказы")
     
     with db.get_connection() as conn:
         cursor = conn.cursor()
-        # Сначала удаляем историю статусов (из-за внешнего ключа)
         cursor.execute('''
             DELETE FROM order_history 
             WHERE order_id IN (SELECT id FROM orders WHERE order_number = ?)
@@ -291,9 +285,11 @@ async def get_orders(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
+    master: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     try:
+        # Получаем все заказы в зависимости от роли
         if current_user["role"] in ['admin', 'superadmin']:
             if search:
                 results = db.search_orders(search)
@@ -312,6 +308,11 @@ async def get_orders(
                 search_lower = search.lower()
                 results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
             results = results[offset:offset + limit]
+        
+        # Фильтр по мастеру
+        if master:
+            results = [o for o in results if o.get('receiver') == master]
+        
         return JSONResponse({
             "success": True,
             "data": results,
@@ -372,6 +373,46 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
+# МАСТЕРА
+# ============================================================
+@app.get("/api/masters")
+async def get_masters(current_user: dict = Depends(get_current_user)):
+    """Получить список всех мастеров (приёмщиков)"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT receiver as name 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                ORDER BY receiver
+            ''')
+            masters = [row['name'] for row in cursor.fetchall()]
+        return JSONResponse({"success": True, "data": masters})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# ПОДСЧЁТ ЗАКАЗОВ ПО СТАТУСАМ
+# ============================================================
+@app.get("/api/status-counts")
+async def get_status_counts(current_user: dict = Depends(get_current_user)):
+    """Получить количество заказов по статусам"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT status, COUNT(*) as count 
+                FROM orders 
+                GROUP BY status
+                ORDER BY count DESC
+            ''')
+            status_counts = [dict(row) for row in cursor.fetchall()]
+        return JSONResponse({"success": True, "data": status_counts})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
 # СТАТИСТИКА
 # ============================================================
 @app.get("/api/statistics")
@@ -404,7 +445,39 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Доступ запрещен. Требуются права администратора.")
     try:
         stats = db.get_detailed_stats()
-        return JSONResponse({"success": True, "data": stats})
+        
+        # Дополнительная статистика по мастерам
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            # Заказы по мастерам (все)
+            cursor.execute('''
+                SELECT receiver, COUNT(*) as count 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                GROUP BY receiver
+                ORDER BY count DESC
+            ''')
+            by_master = [dict(row) for row in cursor.fetchall()]
+            
+            # Заказы по мастерам (выполненные — Выдано оплачено)
+            cursor.execute('''
+                SELECT receiver, COUNT(*) as count 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                AND status = 'Выдано (оплачено)'
+                GROUP BY receiver
+                ORDER BY count DESC
+            ''')
+            by_master_done = [dict(row) for row in cursor.fetchall()]
+        
+        return JSONResponse({
+            "success": True,
+            "data": {
+                **stats,
+                "by_master": by_master,
+                "by_master_done": by_master_done
+            }
+        })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
