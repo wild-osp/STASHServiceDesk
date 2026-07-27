@@ -17,6 +17,7 @@ class Database:
     """Класс для управления базой данных заказов"""
     
     def __init__(self, db_path: str = None):
+        # Если путь не передан, используем из переменной окружения или значение по умолчанию
         if db_path is None:
             db_path = os.getenv('DB_PATH', '/app/data/orders.db')
         self.db_path = db_path
@@ -435,6 +436,63 @@ class Database:
                 ''', (f'%{user_id}%', f'%{user_id}%'))
             
             return [dict(row) for row in cursor.fetchall()]
+
+    # ============================================================
+    # НОВЫЕ МЕТОДЫ ДЛЯ АНАЛИТИКИ ПО МАСТЕРАМ
+    # ============================================================
+    def get_masters(self) -> List[str]:
+        """Получает список всех мастеров (приёмщиков)"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT receiver as name 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                ORDER BY receiver
+            ''')
+            return [row['name'] for row in cursor.fetchall()]
+    
+    def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
+        """Получает заказы по мастеру"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM orders 
+                WHERE receiver = ? 
+                ORDER BY created_at DESC
+            ''', (master,))
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def get_master_stats(self) -> Dict[str, Any]:
+        """Получает статистику по мастерам"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Все заказы по мастерам
+            cursor.execute('''
+                SELECT receiver, COUNT(*) as count 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                GROUP BY receiver
+                ORDER BY count DESC
+            ''')
+            all_stats = [dict(row) for row in cursor.fetchall()]
+            
+            # Выполненные заказы по мастерам (Выдано оплачено)
+            cursor.execute('''
+                SELECT receiver, COUNT(*) as count 
+                FROM orders 
+                WHERE receiver IS NOT NULL AND receiver != ''
+                AND status = 'Выдано (оплачено)'
+                GROUP BY receiver
+                ORDER BY count DESC
+            ''')
+            done_stats = [dict(row) for row in cursor.fetchall()]
+            
+            return {
+                "all": all_stats,
+                "done": done_stats
+            }
 
 
 # Синглтон
