@@ -167,8 +167,13 @@
         .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .history-item .h-time { color: var(--text-secondary); font-size: 13px; }
 
-        /* ===== КОНТАКТЫ ===== */
-        .contact-btn {
+        /* ===== КОНТАКТЫ (3 ряда) ===== */
+        .contact-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .contact-row .contact-btn {
             flex: 1;
             min-width: 48px;
             color: white;
@@ -182,13 +187,15 @@
             background: var(--bg-card);
             border-bottom: 3px solid transparent;
         }
-        .contact-btn:active { transform: scale(0.95); }
-        .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
-        .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
-        .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
-        .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.3; min-width: 40px; }
+        .contact-row .contact-btn:active { transform: scale(0.95); }
+        .contact-row .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
+        .contact-row .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
+        .contact-row .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
+        .contact-row .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); flex: 0.5; }
+        .contact-row .contact-btn.client { background: #1a2a4a; border-bottom-color: var(--accent); color: var(--accent); flex: 1; }
 
-        .client-btn, .action-btn {
+        /* ===== ДРУГИЕ КНОПКИ ===== */
+        .action-btn {
             padding: 8px 14px;
             background: var(--bg-card);
             border: 1px solid var(--accent);
@@ -261,19 +268,30 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* ===== СОРТИРОВКА ===== */
-        .sort-btn {
-            padding: 6px 14px;
+        /* ===== СОРТИРОВКА (выпадающий список) ===== */
+        .sort-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .sort-wrapper label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .sort-wrapper select {
+            padding: 6px 12px;
             border: 1px solid var(--bg-secondary);
             border-radius: 20px;
-            background: transparent;
-            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            margin-left: 8px;
+            outline: none;
         }
-        .sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
+        .sort-wrapper select:focus { border-color: var(--accent); }
 
         /* ===== НАВИГАЦИЯ ===== */
         .nav {
@@ -317,6 +335,7 @@
             .nav-btn { font-size: 10px; padding: 6px 10px; }
             .nav-btn .icon { font-size: 18px; }
             .order-card .phone { font-size: 14px; }
+            .contact-row .contact-btn { font-size: 12px; padding: 8px 4px; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -362,19 +381,24 @@
         <div class="search-wrapper">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
-            <div class="filters" id="filters" style="margin-bottom:0; flex:1;">
-                <button class="filter-btn active" data-filter="all">Все</button>
-                <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
-                <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
-                <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
-                <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
-                <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
-                <button class="filter-btn" data-filter="Готово">Готово</button>
-                <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
-                <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
-            </div>
-            <button class="sort-btn" id="sortBtn" onclick="toggleSort()">📅 По дате</button>
+        <div class="filters" id="filters" style="margin-bottom:10px;">
+            <button class="filter-btn active" data-filter="all">Все</button>
+            <button class="filter-btn" data-filter="Принят в ремонт">Принят</button>
+            <button class="filter-btn" data-filter="В ремонте">Ремонт</button>
+            <button class="filter-btn" data-filter="Согласование с клиентом">Согласование</button>
+            <button class="filter-btn" data-filter="Ожидание запчасти">Ожидание</button>
+            <button class="filter-btn" data-filter="Гарантия">Гарантия</button>
+            <button class="filter-btn" data-filter="Готово">Готово</button>
+            <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
+            <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
+        </div>
+        <div class="sort-wrapper">
+            <label for="sortSelect">📅 Сортировка:</label>
+            <select id="sortSelect" onchange="changeSort(this.value)">
+                <option value="number">По номеру</option>
+                <option value="date">По дате</option>
+                <option value="new">Новые сверху</option>
+            </select>
         </div>
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
@@ -461,7 +485,7 @@
         let USER_ROLE = 'user';
         let allOrders = [], currentFilter = 'all', searchQuery = '';
         let allUsers = [];
-        let sortAsc = false; // false = новые сверху
+        let sortMode = 'number'; // number, date, new
 
         // ============================================================
         // 2. ПРОВЕРКА ДОСТУПА
@@ -488,7 +512,6 @@
                     document.getElementById('profileName').textContent = currentUser.full_name;
                     document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
                     
-                    // Скрыть кнопку добавления пользователя для админа
                     if (USER_ROLE !== 'superadmin') {
                         const addBtn = document.getElementById('addUserBtn');
                         if (addBtn) addBtn.style.display = 'none';
@@ -564,9 +587,8 @@
         // ============================================================
         // 7. СОРТИРОВКА
         // ============================================================
-        function toggleSort() {
-            sortAsc = !sortAsc;
-            document.getElementById('sortBtn').textContent = sortAsc ? '📅 По старым' : '📅 По дате';
+        function changeSort(value) {
+            sortMode = value;
             renderOrders();
         }
 
@@ -585,13 +607,22 @@
 
             let contacts = '';
             if (cleanPhone && cleanPhone.length > 4) {
-                contacts = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
-                    '<a href="tel:' + cleanPhone + '" class="contact-btn call">📞 Позвонить</a>' +
-                    '<button class="contact-btn viber" onclick="openViber(\'' + cleanPhone + '\')">💬 Viber</button>' +
-                    '<button class="contact-btn telegram" onclick="openTelegram(\'' + cleanPhone + '\')">✈️ Telegram</button>' +
-                    '<button class="contact-btn copy" onclick="copyPhone(\'' + cleanPhone + '\')">📋 Копировать</button>' +
-                    '<button class="client-btn" onclick="showClient(\'' + cleanPhone + '\')">👤 О клиенте</button>' +
-                    '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:6px;">📱 ' + cleanPhone + '</div>';
+                contacts = `
+                    <div style="margin:8px 0;">
+                        <div class="contact-row">
+                            <a href="tel:${cleanPhone}" class="contact-btn call">📞 Позвонить</a>
+                            <button class="contact-btn copy" onclick="copyPhone('${cleanPhone}')">📋 Копировать</button>
+                        </div>
+                        <div class="contact-row">
+                            <button class="contact-btn viber" onclick="openViber('${cleanPhone}')">💬 Viber</button>
+                            <button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">✈️ Telegram</button>
+                        </div>
+                        <div class="contact-row">
+                            <button class="contact-btn client" onclick="showClient('${cleanPhone}')">👤 О клиенте</button>
+                        </div>
+                        <div style="font-size:16px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:6px;">📱 ${cleanPhone}</div>
+                    </div>
+                `;
             }
 
             let history = '';
@@ -686,9 +717,17 @@
             
             // Сортировка
             filtered.sort((a, b) => {
-                const dateA = new Date(a.created_at || a.date);
-                const dateB = new Date(b.created_at || b.date);
-                return sortAsc ? dateA - dateB : dateB - dateA;
+                if (sortMode === 'number') {
+                    return parseInt(a.order_number) - parseInt(b.order_number);
+                } else if (sortMode === 'date') {
+                    const dateA = new Date(a.date || a.created_at);
+                    const dateB = new Date(b.date || b.created_at);
+                    return dateA - dateB;
+                } else { // new - новые сверху (по updated_at)
+                    const dateA = new Date(a.updated_at || a.created_at);
+                    const dateB = new Date(b.updated_at || b.created_at);
+                    return dateB - dateA;
+                }
             });
 
             let container = document.getElementById('orderList');
