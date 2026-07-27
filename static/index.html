@@ -102,14 +102,20 @@
         }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
 
-        .control-group {
+        /* НОВАЯ СТРОКА ДЛЯ СОРТИРОВКИ */
+        .sorting-row {
             display: flex;
-            gap: 6px;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
             align-items: center;
-            flex-shrink: 0;
         }
-        .control-group select {
+        .sorting-row .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sorting-row select {
             padding: 6px 10px;
             border: 1px solid var(--bg-secondary);
             border-radius: 20px;
@@ -119,10 +125,9 @@
             font-weight: 600;
             cursor: pointer;
             outline: none;
-            max-width: 120px;
         }
-        .control-group select:focus { border-color: var(--accent); }
-        .control-group label {
+        .sorting-row select:focus { border-color: var(--accent); }
+        .sorting-row label {
             font-size: 13px;
             color: var(--text-secondary);
             font-weight: 600;
@@ -447,6 +452,39 @@
         .nav-btn.active { color: var(--accent); background: rgba(245, 166, 35, 0.1); }
         .nav-btn:active { transform: scale(0.95); }
 
+        /* СТИЛИ ДЛЯ АНАЛИТИКИ */
+        .analytics-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .analytics-filters select {
+            padding: 8px 12px;
+            border: 1px solid var(--bg-secondary);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+        }
+        .analytics-filters select:focus { border-color: var(--accent); }
+        .analytics-filters button {
+            padding: 8px 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius);
+            color: var(--bg-primary);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .analytics-filters button:active { transform: scale(0.95); }
+
         @media (max-width: 480px) {
             body { padding: 12px; padding-bottom: calc(var(--nav-height) + 16px); }
             .header h1 { font-size: 17px; }
@@ -457,7 +495,10 @@
             .order-card .phone { font-size: 14px; }
             .contact-grid .contact-btn { font-size: 12px; padding: 8px 4px; }
             .filter-row { flex-direction: row; overflow-x: auto; }
-            .control-group select { max-width: 100px; font-size: 12px; }
+            .sorting-row { flex-direction: column; align-items: stretch; }
+            .sorting-row .control-group { flex: 1; }
+            .sorting-row select { width: 100%; }
+            .analytics-filters select { min-width: 60px; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -485,6 +526,7 @@
         </button>
     </div>
 
+    <!-- ===== СТРАНИЦА ЗАКАЗОВ ===== -->
     <div class="page active" id="page-orders">
         <div class="header">
             <div class="header-left">
@@ -501,6 +543,8 @@
         <div class="search-wrapper">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
         </div>
+        
+        <!-- КАРУСЕЛЬ СО СТАТУСАМИ -->
         <div class="filter-row">
             <div class="filters" id="filters">
                 <button class="filter-btn active" data-filter="all">Все</button>
@@ -513,12 +557,18 @@
                 <button class="filter-btn" data-filter="Выдано (не оплачено)">Не оплачено</button>
                 <button class="filter-btn" data-filter="Выдано (оплачено)">Оплачено</button>
             </div>
+        </div>
+        
+        <!-- СОРТИРОВКА ОТДЕЛЬНОЙ СТРОКОЙ -->
+        <div class="sorting-row">
             <div class="control-group">
-                <label for="masterFilter">👨‍🔧</label>
+                <label for="masterFilter">👨‍🔧 По мастеру:</label>
                 <select id="masterFilter" onchange="applyMasterFilter(this.value)">
                     <option value="">Все мастера</option>
                 </select>
-                <label for="sortSelect">📅</label>
+            </div>
+            <div class="control-group">
+                <label for="sortSelect">📅 Сортировка:</label>
                 <select id="sortSelect" onchange="changeSort(this.value)">
                     <option value="number">По номеру</option>
                     <option value="date">По дате</option>
@@ -526,9 +576,11 @@
                 </select>
             </div>
         </div>
+        
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
+    <!-- ===== СТРАНИЦА ДЕТАЛЕЙ ЗАКАЗА ===== -->
     <div class="page" id="page-detail">
         <div class="header">
             <div class="header-left">
@@ -540,6 +592,7 @@
         <div id="detailContent"></div>
     </div>
 
+    <!-- ===== СТРАНИЦА КЛИЕНТА ===== -->
     <div class="page" id="page-client">
         <div class="header">
             <div class="header-left">
@@ -550,6 +603,7 @@
         <div id="clientContent"></div>
     </div>
 
+    <!-- ===== СТРАНИЦА АНАЛИТИКИ ===== -->
     <div class="page" id="page-dashboard">
         <div class="header">
             <div class="header-left">
@@ -557,9 +611,33 @@
                 <div><h1>Аналитика</h1></div>
             </div>
         </div>
+        <!-- ФИЛЬТРЫ ДЛЯ АНАЛИТИКИ -->
+        <div class="analytics-filters" id="analyticsFilters">
+            <select id="analyticsMonth">
+                <option value="1">Январь</option>
+                <option value="2">Февраль</option>
+                <option value="3">Март</option>
+                <option value="4">Апрель</option>
+                <option value="5">Май</option>
+                <option value="6">Июнь</option>
+                <option value="7">Июль</option>
+                <option value="8">Август</option>
+                <option value="9">Сентябрь</option>
+                <option value="10">Октябрь</option>
+                <option value="11">Ноябрь</option>
+                <option value="12">Декабрь</option>
+            </select>
+            <select id="analyticsYear">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+            </select>
+            <button onclick="loadAnalytics()">📊 Показать</button>
+        </div>
         <div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
+    <!-- ===== СТРАНИЦА ПОЛЬЗОВАТЕЛЕЙ ===== -->
     <div class="page" id="page-users">
         <div class="header">
             <div class="header-left">
@@ -586,6 +664,7 @@
         </div>
     </div>
 
+    <!-- ===== СТРАНИЦА ПРОФИЛЯ ===== -->
     <div class="page" id="page-profile">
         <div class="header">
             <div class="header-left">
@@ -624,10 +703,13 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Мастер</label>
+                <label>Назначить мастером</label>
                 <select id="editMaster">
-                    <option value="">— Выберите мастера —</option>
+                    <option value="">— Не мастер —</option>
                 </select>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+                    💡 Выберите мастера, к которому будет привязан пользователь
+                </div>
             </div>
             <div class="form-actions">
                 <button class="save-btn" onclick="saveUserEdit()">💾 Сохранить</button>
@@ -697,6 +779,7 @@
             if (btn) btn.classList.add('active');
             window.scrollTo(0, 0);
             if (page === 'users') loadUsers();
+            if (page === 'dashboard') loadDashboard();
         }
 
         const API_BASE = window.location.origin + '/api';
@@ -749,14 +832,30 @@
                         select.innerHTML += `<option value="${master}">${master}</option>`;
                     });
                     // Обновляем список в модалке
-                    const editSelect = document.getElementById('editMaster');
-                    editSelect.innerHTML = '<option value="">— Выберите мастера —</option>';
-                    mastersList.forEach(master => {
-                        editSelect.innerHTML += `<option value="${master}">${master}</option>`;
-                    });
+                    await loadMastersForModal();
                 }
             } catch(e) {
                 console.error('Ошибка загрузки мастеров:', e);
+            }
+        }
+
+        async function loadMastersForModal() {
+            try {
+                const r = await apiFetch('/masters');
+                if (r.success) {
+                    const masters = r.data;
+                    const editSelect = document.getElementById('editMaster');
+                    const currentValue = editSelect.value;
+                    editSelect.innerHTML = '<option value="">— Не мастер —</option>';
+                    masters.forEach(master => {
+                        editSelect.innerHTML += `<option value="${master}">${master}</option>`;
+                    });
+                    if (currentValue) {
+                        editSelect.value = currentValue;
+                    }
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки мастеров для модалки:', e);
             }
         }
 
@@ -822,7 +921,6 @@
                 `;
             }
 
-            // ===== ИСТОРИЯ СТАТУСОВ =====
             let historyHtml = '';
             if (order.history && order.history.length > 0) {
                 historyHtml = '<div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);">📜 История статусов</div>';
@@ -953,17 +1051,29 @@
             renderOrders();
         });
 
-        // ===== ДАШБОРД =====
-        async function loadDashboard() {
+        // ===== АНАЛИТИКА =====
+        async function loadAnalytics() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
                 return;
             }
+            
+            const month = document.getElementById('analyticsMonth').value;
+            const year = document.getElementById('analyticsYear').value;
+            
+            document.getElementById('dashboardContent').innerHTML = 
+                '<div class="loader"><div class="spinner"></div>Загрузка аналитики за ' + 
+                month + '/' + year + '...</div>';
+            
             try {
-                let r = await apiFetch('/admin/dashboard');
+                const r = await apiFetch('/admin/dashboard?month=' + month + '&year=' + year);
                 if (r.success) {
-                    let stats = r.data;
-                    let maxCount = stats.orders_by_day.length > 0 ? Math.max(...stats.orders_by_day.map(x => x.count)) : 1;
+                    const stats = r.data;
+                    const maxCount = stats.orders_by_day && stats.orders_by_day.length > 0 
+                        ? Math.max(...stats.orders_by_day.map(x => x.count)) 
+                        : 1;
+                    
                     let masterHtml = '';
                     if (stats.by_master && stats.by_master.length > 0) {
                         masterHtml = '<div style="margin-top:12px;"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">👨‍🔧 Статистика по мастерам</div>';
@@ -976,19 +1086,60 @@
                         });
                         masterHtml += '</div>';
                     }
-                    document.getElementById('dashboardContent').innerHTML =
-                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.avg_repair_time + ' дн.</div></div><div style="background:var(--bg-card);padding:12px;border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div><div style="font-size:22px;font-weight:700;color:var(--accent);">' + stats.total_orders + '</div></div></div>' +
-                        '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>' +
-                        stats.top_problems.map(p => '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>' + (p.problem || 'Без описания') + '</span><span style="color:var(--accent);">' + p.count + '</span></div>').join('') +
-                        masterHtml +
-                        '<div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>' +
-                        '<div style="display:flex;gap:4px;height:40px;align-items:flex-end;">' +
-                        stats.orders_by_day.slice(0,7).reverse().map(d => '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + Math.max(4, (d.count / maxCount) * 40) + 'px;"></div><div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>').join('') +
-                        '</div>';
+                    
+                    document.getElementById('dashboardContent').innerHTML = `
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
+                                <div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div>
+                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.avg_repair_time || 0} дн.</div>
+                            </div>
+                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
+                                <div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div>
+                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.total_orders || 0}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
+                            📊 Аналитика за ${month}.${year}
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>
+                        ${(stats.top_problems || []).map(p => 
+                            '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                            '<span>' + (p.problem || 'Без описания') + '</span>' +
+                            '<span style="color:var(--accent);">' + p.count + '</span></div>'
+                        ).join('')}
+                        ${masterHtml}
+                        <div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>
+                        <div style="display:flex;gap:4px;height:40px;align-items:flex-end;">
+                            ${(stats.orders_by_day || []).slice(0,7).reverse().map(d => 
+                                '<div style="flex:1;display:flex;flex-direction:column;align-items:center;">' +
+                                '<div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + 
+                                Math.max(4, (d.count / maxCount) * 40) + 'px;"></div>' +
+                                '<div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>'
+                            ).join('')}
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dashboardContent').innerHTML = 
+                        '<div class="empty-state"><div class="icon">⚠️</div><p>Нет данных за выбранный период</p></div>';
                 }
             } catch(e) {
-                document.getElementById('dashboardContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+                console.error('Ошибка загрузки аналитики:', e);
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>' + e.message + '</p></div>';
             }
+        }
+
+        async function loadDashboard() {
+            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+                return;
+            }
+            // Загружаем данные за текущий месяц по умолчанию
+            const now = new Date();
+            document.getElementById('analyticsMonth').value = now.getMonth() + 1;
+            document.getElementById('analyticsYear').value = now.getFullYear();
+            await loadAnalytics();
         }
 
         // ===== ПОЛЬЗОВАТЕЛИ =====
@@ -1004,9 +1155,7 @@
                     let html = '';
                     allUsers.forEach(u => {
                         let roleClass = u.role === 'superadmin' ? 'role-superadmin' : u.role === 'admin' ? 'role-admin' : 'role-user';
-                        let actions = '';
-                        // Для суперпользователя тоже показываем кнопку редактирования
-                        actions = `
+                        let actions = `
                             <button class="edit" onclick="openUserEdit('${u.telegram_id}')">✏️</button>
                         `;
                         if (u.telegram_id !== userId) {
@@ -1034,19 +1183,26 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            apiFetch('/users/' + telegram_id).then(r => {
-                if (r.success) {
-                    const u = r.data;
-                    document.getElementById('editUserId').value = u.telegram_id;
-                    document.getElementById('editFullName').value = u.full_name || '';
-                    document.getElementById('editUsername').value = u.username || '';
-                    document.getElementById('editRole').value = u.role || 'user';
-                    document.getElementById('editMaster').value = u.master || '';
-                    document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
-                }
-            }).catch(e => {
-                alert('Ошибка загрузки данных пользователя');
-                closeUserModal();
+            // Загружаем мастеров перед открытием модалки
+            loadMastersForModal().then(() => {
+                apiFetch('/users/' + telegram_id).then(r => {
+                    if (r.success) {
+                        const u = r.data;
+                        document.getElementById('editUserId').value = u.telegram_id;
+                        document.getElementById('editFullName').value = u.full_name || '';
+                        document.getElementById('editUsername').value = u.username || '';
+                        document.getElementById('editRole').value = u.role || 'user';
+                        // Устанавливаем мастера
+                        const masterSelect = document.getElementById('editMaster');
+                        if (u.master) {
+                            masterSelect.value = u.master;
+                        }
+                        document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
+                    }
+                }).catch(e => {
+                    alert('Ошибка загрузки данных пользователя');
+                    closeUserModal();
+                });
             });
         }
 
@@ -1069,10 +1225,25 @@
             }
             
             try {
-                await apiFetch('/users/' + editingTelegramId, {
+                const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
                     method: 'PUT',
-                    body: JSON.stringify({ full_name, username, role, master })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-User-Id': userId || 'anonymous'
+                    },
+                    body: JSON.stringify({ 
+                        full_name, 
+                        username, 
+                        role, 
+                        master: master || null
+                    })
                 });
+                
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Ошибка обновления');
+                }
+                
                 alert('✅ Пользователь обновлен');
                 closeUserModal();
                 loadUsers();
@@ -1126,20 +1297,6 @@
             try {
                 await apiFetch('/users/' + telegram_id, { method: 'DELETE' });
                 alert('✅ Пользователь удален');
-                loadUsers();
-            } catch(e) {
-                alert('❌ Ошибка: ' + e.message);
-            }
-        }
-
-        async function changeUserRole(telegram_id, newRole) {
-            if (USER_ROLE !== 'superadmin') {
-                alert('Только суперадмин может менять роли');
-                return;
-            }
-            try {
-                await apiFetch('/users/' + telegram_id + '/role?new_role=' + newRole, { method: 'PUT' });
-                alert('✅ Роль изменена');
                 loadUsers();
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
