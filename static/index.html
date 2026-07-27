@@ -80,9 +80,13 @@
         .filters {
             display: flex;
             gap: 6px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
             flex: 1;
         }
+        .filters::-webkit-scrollbar { display: none; }
         .filter-btn {
             padding: 6px 14px;
             border: 1px solid var(--bg-secondary);
@@ -617,6 +621,11 @@
                     <option value="superadmin">Суперадмин</option>
                 </select>
             </div>
+            <!-- ⬇️ НОВОЕ ПОЛЕ: МАСТЕР -->
+            <div class="form-group">
+                <label>Мастер (имя в 1С)</label>
+                <input id="editMaster" placeholder="Введите имя мастера">
+            </div>
             <div class="form-actions">
                 <button class="save-btn" onclick="saveUserEdit()">💾 Сохранить</button>
                 <button class="cancel-btn" onclick="closeUserModal()">Отмена</button>
@@ -1017,6 +1026,7 @@
                     document.getElementById('editFullName').value = u.full_name || '';
                     document.getElementById('editUsername').value = u.username || '';
                     document.getElementById('editRole').value = u.role || 'user';
+                    document.getElementById('editMaster').value = u.master || '';  // ⬅️ НОВОЕ
                     document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
                 }
             }).catch(e => {
@@ -1036,6 +1046,7 @@
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
             const role = document.getElementById('editRole').value;
+            const master = document.getElementById('editMaster').value.trim();  // ⬅️ НОВОЕ
             
             if (!full_name) {
                 alert('Введите имя');
@@ -1045,7 +1056,7 @@
             try {
                 await apiFetch('/users/' + editingTelegramId, {
                     method: 'PUT',
-                    body: JSON.stringify({ full_name, username, role })
+                    body: JSON.stringify({ full_name, username, role, master })  // ⬅️ ДОБАВЛЕН master
                 });
                 alert('✅ Пользователь обновлен');
                 closeUserModal();
