@@ -90,7 +90,8 @@ async def get_current_user(
         "user_id": user['telegram_id'],
         "username": user['username'] or '',
         "full_name": user['full_name'] or '',
-        "role": user['role'] or 'user'
+        "role": user['role'] or 'user',
+        "master": user.get('master', '')  # ⬅️ ДОБАВЛЕНО
     }
 
 # ============================================================
@@ -136,7 +137,8 @@ async def check_user(
             "id": user['telegram_id'],
             "username": user['username'] or '',
             "full_name": user['full_name'] or '',
-            "role": user['role'] or 'user'
+            "role": user['role'] or 'user',
+            "master": user.get('master', '')  # ⬅️ ДОБАВЛЕНО
         }
     })
 
@@ -167,6 +169,7 @@ async def add_user(
     username: str = "",
     full_name: str = "",
     role: str = "user",
+    master: str = "",  # ⬅️ ДОБАВЛЕНО
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] not in ['admin', 'superadmin']:
@@ -182,7 +185,8 @@ async def add_user(
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
     
-    success = db.add_user(telegram_id, username, full_name, role)
+    # Добавляем пользователя с мастером
+    success = db.add_user(telegram_id, username, full_name, role, master)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
     else:
@@ -194,6 +198,7 @@ async def update_user(
     full_name: str = "",
     username: str = "",
     role: str = "",
+    master: str = "",  # ⬅️ ДОБАВЛЕНО
     current_user: dict = Depends(get_current_user)
 ):
     """Обновить данные пользователя (только для суперадмина)"""
@@ -211,6 +216,8 @@ async def update_user(
         updates['username'] = username
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
+    if master:  # ⬅️ ДОБАВЛЕНО
+        updates['master'] = master
     
     if not updates:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
@@ -492,7 +499,6 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            # Заказы по мастерам (все) — используем поле master
             cursor.execute('''
                 SELECT master, COUNT(*) as count 
                 FROM orders 
@@ -502,7 +508,6 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             ''')
             by_master = [dict(row) for row in cursor.fetchall()]
             
-            # Заказы по мастерам (выполненные — Выдано оплачено)
             cursor.execute('''
                 SELECT master, COUNT(*) as count 
                 FROM orders 
