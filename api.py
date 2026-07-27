@@ -64,7 +64,7 @@ class OrderFrom1C(BaseModel):
     date: Optional[str] = None
     status: str
     receiver: Optional[str] = None
-    master: Optional[str] = None  # ⬅️ ДОБАВИТЬ
+    master: Optional[str] = None
     phone: Optional[str] = None
     client_name: Optional[str] = None
     device: Optional[str] = None
@@ -150,6 +150,17 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     users = db.get_all_users()
     return JSONResponse({"success": True, "data": users})
 
+@app.get("/api/users/{telegram_id}")
+async def get_user(telegram_id: str, current_user: dict = Depends(get_current_user)):
+    """Получить данные пользователя по ID (только для суперадмина)"""
+    if current_user["role"] != 'superadmin':
+        raise HTTPException(status_code=403, detail="Только суперадмин может просматривать пользователей")
+    
+    user = db.get_user(telegram_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return JSONResponse({"success": True, "data": user})
+
 @app.post("/api/users")
 async def add_user(
     telegram_id: str,
@@ -176,6 +187,39 @@ async def add_user(
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
     else:
         raise HTTPException(status_code=400, detail="Не удалось добавить пользователя")
+
+@app.put("/api/users/{telegram_id}")
+async def update_user(
+    telegram_id: str,
+    full_name: str = "",
+    username: str = "",
+    role: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    """Обновить данные пользователя (только для суперадмина)"""
+    if current_user["role"] != 'superadmin':
+        raise HTTPException(status_code=403, detail="Только суперадмин может редактировать пользователей")
+    
+    user = db.get_user(telegram_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    updates = {}
+    if full_name:
+        updates['full_name'] = full_name
+    if username:
+        updates['username'] = username
+    if role and role in ['user', 'admin', 'superadmin']:
+        updates['role'] = role
+    
+    if not updates:
+        raise HTTPException(status_code=400, detail="Нет данных для обновления")
+    
+    success = db.update_user(telegram_id, updates)
+    if success:
+        return JSONResponse({"success": True, "message": "Пользователь обновлен"})
+    else:
+        raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
 
 @app.put("/api/users/{telegram_id}/role")
 async def update_user_role(
@@ -256,7 +300,7 @@ async def receive_order_from_1c(
             date=order_data.date,
             status=order_data.status,
             receiver=order_data.receiver,
-            master=order_data.master,  # ⬅️ ДОБАВИТЬ
+            master=order_data.master,
             phone=order_data.phone,
             client_name=order_data.client_name,
             device=order_data.device,
@@ -291,7 +335,6 @@ async def get_orders(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        # Получаем все заказы в зависимости от роли
         if current_user["role"] in ['admin', 'superadmin']:
             if search:
                 results = db.search_orders(search)
@@ -311,9 +354,8 @@ async def get_orders(
                 results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
             results = results[offset:offset + limit]
         
-        # Фильтр по мастеру
         if master:
-            results = [o for o in results if o.get('receiver') == master]
+            results = [o for o in results if o.get('master') == master]
         
         return JSONResponse({
             "success": True,
@@ -379,15 +421,15 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
 # ============================================================
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
-    """Получить список всех мастеров (приёмщиков)"""
+    """Получить список всех мастеров из поля master"""
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT DISTINCT receiver as name 
+                SELECT DISTINCT master as name 
                 FROM orders 
-                WHERE receiver IS NOT NULL AND receiver != ''
-                ORDER BY receiver
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
             ''')
             masters = [row['name'] for row in cursor.fetchall()]
         return JSONResponse({"success": True, "data": masters})
@@ -448,26 +490,25 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     try:
         stats = db.get_detailed_stats()
         
-        # Дополнительная статистика по мастерам
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            # Заказы по мастерам (все)
+            # Заказы по мастерам (все) — используем поле master
             cursor.execute('''
-                SELECT receiver, COUNT(*) as count 
+                SELECT master, COUNT(*) as count 
                 FROM orders 
-                WHERE receiver IS NOT NULL AND receiver != ''
-                GROUP BY receiver
+                WHERE master IS NOT NULL AND master != ''
+                GROUP BY master
                 ORDER BY count DESC
             ''')
             by_master = [dict(row) for row in cursor.fetchall()]
             
             # Заказы по мастерам (выполненные — Выдано оплачено)
             cursor.execute('''
-                SELECT receiver, COUNT(*) as count 
+                SELECT master, COUNT(*) as count 
                 FROM orders 
-                WHERE receiver IS NOT NULL AND receiver != ''
+                WHERE master IS NOT NULL AND master != ''
                 AND status = 'Выдано (оплачено)'
-                GROUP BY receiver
+                GROUP BY master
                 ORDER BY count DESC
             ''')
             by_master_done = [dict(row) for row in cursor.fetchall()]
