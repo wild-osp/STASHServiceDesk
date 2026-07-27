@@ -10,11 +10,11 @@ from typing import Optional, List, Dict, Any
 
 @dataclass
 class Order:
-    """Модель заказа"""
     order_number: str
     date: Optional[str] = None
     status: Optional[str] = None
     receiver: Optional[str] = None
+    master: Optional[str] = None  # ⬅️ ДОБАВИТЬ
     phone: Optional[str] = None
     client_name: Optional[str] = None
     device: Optional[str] = None
