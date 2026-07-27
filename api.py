@@ -64,6 +64,7 @@ class OrderFrom1C(BaseModel):
     date: Optional[str] = None
     status: str
     receiver: Optional[str] = None
+    master: Optional[str] = None  # ⬅️ ДОБАВИТЬ
     phone: Optional[str] = None
     client_name: Optional[str] = None
     device: Optional[str] = None
@@ -255,6 +256,7 @@ async def receive_order_from_1c(
             date=order_data.date,
             status=order_data.status,
             receiver=order_data.receiver,
+            master=order_data.master,  # ⬅️ ДОБАВИТЬ
             phone=order_data.phone,
             client_name=order_data.client_name,
             device=order_data.device,
