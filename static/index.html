@@ -652,6 +652,7 @@
             <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserPhone" placeholder="Телефон" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
                 <option value="user">Сотрудник</option>
                 <option value="admin">Администратор</option>
@@ -693,6 +694,10 @@
             <div class="form-group">
                 <label>Username</label>
                 <input id="editUsername" placeholder="Введите username">
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input id="editPhone" placeholder="Введите телефон">
             </div>
             <div class="form-group">
                 <label>Роль</label>
@@ -750,7 +755,7 @@
                     USER_ROLE = currentUser.role;
                     document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
                     document.getElementById('profileName').textContent = currentUser.full_name;
-                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
+                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div><div style="font-size:13px;color:var(--text-secondary);">📱 ' + (currentUser.phone || 'Не указан') + '</div></div></div></div>';
                     
                     if (USER_ROLE !== 'superadmin') {
                         const addBtn = document.getElementById('addUserBtn');
@@ -951,7 +956,7 @@
                 historyHtml;
         }
 
-        // ===== КЛИЕНТ =====
+        // ===== КЛИЕНТ (ИСПРАВЛЕНО) =====
         function showClient(phone) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-client').classList.add('active');
@@ -960,22 +965,31 @@
             let container = document.getElementById('clientContent');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
 
+            // Ищем заказы по телефону
             apiFetch('/orders?search=' + encodeURIComponent(phone)).then(r => {
                 if (r.success) {
                     let orders = r.data;
-                    let total = orders.length;
+                    
+                    // Фильтруем заказы по точному совпадению телефона
+                    let cleanPhone = phone.replace(/[^0-9+]/g, '');
+                    let filteredOrders = orders.filter(o => {
+                        let orderPhone = (o.phone || '').replace(/[^0-9+]/g, '');
+                        return orderPhone === cleanPhone || orderPhone.includes(cleanPhone);
+                    });
+
+                    let total = filteredOrders.length;
                     let statusCount = {};
                     let devices = new Set();
-                    orders.forEach(o => {
+                    filteredOrders.forEach(o => {
                         let s = o.status || 'Без статуса';
                         statusCount[s] = (statusCount[s] || 0) + 1;
                         if (o.device) devices.add(o.device);
                     });
                     let topStatus = Object.entries(statusCount).sort((a,b) => b[1]-a[1])[0];
 
-                    let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
+                    let listHtml = filteredOrders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
 
-                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
+                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (filteredOrders[0]?.client_name || 'Клиент') + '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + filteredOrders.length + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
                 } else {
                     container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
                 }
@@ -1191,6 +1205,7 @@
                         document.getElementById('editUserId').value = u.telegram_id;
                         document.getElementById('editFullName').value = u.full_name || '';
                         document.getElementById('editUsername').value = u.username || '';
+                        document.getElementById('editPhone').value = u.phone || '';
                         document.getElementById('editRole').value = u.role || 'user';
                         // Устанавливаем мастера
                         const masterSelect = document.getElementById('editMaster');
@@ -1216,6 +1231,7 @@
             if (!editingTelegramId) return;
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
@@ -1234,6 +1250,7 @@
                     body: JSON.stringify({ 
                         full_name, 
                         username, 
+                        phone,
                         role, 
                         master: master || null
                     })
@@ -1268,6 +1285,7 @@
             const telegram_id = document.getElementById('newUserId').value.trim();
             const full_name = document.getElementById('newUserName').value.trim();
             const username = document.getElementById('newUserUsername').value.trim();
+            const phone = document.getElementById('newUserPhone').value.trim();
             const role = document.getElementById('newUserRole').value;
 
             if (!telegram_id || !full_name) {
@@ -1276,12 +1294,13 @@
             }
 
             try {
-                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&role=' + role, { method: 'POST' });
+                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&phone=' + encodeURIComponent(phone) + '&role=' + role, { method: 'POST' });
                 alert('✅ Пользователь добавлен');
                 document.getElementById('addUserForm').style.display = 'none';
                 document.getElementById('newUserId').value = '';
                 document.getElementById('newUserName').value = '';
                 document.getElementById('newUserUsername').value = '';
+                document.getElementById('newUserPhone').value = '';
                 loadUsers();
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
