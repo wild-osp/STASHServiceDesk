@@ -91,8 +91,7 @@ async def get_current_user(
         "username": user['username'] or '',
         "full_name": user['full_name'] or '',
         "role": user['role'] or 'user',
-        "master": user.get('master', ''),
-        "phone": user.get('phone', '')
+        "master": user.get('master', '')  # ⬅️ ДОБАВЛЕНО
     }
 
 # ============================================================
@@ -139,8 +138,7 @@ async def check_user(
             "username": user['username'] or '',
             "full_name": user['full_name'] or '',
             "role": user['role'] or 'user',
-            "master": user.get('master', ''),
-            "phone": user.get('phone', '')
+            "master": user.get('master', '')  # ⬅️ ДОБАВЛЕНО
         }
     })
 
@@ -171,8 +169,7 @@ async def add_user(
     username: str = "",
     full_name: str = "",
     role: str = "user",
-    master: str = "",
-    phone: str = "",
+    master: str = "",  # ⬅️ ДОБАВЛЕНО
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] not in ['admin', 'superadmin']:
@@ -188,7 +185,8 @@ async def add_user(
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
     
-    success = db.add_user(telegram_id, username, full_name, role, master, phone)
+    # Добавляем пользователя с мастером
+    success = db.add_user(telegram_id, username, full_name, role, master)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
     else:
@@ -200,8 +198,7 @@ async def update_user(
     full_name: str = "",
     username: str = "",
     role: str = "",
-    master: str = "",
-    phone: str = "",
+    master: str = "",  # ⬅️ ДОБАВЛЕНО
     current_user: dict = Depends(get_current_user)
 ):
     """Обновить данные пользователя (только для суперадмина)"""
@@ -219,10 +216,8 @@ async def update_user(
         updates['username'] = username
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
-    if master is not None:  # Позволяем снять мастера
+    if master:  # ⬅️ ДОБАВЛЕНО
         updates['master'] = master
-    if phone:
-        updates['phone'] = phone
     
     if not updates:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
@@ -336,7 +331,7 @@ async def receive_order_from_1c(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# ЗАКАЗЫ (исправлено - фильтрация в SQL)
+# ЗАКАЗЫ
 # ============================================================
 @app.get("/api/orders")
 async def get_orders(
@@ -344,33 +339,30 @@ async def get_orders(
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
     master: Optional[str] = None,
-    status: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     try:
         if current_user["role"] in ['admin', 'superadmin']:
-            # Фильтрация в SQL (исправлено)
-            results = db.get_all_orders(limit, offset, master, status, search)
-            total = db.get_orders_count(master, status, search)
+            if search:
+                results = db.search_orders(search)
+                total = len(results)
+                results = results[offset:offset + limit]
+            else:
+                results = db.get_all_orders(limit, offset)
+                with db.get_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT COUNT(*) as total FROM orders')
+                    total = cursor.fetchone()['total']
         else:
-            # Для обычных пользователей - фильтрация по телефону
-            user_orders = db.get_user_orders(current_user["user_id"], "user")
-            total = len(user_orders)
-            
-            # Фильтруем на клиенте для обычных пользователей
-            if master:
-                user_orders = [o for o in user_orders if o.get('master') == master]
-            if status and status != 'all':
-                user_orders = [o for o in user_orders if o.get('status') == status]
+            results = db.get_user_orders(current_user["user_id"], "user")
+            total = len(results)
             if search:
                 search_lower = search.lower()
-                user_orders = [o for o in user_orders if 
-                    search_lower in (o.get('order_number') or '').lower() or 
-                    search_lower in (o.get('client_name') or '').lower() or 
-                    search_lower in (o.get('phone') or '').lower() or
-                    search_lower in (o.get('device') or '').lower()]
-            
-            results = user_orders[offset:offset + limit]
+                results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
+            results = results[offset:offset + limit]
+        
+        if master:
+            results = [o for o in results if o.get('master') == master]
         
         return JSONResponse({
             "success": True,
@@ -389,23 +381,12 @@ async def get_order(order_id: int, current_user: dict = Depends(get_current_user
             order = cursor.fetchone()
             if not order:
                 raise HTTPException(status_code=404, detail="Заказ не найден")
-            
             if current_user["role"] not in ['admin', 'superadmin']:
-                # Проверяем доступ по телефону пользователя
-                user = db.get_user(current_user["user_id"])
-                if user and user.get('phone'):
-                    clean_user_phone = ''.join(filter(str.isdigit, user['phone']))
-                    clean_order_phone = ''.join(filter(str.isdigit, order['phone'] or ''))
-                    if clean_user_phone not in clean_order_phone:
-                        raise HTTPException(status_code=403, detail="Доступ запрещен")
-                else:
-                    # Старый способ проверки
-                    user_id = current_user["user_id"]
-                    phone = order['phone'] or ''
-                    client_name = order['client_name'] or ''
-                    if user_id not in phone and user_id not in client_name:
-                        raise HTTPException(status_code=403, detail="Доступ запрещен")
-            
+                user_id = current_user["user_id"]
+                phone = order['phone'] or ''
+                client_name = order['client_name'] or ''
+                if user_id not in phone and user_id not in client_name:
+                    raise HTTPException(status_code=403, detail="Доступ запрещен")
             cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
             history = [dict(row) for row in cursor.fetchall()]
             result = dict(order)
@@ -425,21 +406,12 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
             order = cursor.fetchone()
             if not order:
                 raise HTTPException(status_code=404, detail="Заказ не найден")
-            
             if current_user["role"] not in ['admin', 'superadmin']:
-                user = db.get_user(current_user["user_id"])
-                if user and user.get('phone'):
-                    clean_user_phone = ''.join(filter(str.isdigit, user['phone']))
-                    clean_order_phone = ''.join(filter(str.isdigit, order['phone'] or ''))
-                    if clean_user_phone not in clean_order_phone:
-                        raise HTTPException(status_code=403, detail="Доступ запрещен")
-                else:
-                    user_id = current_user["user_id"]
-                    phone = order['phone'] or ''
-                    client_name = order['client_name'] or ''
-                    if user_id not in phone and user_id not in client_name:
-                        raise HTTPException(status_code=403, detail="Доступ запрещен")
-            
+                user_id = current_user["user_id"]
+                phone = order['phone'] or ''
+                client_name = order['client_name'] or ''
+                if user_id not in phone and user_id not in client_name:
+                    raise HTTPException(status_code=403, detail="Доступ запрещен")
             order_id = order['id']
             cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
             history = [dict(row) for row in cursor.fetchall()]
@@ -452,13 +424,21 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# МАСТЕРА (исправлено - из таблицы users)
+# МАСТЕРА
 # ============================================================
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
-    """Получить список всех мастеров из таблицы users"""
+    """Получить список всех мастеров из поля master"""
     try:
-        masters = db.get_masters()
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT master as name 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
+            ''')
+            masters = [row['name'] for row in cursor.fetchall()]
         return JSONResponse({"success": True, "data": masters})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -508,48 +488,34 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# АДМИНСКАЯ АНАЛИТИКА (с фильтром по месяцу/году)
+# АДМИНСКАЯ АНАЛИТИКА
 # ============================================================
 @app.get("/api/admin/dashboard")
-async def get_dashboard_stats(
-    month: Optional[int] = None,
-    year: Optional[int] = None,
-    current_user: dict = Depends(get_current_user)
-):
+async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен. Требуются права администратора.")
     try:
-        stats = db.get_detailed_stats(month, year)
+        stats = db.get_detailed_stats()
         
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            
-            # Фильтр по дате для статистики по мастерам
-            date_filter = ""
-            params = []
-            if month and year:
-                date_filter = " WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?"
-                params = [str(month).zfill(2), str(year)]
-            
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT master, COUNT(*) as count 
                 FROM orders 
                 WHERE master IS NOT NULL AND master != ''
-                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
                 GROUP BY master
                 ORDER BY count DESC
-            ''', params)
+            ''')
             by_master = [dict(row) for row in cursor.fetchall()]
             
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT master, COUNT(*) as count 
                 FROM orders 
                 WHERE master IS NOT NULL AND master != ''
                 AND status = 'Выдано (оплачено)'
-                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
                 GROUP BY master
                 ORDER BY count DESC
-            ''', params)
+            ''')
             by_master_done = [dict(row) for row in cursor.fetchall()]
         
         return JSONResponse({
