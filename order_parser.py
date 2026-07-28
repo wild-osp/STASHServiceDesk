@@ -3,10 +3,38 @@
 Модуль для парсинга заказов из текста сообщений 1С
 """
 
+import os
 import re
+import sys
 from datetime import datetime
 from typing import Optional, Dict, Any
 from models import Order
+
+# ============================================================
+# ЕДИНЫЙ ПУТЬ К БАЗЕ ДАННЫХ
+# ============================================================
+# Устанавливаем путь к БД из переменных окружения или используем стандартный
+DATA_DIR = os.getenv('DATA_DIR', '/app/data')
+DB_PATH = os.getenv('DB_PATH', os.path.join(DATA_DIR, 'orders.db'))
+
+# Убеждаемся, что папка существует
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# Устанавливаем переменную окружения для других модулей
+os.environ['DB_PATH'] = DB_PATH
+
+print(f"📂 Бот использует базу данных: {DB_PATH}")
+
+# Проверяем, существует ли база данных
+if os.path.exists(DB_PATH):
+    size = os.path.getsize(DB_PATH)
+    print(f"✅ База данных найдена, размер: {size} байт")
+else:
+    print(f"⚠️ База данных не найдена, будет создана новая: {DB_PATH}")
+
+# Импортируем Database только после установки DB_PATH
+from database import get_db
+db = get_db()
 
 
 class OrderParser:
