@@ -15,7 +15,7 @@ class Database:
     """Класс для управления базой данных заказов"""
     
     def __init__(self, db_path: str = None):
-        # ЕДИНЫЙ ПУТЬ К БАЗЕ ДАННЫХ - только здесь
+        # ЕДИНЫЙ ПУТЬ К БАЗЕ ДАННЫХ
         if db_path is None:
             db_path = os.getenv('DB_PATH', '/app/data/orders.db')
         
@@ -224,6 +224,8 @@ class Database:
                 order_id = existing['id']
                 old_status = existing['status']
                 
+                print(f"📝 Обновление заказа #{order.order_number}: старый статус '{old_status}', новый статус '{order.status}'")
+                
                 cursor.execute('''
                     UPDATE orders SET
                         date = ?,
@@ -259,6 +261,7 @@ class Database:
                 
                 # Записываем историю только если статус изменился
                 if order.status and old_status != order.status:
+                    print(f"📝 Записываем историю: статус изменен с '{old_status}' на '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -267,12 +270,19 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
-                    print(f"📝 История: статус изменен с '{old_status}' на '{order.status}'")
+                    conn.commit()
+                    print(f"✅ История записана для заказа #{order.order_number}")
+                else:
+                    if order.status == old_status:
+                        print(f"ℹ️ Статус не изменился, история не записана")
+                    else:
+                        print(f"⚠️ Статус пустой, история не записана")
                 
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
                 return order_id
             else:
+                print(f"📝 Создание нового заказа #{order.order_number}")
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, master,
@@ -303,6 +313,7 @@ class Database:
                 
                 # Записываем начальный статус в историю
                 if order.status:
+                    print(f"📝 Записываем начальный статус '{order.status}' для заказа #{order.order_number}")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -311,7 +322,8 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
-                    print(f"📝 История: создан заказ со статусом '{order.status}'")
+                    conn.commit()
+                    print(f"✅ Начальный статус записан")
                 
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
@@ -538,12 +550,12 @@ class Database:
     # МЕТОДЫ ДЛЯ МАСТЕРОВ
     # ============================================================
     def get_masters(self) -> List[str]:
-        """Получает список всех мастеров из таблицы users"""
+        """Получает список всех мастеров из заказов"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT DISTINCT master as name 
-                FROM users 
+                FROM orders 
                 WHERE master IS NOT NULL AND master != ''
                 ORDER BY master
             ''')
