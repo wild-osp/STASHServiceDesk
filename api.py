@@ -26,7 +26,6 @@ def run_bot():
     """Запускает бота в отдельном процессе при старте API"""
     time.sleep(5)
     try:
-        # Передаем путь к БД в переменные окружения для бота
         env = os.environ.copy()
         subprocess.Popen(["python", "orders_bot.py"], env=env)
         print("🚀 Бот автоматически запущен из API")
@@ -221,7 +220,7 @@ async def update_user(
         updates['username'] = username
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
-    if master is not None:  # Позволяем снять мастера (передать пустую строку)
+    if master is not None:
         updates['master'] = master
     if phone is not None:
         updates['phone'] = phone
@@ -338,7 +337,7 @@ async def receive_order_from_1c(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# ЗАКАЗЫ (ИСПРАВЛЕНО)
+# ЗАКАЗЫ
 # ============================================================
 @app.get("/api/orders")
 async def get_orders(
@@ -351,17 +350,13 @@ async def get_orders(
 ):
     try:
         if current_user["role"] in ['admin', 'superadmin']:
-            # Фильтрация в SQL (ИСПРАВЛЕНО)
             results = db.get_all_orders(limit, offset, master, status, search)
             total = db.get_orders_count(master, status, search)
         else:
-            # Для обычных пользователей - по телефону
             user = db.get_user(current_user["user_id"])
             if user and user.get('phone'):
-                # Ищем по телефону пользователя
                 clean_phone = ''.join(filter(str.isdigit, user['phone']))
                 results = db.get_all_orders(limit, offset, master, status, search)
-                # Фильтруем по телефону
                 results = [o for o in results if clean_phone in ''.join(filter(str.isdigit, o.get('phone', '')))]
                 total = len(results)
             else:
@@ -391,7 +386,6 @@ async def get_order(order_id: int, current_user: dict = Depends(get_current_user
                 raise HTTPException(status_code=404, detail="Заказ не найден")
             
             if current_user["role"] not in ['admin', 'superadmin']:
-                # Проверяем доступ по телефону пользователя (ИСПРАВЛЕНО)
                 user = db.get_user(current_user["user_id"])
                 if user and user.get('phone'):
                     clean_user_phone = ''.join(filter(str.isdigit, user['phone']))
@@ -451,15 +445,17 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# МАСТЕРА (ИСПРАВЛЕНО - из таблицы users)
+# МАСТЕРА (ИСПРАВЛЕНО - берем из заказов)
 # ============================================================
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
-    """Получить список всех мастеров из таблицы users"""
+    """Получить список всех мастеров из заказов"""
     try:
         masters = db.get_masters()
+        print(f"📋 Найдено мастеров: {len(masters)} - {masters}")
         return JSONResponse({"success": True, "data": masters})
     except Exception as e:
+        print(f"❌ Ошибка получения мастеров: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
@@ -507,7 +503,7 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# АДМИНСКАЯ АНАЛИТИКА (С ПОДДЕРЖКОЙ МЕСЯЦА/ГОДА)
+# АДМИНСКАЯ АНАЛИТИКА
 # ============================================================
 @app.get("/api/admin/dashboard")
 async def get_dashboard_stats(
@@ -523,7 +519,6 @@ async def get_dashboard_stats(
         with db.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Фильтр по дате для статистики по мастерам
             date_filter = ""
             params = []
             if month and year:
@@ -583,6 +578,66 @@ async def search_orders(
             total = len(results)
             results = results[:limit]
         return JSONResponse({"success": True, "data": results, "total": total, "limit": limit})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# ДИАГНОСТИКА - ПРОВЕРКА ИСТОРИИ
+# ============================================================
+@app.get("/api/debug/history/{order_number}")
+async def debug_history(order_number: str, current_user: dict = Depends(get_current_user)):
+    """Диагностический эндпоинт для проверки истории"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Только администратор")
+    
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
+            order = cursor.fetchone()
+            if not order:
+                return JSONResponse({"error": "Заказ не найден"})
+            
+            order_id = order['id']
+            
+            cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at', (order_id,))
+            history = [dict(row) for row in cursor.fetchall()]
+            
+            cursor.execute('SELECT COUNT(*) as total FROM order_history')
+            total_history = cursor.fetchone()['total']
+            
+            return JSONResponse({
+                "order": dict(order),
+                "history": history,
+                "history_count": len(history),
+                "total_history_records": total_history
+            })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# ДИАГНОСТИКА - ВСЕ ЗАКАЗЫ
+# ============================================================
+@app.get("/api/debug/orders")
+async def debug_orders(current_user: dict = Depends(get_current_user)):
+    """Диагностический эндпоинт - все заказы"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Только администратор")
+    
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT order_number, status, master, phone, client_name FROM orders LIMIT 10')
+            orders = [dict(row) for row in cursor.fetchall()]
+            
+            cursor.execute('SELECT COUNT(*) as total FROM orders')
+            total = cursor.fetchone()['total']
+            
+            return JSONResponse({
+                "total": total,
+                "sample": orders
+            })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
