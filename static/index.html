@@ -182,7 +182,6 @@
             font-weight: 500;
         }
 
-        /* Стили для карточки заказа */
         .detail-section {
             background: var(--bg-secondary);
             border-radius: var(--radius);
@@ -797,10 +796,7 @@
                 <label>Username</label>
                 <input id="editUsername" placeholder="Введите username">
             </div>
-            <div class="form-group">
-                <label>Телефон</label>
-                <input id="editPhone" placeholder="Введите телефон">
-            </div>
+            <!-- ПОЛЕ PHONE УБРАНО -->
             <div class="form-group">
                 <label>Роль</label>
                 <select id="editRole">
@@ -923,7 +919,6 @@
         function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
         function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
 
-        // Форматирование телефона для РБ
         function formatPhone(phone) {
             if (!phone) return '';
             let clean = phone.replace(/[^0-9]/g, '');
@@ -957,7 +952,6 @@
             renderOrders();
         }
 
-        // ===== МАСТЕРА =====
         async function loadMasters() {
             try {
                 const r = await apiFetch('/masters');
@@ -1000,7 +994,6 @@
             renderOrders();
         }
 
-        // ===== ПОДСЧЁТ СТАТУСОВ =====
         async function loadStatusCounts() {
             try {
                 const r = await apiFetch('/status-counts');
@@ -1026,7 +1019,6 @@
             }
         }
 
-        // ===== ДЕТАЛИ ЗАКАЗА =====
         function showDetail(order) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-detail').classList.add('active');
@@ -1059,7 +1051,6 @@
             let formattedPhone = formatPhone(cleanPhone || phone);
             let displayPhone = formattedPhone || phone || '—';
 
-            // Контакты клиента
             let contacts = '';
             if (cleanPhone && cleanPhone.length > 4) {
                 const callLink = `tel:${cleanPhone}`;
@@ -1073,7 +1064,6 @@
                 `;
             }
 
-            // История статусов
             let historyHtml = '';
             if (order.history && order.history.length > 0) {
                 historyHtml = '<div class="detail-section"><div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">📜 История статусов</div>';
@@ -1106,9 +1096,7 @@
             }
             document.getElementById('detailActions').innerHTML = actions;
 
-            // Формируем карточку
             document.getElementById('detailContent').innerHTML = `
-                <!-- Статус + Дата -->
                 <div class="detail-section">
                     <div class="status-date-row">
                         <div>
@@ -1118,7 +1106,6 @@
                     </div>
                 </div>
 
-                <!-- Данные клиента -->
                 <div class="detail-section">
                     <div style="font-size:16px;font-weight:600;">${escapeHtml(order.client_name || '—')}</div>
                     <div style="font-size:15px;color:var(--text-primary);margin-top:4px;">📱 ${escapeHtml(displayPhone)}</div>
@@ -1126,7 +1113,6 @@
                     <button class="action-btn client-btn" onclick="showClientDetail('${cleanPhone}')">👤 Открыть карточку клиента</button>
                 </div>
 
-                <!-- Приёмщик и мастер -->
                 <div class="detail-section">
                     <div class="detail-grid">
                         <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver || '—')}</span></div>
@@ -1134,13 +1120,11 @@
                     </div>
                 </div>
 
-                <!-- Устройство -->
                 <div class="detail-section">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🖥️ Устройство</div>
                     <div style="font-size:16px;">${escapeHtml(order.device || '—')}</div>
                 </div>
 
-                <!-- Неисправность -->
                 <div class="detail-section">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🔧 Неисправность</div>
                     <div class="problem-text">${escapeHtml(order.problem || 'Не указана')}</div>
@@ -1150,7 +1134,6 @@
             `;
         }
 
-        // ===== КЛИЕНТЫ - СПИСОК =====
         function loadClients() {
             let container = document.getElementById('clientsList');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
@@ -1181,7 +1164,6 @@
             const clientsMap = new Map();
             orders.forEach(o => {
                 const phone = o.phone || '';
-                // Приводим к единому формату – только цифры
                 const cleanPhone = phone.replace(/[^0-9]/g, '');
                 if (!cleanPhone) return;
                 
@@ -1189,7 +1171,7 @@
                 if (!clientsMap.has(key)) {
                     clientsMap.set(key, {
                         phone: phone,
-                        cleanPhone: cleanPhone, // только цифры
+                        cleanPhone: cleanPhone,
                         name: o.client_name || 'Без имени',
                         orders: [],
                         devices: new Set()
@@ -1243,7 +1225,6 @@
             container.innerHTML = html;
         }
 
-        // ===== ДЕТАЛИ КЛИЕНТА =====
         function showClientDetail(phone) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-client').classList.add('active');
@@ -1252,7 +1233,6 @@
             let container = document.getElementById('clientContent');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
 
-            // Приводим переданный номер к единому формату (только цифры)
             let cleanPhone = phone.replace(/[^0-9]/g, '');
             
             if (allOrders && allOrders.length > 0) {
@@ -1276,7 +1256,6 @@
         function renderClientDetail(cleanPhone, orders) {
             let container = document.getElementById('clientContent');
             
-            // Сравниваем только цифры
             let filteredOrders = orders.filter(o => {
                 let orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
                 return orderPhone === cleanPhone;
@@ -1303,7 +1282,6 @@
                 return;
             }
 
-            // Контакты клиента
             let contacts = '';
             const clean = rawPhone.replace(/[^0-9]/g, '');
             if (clean && clean.length > 4) {
@@ -1355,7 +1333,6 @@
             `;
         }
 
-        // Поиск клиентов
         document.getElementById('clientSearchInput')?.addEventListener('input', function() {
             const query = this.value.toLowerCase().trim();
             if (!query) {
@@ -1380,7 +1357,6 @@
             renderClients(filtered);
         });
 
-        // ===== ЗАГРУЗКА ЗАКАЗОВ =====
         async function loadOrders() {
             try {
                 let url = '/orders?limit=200';
@@ -1447,7 +1423,6 @@
             renderOrders();
         });
 
-        // ===== АНАЛИТИКА =====
         async function loadAnalytics() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
                 document.getElementById('dashboardContent').innerHTML = 
@@ -1537,7 +1512,6 @@
             await loadAnalytics();
         }
 
-        // ===== ПОЛЬЗОВАТЕЛИ =====
         async function loadUsers() {
             if (USER_ROLE !== 'superadmin') {
                 document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Только суперадмин может управлять пользователями</h3></div>';
@@ -1567,7 +1541,6 @@
             }
         }
 
-        // ===== РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ =====
         function openUserEdit(telegram_id) {
             if (USER_ROLE !== 'superadmin') {
                 alert('Только суперадмин может редактировать пользователей');
@@ -1585,7 +1558,6 @@
                         document.getElementById('editUserId').value = u.telegram_id;
                         document.getElementById('editFullName').value = u.full_name || '';
                         document.getElementById('editUsername').value = u.username || '';
-                        document.getElementById('editPhone').value = u.phone || '';
                         document.getElementById('editRole').value = u.role || 'user';
                         const masterSelect = document.getElementById('editMaster');
                         if (u.master) {
@@ -1610,7 +1582,6 @@
             if (!editingTelegramId) return;
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
@@ -1629,9 +1600,8 @@
                     body: JSON.stringify({ 
                         full_name, 
                         username, 
-                        phone,
                         role, 
-                        master: master || null
+                        master: master || ''
                     })
                 });
                 
@@ -1701,7 +1671,6 @@
             }
         }
 
-        // ===== УДАЛЕНИЕ ЗАКАЗА =====
         async function deleteOrder(orderNumber) {
             if (USER_ROLE !== 'superadmin' && USER_ROLE !== 'admin') {
                 alert('Только администратор может удалять заказы');
@@ -1718,7 +1687,6 @@
             }
         }
 
-        // ===== АВТООБНОВЛЕНИЕ =====
         setInterval(() => {
             if (document.getElementById('page-orders').classList.contains('active')) {
                 loadOrders();
