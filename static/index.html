@@ -753,7 +753,6 @@
             <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
-            <input id="newUserPhone" placeholder="Телефон" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
                 <option value="user">Сотрудник</option>
                 <option value="admin">Администратор</option>
@@ -764,7 +763,6 @@
                 <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:10px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:15px;">Отмена</button>
             </div>
         </div>
-    </div>
 
     <!-- ===== СТРАНИЦА ПРОФИЛЯ ===== -->
     <div class="page" id="page-profile">
@@ -1634,7 +1632,6 @@
             const telegram_id = document.getElementById('newUserId').value.trim();
             const full_name = document.getElementById('newUserName').value.trim();
             const username = document.getElementById('newUserUsername').value.trim();
-            const phone = document.getElementById('newUserPhone').value.trim();
             const role = document.getElementById('newUserRole').value;
 
             if (!telegram_id || !full_name) {
