@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Модуль для работы с базой данных SQLite
+С поддержкой синхронизации с GitHub и таблицей пользователей
 """
 
 import sqlite3
@@ -9,33 +10,16 @@ import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from models import Order, OrderHistory
+from db_sync import db_sync
 
 
 class Database:
     """Класс для управления базой данных заказов"""
     
     def __init__(self, db_path: str = None):
-        # ЕДИНЫЙ ПУТЬ К БАЗЕ ДАННЫХ
         if db_path is None:
             db_path = os.getenv('DB_PATH', '/app/data/orders.db')
-        
-        # Создаем папку для базы данных, если её нет
-        db_dir = os.path.dirname(db_path)
-        if db_dir and not os.path.exists(db_dir):
-            os.makedirs(db_dir, exist_ok=True)
-            print(f"📁 Создана папка для БД: {db_dir}")
-        
         self.db_path = db_path
-        print(f"📂 Путь к базе данных: {self.db_path}")
-        
-        # Проверяем, существует ли файл БД
-        if os.path.exists(self.db_path):
-            print(f"✅ База данных найдена: {self.db_path}")
-            size = os.path.getsize(self.db_path)
-            print(f"📊 Размер БД: {size} байт")
-        else:
-            print(f"⚠️ База данных не найдена, будет создана новая: {self.db_path}")
-        
         self.init_database()
         self.init_users_table()
     
@@ -83,26 +67,24 @@ class Database:
                 )
             ''')
             
-            # Индексы для быстрого поиска
+            # Индексы
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_phone ON orders(phone)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_client_name ON orders(client_name)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_device ON orders(device)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_status ON orders(status)')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_master ON orders(master)')
             
             conn.commit()
             
-            # Проверяем количество заказов
             cursor.execute('SELECT COUNT(*) as count FROM orders')
             count = cursor.fetchone()['count']
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
     # ============================================================
-    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ
+    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (добавлено поле master)
     # ============================================================
     def init_users_table(self):
-        """Создает таблицу пользователей с полем master и phone"""
+        """Создает таблицу пользователей с полем master"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -113,35 +95,18 @@ class Database:
                     full_name TEXT,
                     role TEXT DEFAULT 'user',
                     master TEXT,
-                    phone TEXT,
                     created_at TEXT,
                     updated_at TEXT
                 )
             ''')
             conn.commit()
-            
-            # Проверяем количество пользователей
-            cursor.execute('SELECT COUNT(*) as count FROM users')
-            count = cursor.fetchone()['count']
-            print(f"✅ Таблица пользователей готова ({count} пользователей)")
+            print("✅ Таблица пользователей создана")
 
     def get_user(self, telegram_id: str) -> Optional[Dict[str, Any]]:
         """Получает пользователя по Telegram ID"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,))
-            row = cursor.fetchone()
-            return dict(row) if row else None
-
-    def get_user_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
-        """Получает пользователя по номеру телефона"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            clean_phone = ''.join(filter(str.isdigit, phone))
-            cursor.execute('''
-                SELECT * FROM users 
-                WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, '+', ''), ' ', ''), '-', ''), '(', '') LIKE ?
-            ''', (f'%{clean_phone}%',))
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -152,15 +117,15 @@ class Database:
             cursor.execute('SELECT * FROM users ORDER BY role DESC, full_name')
             return [dict(row) for row in cursor.fetchall()]
 
-    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user', master: str = '', phone: str = '') -> bool:
-        """Добавляет нового пользователя"""
+    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user', master: str = '') -> bool:
+        """Добавляет нового пользователя (с поддержкой мастера)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute('''
-                    INSERT INTO users (telegram_id, username, full_name, role, master, phone, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (telegram_id, username, full_name, role, master, phone, datetime.now().isoformat(), datetime.now().isoformat()))
+                    INSERT INTO users (telegram_id, username, full_name, role, master, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (telegram_id, username, full_name, role, master, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.commit()
                 print(f"✅ Пользователь {full_name} добавлен с ролью {role} и мастером {master}")
                 return True
@@ -169,7 +134,7 @@ class Database:
                 return False
 
     def update_user(self, telegram_id: str, updates: Dict[str, Any]) -> bool:
-        """Обновляет данные пользователя"""
+        """Обновляет данные пользователя (включая master)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
@@ -210,7 +175,7 @@ class Database:
     # МЕТОДЫ ДЛЯ ЗАКАЗОВ
     # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
-        """Сохраняет или обновляет заказ"""
+        """Сохраняет или обновляет заказ и синхронизирует с GitHub"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
@@ -223,8 +188,6 @@ class Database:
             if existing:
                 order_id = existing['id']
                 old_status = existing['status']
-                
-                print(f"📝 Обновление заказа #{order.order_number}: старый статус '{old_status}', новый статус '{order.status}'")
                 
                 cursor.execute('''
                     UPDATE orders SET
@@ -259,9 +222,7 @@ class Database:
                     order.order_number
                 ))
                 
-                # Записываем историю только если статус изменился
                 if order.status and old_status != order.status:
-                    print(f"📝 Записываем историю: статус изменен с '{old_status}' на '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -270,19 +231,12 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
-                    conn.commit()
-                    print(f"✅ История записана для заказа #{order.order_number}")
-                else:
-                    if order.status == old_status:
-                        print(f"ℹ️ Статус не изменился, история не записана")
-                    else:
-                        print(f"⚠️ Статус пустой, история не записана")
                 
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
+                db_sync.sync_on_change(order.order_number)
                 return order_id
             else:
-                print(f"📝 Создание нового заказа #{order.order_number}")
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, master,
@@ -311,9 +265,7 @@ class Database:
                 
                 order_id = cursor.lastrowid
                 
-                # Записываем начальный статус в историю
                 if order.status:
-                    print(f"📝 Записываем начальный статус '{order.status}' для заказа #{order.order_number}")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -322,11 +274,10 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
-                    conn.commit()
-                    print(f"✅ Начальный статус записан")
                 
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
+                db_sync.sync_on_change(order.order_number)
                 return order_id
     
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
@@ -347,7 +298,6 @@ class Database:
             return dict(row) if row else None
     
     def get_order_history(self, order_id: int) -> List[Dict[str, Any]]:
-        """Получает историю статусов заказа"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -377,56 +327,15 @@ class Database:
             ))
             return [dict(row) for row in cursor.fetchall()]
     
-    def get_all_orders(self, limit: int = 200, offset: int = 0, master: str = None, status: str = None, search: str = None) -> List[Dict[str, Any]]:
-        """Получает заказы с фильтрацией в SQL"""
+    def get_all_orders(self, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
-            query = 'SELECT * FROM orders WHERE 1=1'
-            params = []
-            
-            if master:
-                query += ' AND master = ?'
-                params.append(master)
-            
-            if status and status != 'all':
-                query += ' AND status = ?'
-                params.append(status)
-            
-            if search:
-                search_pattern = f'%{search}%'
-                query += ' AND (order_number LIKE ? OR phone LIKE ? OR client_name LIKE ? OR device LIKE ? OR problem LIKE ?)'
-                params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
-            
-            query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-            params.extend([limit, offset])
-            
-            cursor.execute(query, params)
+            cursor.execute('''
+                SELECT * FROM orders 
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?
+            ''', (limit, offset))
             return [dict(row) for row in cursor.fetchall()]
-    
-    def get_orders_count(self, master: str = None, status: str = None, search: str = None) -> int:
-        """Получает количество заказов с фильтрацией"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            
-            query = 'SELECT COUNT(*) as total FROM orders WHERE 1=1'
-            params = []
-            
-            if master:
-                query += ' AND master = ?'
-                params.append(master)
-            
-            if status and status != 'all':
-                query += ' AND status = ?'
-                params.append(status)
-            
-            if search:
-                search_pattern = f'%{search}%'
-                query += ' AND (order_number LIKE ? OR phone LIKE ? OR client_name LIKE ? OR device LIKE ? OR problem LIKE ?)'
-                params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
-            
-            cursor.execute(query, params)
-            return cursor.fetchone()['total']
     
     def get_statistics(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
@@ -456,52 +365,42 @@ class Database:
                 'by_status': by_status
             }
     
-    def get_detailed_stats(self, month: int = None, year: int = None) -> Dict[str, Any]:
-        """Получает детальную статистику с фильтром по месяцу/году"""
+    def get_detailed_stats(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            date_filter = ""
-            params = []
-            if month and year:
-                date_filter = " WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?"
-                params = [str(month).zfill(2), str(year)]
-            
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT date, COUNT(*) as count 
                 FROM orders 
-                {date_filter}
+                WHERE date IS NOT NULL 
                 GROUP BY date 
                 ORDER BY date DESC 
                 LIMIT 7
-            ''', params)
+            ''')
             orders_by_day = [dict(row) for row in cursor.fetchall()]
             
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
                 FROM orders 
                 WHERE status IN ('Готово', 'Выдано (оплачено)', 'Выдано (не оплачено)')
-                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
-            ''', params)
+            ''')
             avg_repair_time = cursor.fetchone()['avg_days'] or 0
             
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT problem, COUNT(*) as count 
                 FROM orders 
                 WHERE problem IS NOT NULL AND problem != ''
-                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
                 GROUP BY problem 
                 ORDER BY count DESC 
                 LIMIT 5
-            ''', params)
+            ''')
             top_problems = [dict(row) for row in cursor.fetchall()]
             
-            cursor.execute(f'''
+            cursor.execute('''
                 SELECT status, COUNT(*) as count 
                 FROM orders 
-                {date_filter}
                 GROUP BY status
-            ''', params)
+            ''')
             status_counts = [dict(row) for row in cursor.fetchall()]
             total = sum(s['count'] for s in status_counts)
             for s in status_counts:
@@ -516,41 +415,26 @@ class Database:
             }
     
     def get_user_orders(self, user_id: str, role: str = 'user') -> List[Dict[str, Any]]:
-        """Получает заказы пользователя по телефону"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            if role in ['admin', 'superadmin']:
+            if role == 'admin' or role == 'superadmin':
                 cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
-                return [dict(row) for row in cursor.fetchall()]
             else:
-                # Получаем телефон пользователя из таблицы users
-                user = self.get_user(user_id)
-                if user and user.get('phone'):
-                    phone = user['phone']
-                    clean_phone = ''.join(filter(str.isdigit, phone))
-                    cursor.execute('''
-                        SELECT * FROM orders 
-                        WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, '+', ''), ' ', ''), '-', ''), '(', '') LIKE ?
-                        ORDER BY created_at DESC 
-                        LIMIT 200
-                    ''', (f'%{clean_phone}%',))
-                else:
-                    # Если у пользователя нет телефона, ищем по ID (для совместимости)
-                    cursor.execute('''
-                        SELECT * FROM orders 
-                        WHERE phone LIKE ? OR client_name LIKE ? 
-                        ORDER BY created_at DESC 
-                        LIMIT 200
-                    ''', (f'%{user_id}%', f'%{user_id}%'))
-                
-                return [dict(row) for row in cursor.fetchall()]
+                cursor.execute('''
+                    SELECT * FROM orders 
+                    WHERE phone LIKE ? OR client_name LIKE ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 200
+                ''', (f'%{user_id}%', f'%{user_id}%'))
+            
+            return [dict(row) for row in cursor.fetchall()]
 
     # ============================================================
     # МЕТОДЫ ДЛЯ МАСТЕРОВ
     # ============================================================
     def get_masters(self) -> List[str]:
-        """Получает список всех мастеров из заказов"""
+        """Получает список всех мастеров из поля master"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -561,19 +445,18 @@ class Database:
             ''')
             return [row['name'] for row in cursor.fetchall()]
     
-    def get_orders_by_master(self, master: str, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
+    def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT * FROM orders 
                 WHERE master = ? 
                 ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
-            ''', (master, limit, offset))
+            ''', (master,))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_master_stats(self) -> Dict[str, Any]:
-        """Получает статистику по мастерам"""
+        """Получает статистику по мастерам (из поля master)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
