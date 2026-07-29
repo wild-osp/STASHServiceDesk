@@ -48,7 +48,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             margin-bottom: 16px;
         }
@@ -189,14 +189,6 @@
             padding: 14px 16px;
             margin-bottom: 10px;
         }
-        .detail-section .section-title {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
         
         /* СТАТУС + ДАТА В ОДНОЙ СТРОКЕ */
         .status-date-row {
@@ -334,7 +326,7 @@
 
         .client-stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
             padding: 8px 0;
         }
@@ -643,7 +635,6 @@
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего</div></div>
             <div class="stat-card"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
-            <div class="stat-card"><div class="stat-number" id="statStatuses">0</div><div class="stat-label">Статусов</div></div>
         </div>
         <div class="search-wrapper">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
@@ -1096,7 +1087,7 @@
             // История статусов
             let historyHtml = '';
             if (order.history && order.history.length > 0) {
-                historyHtml = '<div class="detail-section"><div class="section-title">📜 История статусов</div>';
+                historyHtml = '<div class="detail-section"><div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">📜 История статусов</div>';
                 order.history.forEach(h => {
                     let color = statusColors[h.status] || '#6b7280';
                     let fullDate = '';
@@ -1117,7 +1108,7 @@
                 });
                 historyHtml += '</div>';
             } else {
-                historyHtml = '<div class="detail-section"><div class="section-title">📜 История статусов</div><div style="color:var(--text-secondary);font-size:14px;padding:8px 0;">Нет истории статусов</div></div>';
+                historyHtml = '<div class="detail-section"><div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">📜 История статусов</div><div style="color:var(--text-secondary);font-size:14px;padding:8px 0;">Нет истории статусов</div></div>';
             }
 
             let actions = '';
@@ -1126,31 +1117,28 @@
             }
             document.getElementById('detailActions').innerHTML = actions;
 
-            // Сборка карточки - компактный дизайн
+            // Сборка карточки - без заголовков секций
             document.getElementById('detailContent').innerHTML = `
                 <!-- СТАТУС + ДАТА В ОДНОЙ СТРОКЕ -->
                 <div class="detail-section">
                     <div class="status-date-row">
                         <div>
                             <span class="status-big">${escapeHtml(order.status || 'Новый')}</span>
-                            <span class="order-status status-${getStatusClass(order.status)}" style="margin-left:10px;">${escapeHtml(order.status || 'Новый')}</span>
                         </div>
                         <div class="date-text">📅 ${escapeHtml(order.date || '—')}</div>
                     </div>
                 </div>
 
-                <!-- ДАННЫЕ КЛИЕНТА -->
+                <!-- ДАННЫЕ КЛИЕНТА (без заголовка) -->
                 <div class="detail-section">
-                    <div class="section-title">👤 Данные клиента</div>
                     <div style="font-size:16px;font-weight:600;">${escapeHtml(order.client_name || '—')}</div>
                     <div style="font-size:15px;color:var(--text-primary);margin-top:4px;">📱 ${escapeHtml(displayPhone)}</div>
                     ${contacts}
                     <button class="action-btn client-btn" onclick="showClientDetail('${cleanPhone}')">👤 Открыть карточку клиента</button>
                 </div>
 
-                <!-- ПРИЁМЩИК И МАСТЕР В ДВЕ КОЛОНКИ -->
+                <!-- ПРИЁМЩИК И МАСТЕР (без заголовка) -->
                 <div class="detail-section">
-                    <div class="section-title">👨‍💼 Сотрудники</div>
                     <div class="detail-grid">
                         <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver || '—')}</span></div>
                         <div class="detail-row"><span class="label">Мастер</span><span class="value">${escapeHtml(order.master || '—')}</span></div>
@@ -1159,13 +1147,13 @@
 
                 <!-- УСТРОЙСТВО -->
                 <div class="detail-section">
-                    <div class="section-title">🖥️ Устройство</div>
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🖥️ Устройство</div>
                     <div style="font-size:16px;">${escapeHtml(order.device || '—')}</div>
                 </div>
 
                 <!-- НЕИСПРАВНОСТЬ -->
                 <div class="detail-section">
-                    <div class="section-title">🔧 Неисправность</div>
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🔧 Неисправность</div>
                     <div class="problem-text">${escapeHtml(order.problem || 'Не указана')}</div>
                 </div>
 
@@ -1371,7 +1359,6 @@
                     <div class="client-stats-grid" style="margin-top:8px;">
                         <div class="client-stat-item"><div class="num">${filteredOrders.length}</div><div class="label">Заказов</div></div>
                         <div class="client-stat-item"><div class="num">${devices.size}</div><div class="label">Устройств</div></div>
-                        <div class="client-stat-item"><div class="num">${filteredOrders[0]?.status || '—'}</div><div class="label">Последний статус</div></div>
                     </div>
                 </div>
                 <div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>
@@ -1418,7 +1405,6 @@
                     document.getElementById('statTotal').textContent = r.pagination.total;
                     let today = new Date().toISOString().slice(0,10);
                     document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
-                    document.getElementById('statStatuses').textContent = new Set(allOrders.map(o => o.status).filter(Boolean)).size;
                     renderOrders();
                     loadStatusCounts();
                 }
