@@ -244,8 +244,7 @@ class Database:
                     order.order_number
                 ))
                 
-                # ✅ ИСПРАВЛЕНО: ВСЕГДА записываем историю, даже если статус не изменился
-                # Но делаем это только если есть статус
+                # ✅ ИСПРАВЛЕНО: ВСЕГДА записываем историю, если есть статус
                 if new_status:
                     # Если статус изменился - пишем с новым статусом
                     if old_status != new_status:
@@ -257,12 +256,12 @@ class Database:
                         conn.commit()
                         print(f"✅ История записана для заказа #{order.order_number}")
                     else:
-                        # Если статус не изменился, но заказ обновлен - пишем как "Обновлен"
+                        # Если статус не изменился, но заказ обновлен - пишем текущий статус
                         print(f"📝 ЗАПИСЫВАЕМ ИСТОРИЮ: статус не изменился, но заказ обновлен")
                         cursor.execute('''
-                            INSERT INTO order_history (order_id, status, changed_at, note)
-                            VALUES (?, ?, ?, ?)
-                        ''', (order_id, new_status, datetime.now().isoformat(), "Обновлен из 1С (статус не изменился)"))
+                            INSERT INTO order_history (order_id, status, changed_at)
+                            VALUES (?, ?, ?)
+                        ''', (order_id, new_status, datetime.now().isoformat()))
                         conn.commit()
                         print(f"✅ История обновления записана для заказа #{order.order_number}")
                 else:
@@ -339,7 +338,7 @@ class Database:
                 return order_id
     
     # ============================================================
-    # ОСТАЛЬНЫЕ МЕТОДЫ (без изменений)
+    # ОСТАЛЬНЫЕ МЕТОДЫ
     # ============================================================
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
