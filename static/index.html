@@ -182,15 +182,13 @@
             font-weight: 500;
         }
 
-        /* СТИЛИ ДЛЯ КАРТОЧКИ ЗАКАЗА */
+        /* Стили для карточки заказа */
         .detail-section {
             background: var(--bg-secondary);
             border-radius: var(--radius);
             padding: 14px 16px;
             margin-bottom: 10px;
         }
-        
-        /* СТАТУС + ДАТА В ОДНОЙ СТРОКЕ */
         .status-date-row {
             display: flex;
             justify-content: space-between;
@@ -204,7 +202,6 @@
             font-size: 14px;
             color: var(--text-secondary);
         }
-        
         .detail-row {
             display: flex;
             justify-content: space-between;
@@ -213,14 +210,12 @@
         }
         .detail-row .label { color: var(--text-secondary); }
         .detail-row .value { font-weight: 500; text-align: right; max-width: 60%; }
-        
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 4px 16px;
         }
         .detail-grid .detail-row { border-bottom: none; padding: 4px 0; }
-        
         .problem-text {
             background: var(--bg-primary);
             padding: 12px;
@@ -234,7 +229,6 @@
             word-break: break-word;
         }
 
-        /* КОНТАКТЫ КЛИЕНТА В КАРТОЧКЕ */
         .client-contact-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -929,29 +923,25 @@
         function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
         function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
 
-        // Функция форматирования телефона для РБ
+        // Форматирование телефона для РБ
         function formatPhone(phone) {
             if (!phone) return '';
             let clean = phone.replace(/[^0-9]/g, '');
             if (clean.startsWith('375')) {
                 clean = clean.slice(3);
-                // Мобильные: 2 цифры код (25, 29, 33, 44)
                 if (clean.length === 9) {
                     const code = clean.slice(0, 2);
                     const part1 = clean.slice(2, 5);
                     const part2 = clean.slice(5, 7);
                     const part3 = clean.slice(7, 9);
                     return `+375 (${code}) ${part1}-${part2}-${part3}`;
-                }
-                // Городские: 3-4 цифры код
-                else if (clean.length === 10) {
+                } else if (clean.length === 10) {
                     const code = clean.slice(0, 3);
                     const part1 = clean.slice(3, 6);
                     const part2 = clean.slice(6, 8);
                     const part3 = clean.slice(8, 10);
                     return `+375 (${code}) ${part1}-${part2}-${part3}`;
-                }
-                else if (clean.length === 11) {
+                } else if (clean.length === 11) {
                     const code = clean.slice(0, 4);
                     const part1 = clean.slice(4, 6);
                     const part2 = clean.slice(6, 8);
@@ -959,7 +949,6 @@
                     return `+375 (${code}) ${part1}-${part2}-${part3}`;
                 }
             }
-            // Если не удалось отформатировать, возвращаем с +
             return phone.startsWith('+') ? phone : '+' + phone;
         }
 
@@ -1117,9 +1106,9 @@
             }
             document.getElementById('detailActions').innerHTML = actions;
 
-            // Сборка карточки - без заголовков секций
+            // Формируем карточку
             document.getElementById('detailContent').innerHTML = `
-                <!-- СТАТУС + ДАТА В ОДНОЙ СТРОКЕ -->
+                <!-- Статус + Дата -->
                 <div class="detail-section">
                     <div class="status-date-row">
                         <div>
@@ -1129,7 +1118,7 @@
                     </div>
                 </div>
 
-                <!-- ДАННЫЕ КЛИЕНТА (без заголовка) -->
+                <!-- Данные клиента -->
                 <div class="detail-section">
                     <div style="font-size:16px;font-weight:600;">${escapeHtml(order.client_name || '—')}</div>
                     <div style="font-size:15px;color:var(--text-primary);margin-top:4px;">📱 ${escapeHtml(displayPhone)}</div>
@@ -1137,7 +1126,7 @@
                     <button class="action-btn client-btn" onclick="showClientDetail('${cleanPhone}')">👤 Открыть карточку клиента</button>
                 </div>
 
-                <!-- ПРИЁМЩИК И МАСТЕР (без заголовка) -->
+                <!-- Приёмщик и мастер -->
                 <div class="detail-section">
                     <div class="detail-grid">
                         <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver || '—')}</span></div>
@@ -1145,13 +1134,13 @@
                     </div>
                 </div>
 
-                <!-- УСТРОЙСТВО -->
+                <!-- Устройство -->
                 <div class="detail-section">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🖥️ Устройство</div>
                     <div style="font-size:16px;">${escapeHtml(order.device || '—')}</div>
                 </div>
 
-                <!-- НЕИСПРАВНОСТЬ -->
+                <!-- Неисправность -->
                 <div class="detail-section">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🔧 Неисправность</div>
                     <div class="problem-text">${escapeHtml(order.problem || 'Не указана')}</div>
@@ -1192,14 +1181,15 @@
             const clientsMap = new Map();
             orders.forEach(o => {
                 const phone = o.phone || '';
-                const cleanPhone = phone.replace(/[^0-9+]/g, '');
+                // Приводим к единому формату – только цифры
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
                 if (!cleanPhone) return;
                 
                 const key = cleanPhone;
                 if (!clientsMap.has(key)) {
                     clientsMap.set(key, {
                         phone: phone,
-                        cleanPhone: cleanPhone,
+                        cleanPhone: cleanPhone, // только цифры
                         name: o.client_name || 'Без имени',
                         orders: [],
                         devices: new Set()
@@ -1253,7 +1243,7 @@
             container.innerHTML = html;
         }
 
-        // ===== ДЕТАЛИ КЛИЕНТА (ИСПРАВЛЕНО) =====
+        // ===== ДЕТАЛИ КЛИЕНТА =====
         function showClientDetail(phone) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-client').classList.add('active');
@@ -1262,15 +1252,14 @@
             let container = document.getElementById('clientContent');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
 
-            let cleanPhone = phone.replace(/[^0-9+]/g, '');
+            // Приводим переданный номер к единому формату (только цифры)
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
             
-            // Если есть заказы - используем их
             if (allOrders && allOrders.length > 0) {
                 renderClientDetail(cleanPhone, allOrders);
                 return;
             }
             
-            // Если заказов нет - грузим
             apiFetch('/orders?limit=500')
                 .then(r => {
                     if (r.success) {
@@ -1287,9 +1276,10 @@
         function renderClientDetail(cleanPhone, orders) {
             let container = document.getElementById('clientContent');
             
+            // Сравниваем только цифры
             let filteredOrders = orders.filter(o => {
-                let orderPhone = (o.phone || '').replace(/[^0-9+]/g, '');
-                return orderPhone === cleanPhone || orderPhone.includes(cleanPhone);
+                let orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
+                return orderPhone === cleanPhone;
             });
 
             let total = filteredOrders.length;
@@ -1315,7 +1305,7 @@
 
             // Контакты клиента
             let contacts = '';
-            const clean = rawPhone.replace(/[^0-9+]/g, '');
+            const clean = rawPhone.replace(/[^0-9]/g, '');
             if (clean && clean.length > 4) {
                 const callLink = `tel:${clean}`;
                 contacts = `
@@ -1328,7 +1318,6 @@
                 `;
             }
 
-            // Список заказов клиента
             let listHtml = filteredOrders.map(o => {
                 const orderDate = o.date ? o.date.slice(0, 10) : '';
                 return `
