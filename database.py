@@ -23,13 +23,17 @@ class Database:
         self.init_users_table()
     
     def get_connection(self):
+        """Получает соединение с БД"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
     
     def init_database(self):
+        """Инициализирует структуру базы данных"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            
+            # Таблица заказов
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS orders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +54,8 @@ class Database:
                     updated_at TEXT
                 )
             ''')
+            
+            # Таблица истории статусов
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS order_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,18 +65,26 @@ class Database:
                     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
                 )
             ''')
+            
+            # Индексы
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_phone ON orders(phone)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_client_name ON orders(client_name)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_device ON orders(device)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_status ON orders(status)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_master ON orders(master)')
+            
             conn.commit()
+            
             cursor.execute('SELECT COUNT(*) as count FROM orders')
             count = cursor.fetchone()['count']
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
+    # ============================================================
+    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (БЕЗ ПОЛЯ PHONE)
+    # ============================================================
     def init_users_table(self):
+        """Создает таблицу пользователей с полем master (без phone)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -81,7 +95,6 @@ class Database:
                     full_name TEXT,
                     role TEXT DEFAULT 'user',
                     master TEXT,
-                    phone TEXT,
                     created_at TEXT,
                     updated_at TEXT
                 )
@@ -90,6 +103,7 @@ class Database:
             print("✅ Таблица пользователей создана")
 
     def get_user(self, telegram_id: str) -> Optional[Dict[str, Any]]:
+        """Получает пользователя по Telegram ID"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,))
@@ -97,19 +111,21 @@ class Database:
             return dict(row) if row else None
 
     def get_all_users(self) -> List[Dict[str, Any]]:
+        """Получает всех пользователей"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users ORDER BY role DESC, full_name')
             return [dict(row) for row in cursor.fetchall()]
 
-    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user', master: str = '', phone: str = '') -> bool:
+    def add_user(self, telegram_id: str, username: str, full_name: str, role: str = 'user', master: str = '') -> bool:
+        """Добавляет нового пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute('''
-                    INSERT INTO users (telegram_id, username, full_name, role, master, phone, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (telegram_id, username, full_name, role, master, phone, datetime.now().isoformat(), datetime.now().isoformat()))
+                    INSERT INTO users (telegram_id, username, full_name, role, master, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (telegram_id, username, full_name, role, master, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.commit()
                 print(f"✅ Пользователь {full_name} добавлен с ролью {role} и мастером {master}")
                 return True
@@ -118,6 +134,7 @@ class Database:
                 return False
 
     def update_user(self, telegram_id: str, updates: Dict[str, Any]) -> bool:
+        """Обновляет данные пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
@@ -130,6 +147,7 @@ class Database:
             return cursor.rowcount > 0
 
     def update_user_role(self, telegram_id: str, new_role: str) -> bool:
+        """Обновляет роль пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -143,6 +161,7 @@ class Database:
             return False
 
     def delete_user(self, telegram_id: str) -> bool:
+        """Удаляет пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('DELETE FROM users WHERE telegram_id = ?', (telegram_id,))
@@ -152,17 +171,26 @@ class Database:
                 return True
             return False
     
+    # ============================================================
+    # МЕТОДЫ ДЛЯ ЗАКАЗОВ
+    # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
+        """Сохраняет или обновляет заказ"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            
             cursor.execute(
                 'SELECT id, status FROM orders WHERE order_number = ?',
                 (order.order_number,)
             )
             existing = cursor.fetchone()
+            
             if existing:
                 order_id = existing['id']
                 old_status = existing['status']
+                
+                print(f"📝 Обновление заказа #{order.order_number}: старый статус '{old_status}', новый статус '{order.status}'")
+                
                 cursor.execute('''
                     UPDATE orders SET
                         date = ?,
@@ -195,7 +223,9 @@ class Database:
                     datetime.now().isoformat(),
                     order.order_number
                 ))
+                
                 if order.status and old_status != order.status:
+                    print(f"📝 Записываем историю: статус изменен с '{old_status}' на '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -204,10 +234,19 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
+                    conn.commit()
+                    print(f"✅ История записана для заказа #{order.order_number}")
+                else:
+                    if order.status == old_status:
+                        print(f"ℹ️ Статус не изменился, история не записана")
+                    else:
+                        print(f"⚠️ Статус пустой, история не записана")
+                
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
                 return order_id
             else:
+                print(f"📝 Создание нового заказа #{order.order_number}")
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, master,
@@ -233,8 +272,11 @@ class Database:
                     datetime.now().isoformat(),
                     datetime.now().isoformat()
                 ))
+                
                 order_id = cursor.lastrowid
+                
                 if order.status:
+                    print(f"📝 Записываем начальный статус '{order.status}' для заказа #{order.order_number}")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
@@ -243,6 +285,9 @@ class Database:
                         order.status,
                         datetime.now().isoformat()
                     ))
+                    conn.commit()
+                    print(f"✅ Начальный статус записан")
+                
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
                 return order_id
@@ -250,7 +295,10 @@ class Database:
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
+            cursor.execute(
+                'SELECT * FROM orders WHERE order_number = ?',
+                (order_number,)
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
     
@@ -264,7 +312,11 @@ class Database:
     def get_order_history(self, order_id: int) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
+            cursor.execute('''
+                SELECT * FROM order_history 
+                WHERE order_id = ? 
+                ORDER BY changed_at DESC
+            ''', (order_id,))
             return [dict(row) for row in cursor.fetchall()]
     
     def search_orders(self, query: str) -> List[Dict[str, Any]]:
@@ -281,28 +333,51 @@ class Database:
                     receiver LIKE ?
                 ORDER BY created_at DESC
                 LIMIT 100
-            ''', (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern))
+            ''', (
+                search_pattern, search_pattern, search_pattern,
+                search_pattern, search_pattern, search_pattern
+            ))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_all_orders(self, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (limit, offset))
+            cursor.execute('''
+                SELECT * FROM orders 
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?
+            ''', (limit, offset))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_statistics(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            
             cursor.execute('SELECT COUNT(*) as total FROM orders')
             total = cursor.fetchone()['total']
-            cursor.execute('SELECT status, COUNT(*) as count FROM orders GROUP BY status ORDER BY count DESC')
+            
+            cursor.execute('''
+                SELECT status, COUNT(*) as count 
+                FROM orders 
+                GROUP BY status
+                ORDER BY count DESC
+            ''')
             by_status = [dict(row) for row in cursor.fetchall()]
+            
             today = datetime.now().strftime('%Y-%m-%d')
-            cursor.execute('SELECT COUNT(*) as today FROM orders WHERE date = ?', (today,))
+            cursor.execute(
+                'SELECT COUNT(*) as today FROM orders WHERE date = ?',
+                (today,)
+            )
             today_count = cursor.fetchone()['today']
-            return {'total': total, 'today': today_count, 'by_status': by_status}
+            
+            return {
+                'total': total,
+                'today': today_count,
+                'by_status': by_status
+            }
     
-    # ===== ИСПРАВЛЕННЫЙ МЕТОД С ФИЛЬТРОМ ПО МЕСЯЦУ/ГОДУ =====
+    # ===== МЕТОД С ФИЛЬТРОМ ПО МЕСЯЦУ/ГОДУ =====
     def get_detailed_stats(self, month: int = None, year: int = None) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -364,34 +439,73 @@ class Database:
     def get_user_orders(self, user_id: str, role: str = 'user') -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            
             if role in ['admin', 'superadmin']:
                 cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
             else:
-                cursor.execute('SELECT * FROM orders WHERE phone LIKE ? OR client_name LIKE ? ORDER BY created_at DESC LIMIT 200', (f'%{user_id}%', f'%{user_id}%'))
+                cursor.execute('''
+                    SELECT * FROM orders 
+                    WHERE phone LIKE ? OR client_name LIKE ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 200
+                ''', (f'%{user_id}%', f'%{user_id}%'))
+            
             return [dict(row) for row in cursor.fetchall()]
 
+    # ============================================================
+    # МЕТОДЫ ДЛЯ МАСТЕРОВ
+    # ============================================================
     def get_masters(self) -> List[str]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT DISTINCT master as name FROM orders WHERE master IS NOT NULL AND master != "" ORDER BY master')
+            cursor.execute('''
+                SELECT DISTINCT master as name 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
+            ''')
             return [row['name'] for row in cursor.fetchall()]
     
     def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM orders WHERE master = ? ORDER BY created_at DESC', (master,))
+            cursor.execute('''
+                SELECT * FROM orders 
+                WHERE master = ? 
+                ORDER BY created_at DESC
+            ''', (master,))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_master_stats(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" GROUP BY master ORDER BY count DESC')
+            
+            cursor.execute('''
+                SELECT master, COUNT(*) as count 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                GROUP BY master
+                ORDER BY count DESC
+            ''')
             all_stats = [dict(row) for row in cursor.fetchall()]
-            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" AND status = "Выдано (оплачено)" GROUP BY master ORDER BY count DESC')
+            
+            cursor.execute('''
+                SELECT master, COUNT(*) as count 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                AND status = 'Выдано (оплачено)'
+                GROUP BY master
+                ORDER BY count DESC
+            ''')
             done_stats = [dict(row) for row in cursor.fetchall()]
-            return {"all": all_stats, "done": done_stats}
+            
+            return {
+                "all": all_stats,
+                "done": done_stats
+            }
 
 
+# Синглтон
 _db_instance = None
 
 def get_db() -> Database:
