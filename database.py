@@ -18,37 +18,18 @@ class Database:
     def __init__(self, db_path: str = None):
         if db_path is None:
             db_path = os.getenv('DB_PATH', '/app/data/orders.db')
-        
-        # Создаем папку для БД
-        db_dir = os.path.dirname(db_path)
-        if db_dir and not os.path.exists(db_dir):
-            os.makedirs(db_dir, exist_ok=True)
-            print(f"📁 Создана папка для БД: {db_dir}")
-        
         self.db_path = db_path
-        print(f"📂 Путь к базе данных: {self.db_path}")
-        
-        if os.path.exists(self.db_path):
-            size = os.path.getsize(self.db_path)
-            print(f"✅ База данных найдена, размер: {size} байт")
-        else:
-            print(f"⚠️ База данных не найдена, будет создана новая")
-        
         self.init_database()
         self.init_users_table()
     
     def get_connection(self):
-        """Получает соединение с БД"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
     
     def init_database(self):
-        """Инициализирует структуру базы данных"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
-            # Таблица заказов
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS orders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,8 +50,6 @@ class Database:
                     updated_at TEXT
                 )
             ''')
-            
-            # Таблица истории статусов
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS order_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,26 +59,18 @@ class Database:
                     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
                 )
             ''')
-            
-            # Индексы
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_phone ON orders(phone)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_client_name ON orders(client_name)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_device ON orders(device)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_status ON orders(status)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_master ON orders(master)')
-            
             conn.commit()
-            
             cursor.execute('SELECT COUNT(*) as count FROM orders')
             count = cursor.fetchone()['count']
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
-    # ============================================================
-    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ
-    # ============================================================
     def init_users_table(self):
-        """Создает таблицу пользователей с полем master и phone"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -181,36 +152,17 @@ class Database:
                 return True
             return False
     
-    # ============================================================
-    # МЕТОДЫ ДЛЯ ЗАКАЗОВ - ОСНОВНОЙ
-    # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
-        """
-        Сохраняет или обновляет заказ
-        ВСЕГДА записывает историю при изменении статуса
-        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
             cursor.execute(
                 'SELECT id, status FROM orders WHERE order_number = ?',
                 (order.order_number,)
             )
             existing = cursor.fetchone()
-            
             if existing:
                 order_id = existing['id']
                 old_status = existing['status']
-                new_status = order.status
-                
-                print("=" * 70)
-                print(f"📝 ОБНОВЛЕНИЕ ЗАКАЗА #{order.order_number}")
-                print(f"   Старый статус: '{old_status}'")
-                print(f"   Новый статус: '{new_status}'")
-                print(f"   Статус изменился: {old_status != new_status}")
-                print("=" * 70)
-                
-                # Обновляем заказ
                 cursor.execute('''
                     UPDATE orders SET
                         date = ?,
@@ -229,7 +181,7 @@ class Database:
                     WHERE order_number = ?
                 ''', (
                     order.date,
-                    new_status,
+                    order.status,
                     order.receiver,
                     order.master,
                     order.phone,
@@ -243,48 +195,19 @@ class Database:
                     datetime.now().isoformat(),
                     order.order_number
                 ))
-                
-                # ✅ ИСПРАВЛЕНО: ВСЕГДА записываем историю, если есть статус
-                if new_status:
-                    # Если статус изменился - пишем с новым статусом
-                    if old_status != new_status:
-                        print(f"📝 ЗАПИСЫВАЕМ ИСТОРИЮ: '{old_status}' → '{new_status}'")
-                        cursor.execute('''
-                            INSERT INTO order_history (order_id, status, changed_at)
-                            VALUES (?, ?, ?)
-                        ''', (order_id, new_status, datetime.now().isoformat()))
-                        conn.commit()
-                        print(f"✅ История записана для заказа #{order.order_number}")
-                    else:
-                        # Если статус не изменился, но заказ обновлен - пишем текущий статус
-                        print(f"📝 ЗАПИСЫВАЕМ ИСТОРИЮ: статус не изменился, но заказ обновлен")
-                        cursor.execute('''
-                            INSERT INTO order_history (order_id, status, changed_at)
-                            VALUES (?, ?, ?)
-                        ''', (order_id, new_status, datetime.now().isoformat()))
-                        conn.commit()
-                        print(f"✅ История обновления записана для заказа #{order.order_number}")
-                else:
-                    print(f"⚠️ Статус пустой, история не записана")
-                
+                if order.status and old_status != order.status:
+                    cursor.execute('''
+                        INSERT INTO order_history (order_id, status, changed_at)
+                        VALUES (?, ?, ?)
+                    ''', (
+                        order_id,
+                        order.status,
+                        datetime.now().isoformat()
+                    ))
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
-                print("=" * 70)
-                
-                # Синхронизация с GitHub (если нужна)
-                try:
-                    db_sync.sync_on_change(order.order_number)
-                except:
-                    pass
-                
                 return order_id
             else:
-                # НОВЫЙ ЗАКАЗ
-                print("=" * 70)
-                print(f"📝 СОЗДАНИЕ НОВОГО ЗАКАЗА #{order.order_number}")
-                print(f"   Статус: '{order.status}'")
-                print("=" * 70)
-                
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, master,
@@ -310,36 +233,20 @@ class Database:
                     datetime.now().isoformat(),
                     datetime.now().isoformat()
                 ))
-                
                 order_id = cursor.lastrowid
-                
-                # Записываем начальный статус в историю
                 if order.status:
-                    print(f"📝 ЗАПИСЫВАЕМ НАЧАЛЬНЫЙ СТАТУС: '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
-                    ''', (order_id, order.status, datetime.now().isoformat()))
-                    conn.commit()
-                    print(f"✅ Начальный статус записан")
-                else:
-                    print(f"⚠️ Статус пустой, начальная история не записана")
-                
+                    ''', (
+                        order_id,
+                        order.status,
+                        datetime.now().isoformat()
+                    ))
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
-                print("=" * 70)
-                
-                # Синхронизация с GitHub (если нужна)
-                try:
-                    db_sync.sync_on_change(order.order_number)
-                except:
-                    pass
-                
                 return order_id
     
-    # ============================================================
-    # ОСТАЛЬНЫЕ МЕТОДЫ
-    # ============================================================
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -357,11 +264,7 @@ class Database:
     def get_order_history(self, order_id: int) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM order_history 
-                WHERE order_id = ? 
-                ORDER BY changed_at DESC
-            ''', (order_id,))
+            cursor.execute('SELECT * FROM order_history WHERE order_id = ? ORDER BY changed_at DESC', (order_id,))
             return [dict(row) for row in cursor.fetchall()]
     
     def search_orders(self, query: str) -> List[Dict[str, Any]]:
@@ -399,21 +302,64 @@ class Database:
             today_count = cursor.fetchone()['today']
             return {'total': total, 'today': today_count, 'by_status': by_status}
     
-    def get_detailed_stats(self) -> Dict[str, Any]:
+    # ===== ИСПРАВЛЕННЫЙ МЕТОД С ФИЛЬТРОМ ПО МЕСЯЦУ/ГОДУ =====
+    def get_detailed_stats(self, month: int = None, year: int = None) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT date, COUNT(*) as count FROM orders WHERE date IS NOT NULL GROUP BY date ORDER BY date DESC LIMIT 7')
+            
+            date_filter = ""
+            params = []
+            if month and year:
+                date_filter = " WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?"
+                params = [str(month).zfill(2), str(year)]
+            
+            cursor.execute(f'''
+                SELECT date, COUNT(*) as count 
+                FROM orders 
+                {date_filter}
+                GROUP BY date 
+                ORDER BY date DESC 
+                LIMIT 7
+            ''', params)
             orders_by_day = [dict(row) for row in cursor.fetchall()]
-            cursor.execute('SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days FROM orders WHERE status IN ("Готово", "Выдано (оплачено)", "Выдано (не оплачено)")')
+            
+            cursor.execute(f'''
+                SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+                FROM orders 
+                WHERE status IN ('Готово', 'Выдано (оплачено)', 'Выдано (не оплачено)')
+                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
+            ''', params)
             avg_repair_time = cursor.fetchone()['avg_days'] or 0
-            cursor.execute('SELECT problem, COUNT(*) as count FROM orders WHERE problem IS NOT NULL AND problem != "" GROUP BY problem ORDER BY count DESC LIMIT 5')
+            
+            cursor.execute(f'''
+                SELECT problem, COUNT(*) as count 
+                FROM orders 
+                WHERE problem IS NOT NULL AND problem != ''
+                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
+                GROUP BY problem 
+                ORDER BY count DESC 
+                LIMIT 5
+            ''', params)
             top_problems = [dict(row) for row in cursor.fetchall()]
-            cursor.execute('SELECT status, COUNT(*) as count FROM orders GROUP BY status')
+            
+            cursor.execute(f'''
+                SELECT status, COUNT(*) as count 
+                FROM orders 
+                {date_filter}
+                GROUP BY status
+            ''', params)
             status_counts = [dict(row) for row in cursor.fetchall()]
             total = sum(s['count'] for s in status_counts)
             for s in status_counts:
                 s['percent'] = round((s['count'] / total * 100), 1) if total > 0 else 0
-            return {"orders_by_day": orders_by_day, "avg_repair_time": round(avg_repair_time, 1), "top_problems": top_problems, "status_counts": status_counts, "total_orders": total}
+
+            return {
+                "orders_by_day": orders_by_day,
+                "avg_repair_time": round(avg_repair_time, 1),
+                "top_problems": top_problems,
+                "status_counts": status_counts,
+                "total_orders": total
+            }
     
     def get_user_orders(self, user_id: str, role: str = 'user') -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -424,9 +370,6 @@ class Database:
                 cursor.execute('SELECT * FROM orders WHERE phone LIKE ? OR client_name LIKE ? ORDER BY created_at DESC LIMIT 200', (f'%{user_id}%', f'%{user_id}%'))
             return [dict(row) for row in cursor.fetchall()]
 
-    # ============================================================
-    # МЕТОДЫ ДЛЯ МАСТЕРОВ
-    # ============================================================
     def get_masters(self) -> List[str]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -449,7 +392,6 @@ class Database:
             return {"all": all_stats, "done": done_stats}
 
 
-# Синглтон
 _db_instance = None
 
 def get_db() -> Database:
