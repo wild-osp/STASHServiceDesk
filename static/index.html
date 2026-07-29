@@ -182,25 +182,41 @@
             font-weight: 500;
         }
 
-        /* НОВЫЕ СТИЛИ ДЛЯ КАРТОЧКИ ЗАКАЗА */
+        /* СТИЛИ ДЛЯ КАРТОЧКИ ЗАКАЗА */
         .detail-section {
             background: var(--bg-secondary);
             border-radius: var(--radius);
-            padding: 16px;
-            margin-bottom: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
         }
         .detail-section .section-title {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
         }
+        
+        /* СТАТУС + ДАТА В ОДНОЙ СТРОКЕ */
+        .status-date-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-date-row .status-big {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .status-date-row .date-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
         .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 4px 0;
             font-size: 15px;
         }
         .detail-row .label { color: var(--text-secondary); }
@@ -226,17 +242,17 @@
             word-break: break-word;
         }
 
-        /* Стили для клиентских контактов */
+        /* КОНТАКТЫ КЛИЕНТА В КАРТОЧКЕ */
         .client-contact-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 6px;
+            margin-top: 6px;
         }
         .client-contact-grid .contact-btn {
-            padding: 8px 4px;
+            padding: 6px 4px;
             border-radius: var(--radius);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             text-align: center;
             border: none;
@@ -253,7 +269,7 @@
         .history-item {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
+            padding: 4px 0;
             border-bottom: 1px solid rgba(255,255,255,0.03);
             font-size: 14px;
             align-items: center;
@@ -261,45 +277,6 @@
         .history-item .h-status { display: flex; align-items: center; gap: 8px; }
         .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .history-item .h-time { color: var(--text-secondary); font-size: 13px; }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin: 8px 0;
-        }
-        .contact-grid .contact-btn {
-            color: white;
-            padding: 10px 8px;
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-            background: var(--bg-card);
-            border-bottom: 3px solid transparent;
-            width: 100%;
-        }
-        .contact-grid .contact-btn:active { transform: scale(0.95); }
-        .contact-grid .contact-btn.call { background: #1a3a2a; border-bottom-color: #22c55e; color: #86efac; }
-        .contact-grid .contact-btn.viber { background: #2a1a4a; border-bottom-color: #8b5cf6; color: #c4b5fd; }
-        .contact-grid .contact-btn.telegram { background: #1a2a4a; border-bottom-color: #3b82f6; color: #93bbfc; }
-        .contact-grid .contact-btn.copy { background: #2a2a3a; border-bottom-color: var(--text-secondary); color: var(--text-secondary); }
-        .contact-full { margin-top: 8px; }
-        .contact-full .contact-btn {
-            color: var(--accent);
-            padding: 10px 8px;
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
-            border: 1px solid var(--accent);
-            cursor: pointer;
-            background: var(--bg-card);
-            width: 100%;
-        }
-        .contact-full .contact-btn:active { transform: scale(0.95); }
 
         .action-btn {
             padding: 8px 14px;
@@ -312,6 +289,16 @@
             cursor: pointer;
         }
         .action-btn.danger { border-color: #ef4444; color: #fca5a5; }
+        .action-btn.client-btn { 
+            width: 100%; 
+            border-color: var(--accent);
+            background: var(--bg-card);
+            color: var(--accent);
+            padding: 10px;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .action-btn.client-btn:active { transform: scale(0.98); }
 
         .client-order-item {
             cursor: pointer;
@@ -604,7 +591,7 @@
             .nav-btn { font-size: 10px; padding: 6px 10px; }
             .nav-btn .icon { font-size: 18px; }
             .order-card .phone { font-size: 14px; }
-            .contact-grid .contact-btn { font-size: 12px; padding: 8px 4px; }
+            .client-contact-grid { grid-template-columns: 1fr 1fr; }
             .filter-row { flex-direction: row; overflow-x: auto; }
             .sorting-row { flex-direction: column; align-items: stretch; }
             .sorting-row .control-group { flex: 1; }
@@ -613,7 +600,7 @@
             .client-list-item { flex-direction: column; align-items: flex-start; gap: 8px; }
             .client-list-item .client-orders-count { align-self: flex-start; }
             .detail-grid { grid-template-columns: 1fr; }
-            .client-contact-grid { grid-template-columns: 1fr 1fr; }
+            .status-date-row { flex-direction: column; align-items: flex-start; gap: 4px; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -957,24 +944,28 @@
             let clean = phone.replace(/[^0-9]/g, '');
             if (clean.startsWith('375')) {
                 clean = clean.slice(3);
+                // Мобильные: 2 цифры код (25, 29, 33, 44)
                 if (clean.length === 9) {
                     const code = clean.slice(0, 2);
-                    const part1 = clean.slice(2, 4);
-                    const part2 = clean.slice(4, 6);
-                    const part3 = clean.slice(6, 8);
-                    const part4 = clean.slice(8, 9);
-                    if (['25', '29', '33', '44'].includes(code)) {
-                        return `+375 (${code}) ${part1}-${part2}-${part3}${part4}`;
-                    } else {
-                        return `+375 (${code}) ${part1}-${part2}-${part3}${part4}`;
-                    }
-                } else if (clean.length === 11) {
-                    const code = clean.slice(0, 3);
-                    const part1 = clean.slice(3, 5);
+                    const part1 = clean.slice(2, 5);
                     const part2 = clean.slice(5, 7);
                     const part3 = clean.slice(7, 9);
-                    const part4 = clean.slice(9, 11);
-                    return `+375 (${code}) ${part1}-${part2}-${part3}${part4}`;
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                }
+                // Городские: 3-4 цифры код
+                else if (clean.length === 10) {
+                    const code = clean.slice(0, 3);
+                    const part1 = clean.slice(3, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 10);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                }
+                else if (clean.length === 11) {
+                    const code = clean.slice(0, 4);
+                    const part1 = clean.slice(4, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 11);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
                 }
             }
             // Если не удалось отформатировать, возвращаем с +
@@ -1055,7 +1046,7 @@
             }
         }
 
-        // ===== ДЕТАЛИ ЗАКАЗА (НОВЫЙ ДИЗАЙН) =====
+        // ===== ДЕТАЛИ ЗАКАЗА =====
         function showDetail(order) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-detail').classList.add('active');
@@ -1135,21 +1126,17 @@
             }
             document.getElementById('detailActions').innerHTML = actions;
 
-            // Сборка карточки
+            // Сборка карточки - компактный дизайн
             document.getElementById('detailContent').innerHTML = `
-                <!-- СТАТУС -->
+                <!-- СТАТУС + ДАТА В ОДНОЙ СТРОКЕ -->
                 <div class="detail-section">
-                    <div class="section-title">📌 Статус</div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:18px;font-weight:600;">${escapeHtml(order.status || 'Новый')}</span>
-                        <span class="order-status status-${getStatusClass(order.status)}">${escapeHtml(order.status || 'Новый')}</span>
+                    <div class="status-date-row">
+                        <div>
+                            <span class="status-big">${escapeHtml(order.status || 'Новый')}</span>
+                            <span class="order-status status-${getStatusClass(order.status)}" style="margin-left:10px;">${escapeHtml(order.status || 'Новый')}</span>
+                        </div>
+                        <div class="date-text">📅 ${escapeHtml(order.date || '—')}</div>
                     </div>
-                </div>
-
-                <!-- ДАТА -->
-                <div class="detail-section">
-                    <div class="section-title">📅 Дата приема</div>
-                    <div style="font-size:16px;">${escapeHtml(order.date || '—')}</div>
                 </div>
 
                 <!-- ДАННЫЕ КЛИЕНТА -->
@@ -1158,12 +1145,10 @@
                     <div style="font-size:16px;font-weight:600;">${escapeHtml(order.client_name || '—')}</div>
                     <div style="font-size:15px;color:var(--text-primary);margin-top:4px;">📱 ${escapeHtml(displayPhone)}</div>
                     ${contacts}
-                    <div style="margin-top:8px;">
-                        <button class="action-btn" onclick="showClientDetail('${cleanPhone}')" style="width:100%;border-color:var(--accent);">👤 Открыть карточку клиента</button>
-                    </div>
+                    <button class="action-btn client-btn" onclick="showClientDetail('${cleanPhone}')">👤 Открыть карточку клиента</button>
                 </div>
 
-                <!-- ПРИЁМЩИК И МАСТЕР -->
+                <!-- ПРИЁМЩИК И МАСТЕР В ДВЕ КОЛОНКИ -->
                 <div class="detail-section">
                     <div class="section-title">👨‍💼 Сотрудники</div>
                     <div class="detail-grid">
@@ -1291,24 +1276,24 @@
 
             let cleanPhone = phone.replace(/[^0-9+]/g, '');
             
-            let ordersToUse = allOrders.length > 0 ? allOrders : [];
-            
-            if (ordersToUse.length === 0) {
-                apiFetch('/orders?limit=500')
-                    .then(r => {
-                        if (r.success) {
-                            renderClientDetail(cleanPhone, r.data);
-                        } else {
-                            container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
-                        }
-                    })
-                    .catch(() => {
-                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
-                    });
+            // Если есть заказы - используем их
+            if (allOrders && allOrders.length > 0) {
+                renderClientDetail(cleanPhone, allOrders);
                 return;
             }
             
-            renderClientDetail(cleanPhone, ordersToUse);
+            // Если заказов нет - грузим
+            apiFetch('/orders?limit=500')
+                .then(r => {
+                    if (r.success) {
+                        renderClientDetail(cleanPhone, r.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                });
         }
 
         function renderClientDetail(cleanPhone, orders) {
@@ -1342,8 +1327,8 @@
 
             // Контакты клиента
             let contacts = '';
-            if (rawPhone && rawPhone.length > 4) {
-                const clean = rawPhone.replace(/[^0-9+]/g, '');
+            const clean = rawPhone.replace(/[^0-9+]/g, '');
+            if (clean && clean.length > 4) {
                 const callLink = `tel:${clean}`;
                 contacts = `
                     <div class="client-contact-grid">
