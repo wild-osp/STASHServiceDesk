@@ -19,11 +19,7 @@ os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 from database import get_db
 from models import Order
 
-# ============================================================
-# АВТОЗАПУСК БОТА ИЗ API
-# ============================================================
 def run_bot():
-    """Запускает бота в отдельном процессе при старте API"""
     time.sleep(5)
     try:
         subprocess.Popen(["python", "orders_bot.py"])
@@ -34,11 +30,7 @@ def run_bot():
 bot_thread = threading.Thread(target=run_bot, daemon=True)
 bot_thread.start()
 
-# ============================================================
-# FASTAPI APP
-# ============================================================
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,18 +38,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 db = get_db()
 
-# ============================================================
-# API-КЛЮЧ ДЛЯ ЗАЩИТЫ ЭНДПОИНТА (1С)
-# ============================================================
 API_KEY = os.getenv('API_KEY', 'STASH2024SecretKey!')
 
-# ============================================================
-# МОДЕЛЬ ДЛЯ ПРИЕМА ЗАКАЗА ИЗ 1С
-# ============================================================
 class OrderFrom1C(BaseModel):
     order_number: str
     date: Optional[str] = None
@@ -72,19 +57,14 @@ class OrderFrom1C(BaseModel):
     cost: Optional[float] = None
     notes: Optional[str] = None
 
-# ============================================================
-# АВТОРИЗАЦИЯ
-# ============================================================
 async def get_current_user(
     x_user_id: str = Header(default='anonymous')
 ):
     if x_user_id == 'anonymous':
         raise HTTPException(status_code=401, detail="Не авторизован")
-    
     user = db.get_user(x_user_id)
     if not user:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
     return {
         "user_id": user['telegram_id'],
         "username": user['username'] or '',
@@ -94,9 +74,6 @@ async def get_current_user(
         "phone": user.get('phone', '')
     }
 
-# ============================================================
-# ЭНДПОИНТЫ
-# ============================================================
 @app.get("/")
 async def root():
     return {"name": "STASHServiceDesk API", "status": "running", "timestamp": datetime.now().isoformat()}
@@ -143,9 +120,7 @@ async def check_user(
         }
     })
 
-# ============================================================
-# УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ
-# ============================================================
+# ===== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ =====
 @app.get("/api/users")
 async def get_users(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ['admin', 'superadmin']:
@@ -254,9 +229,7 @@ async def delete_user(
     else:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-# ============================================================
-# УДАЛЕНИЕ ЗАКАЗА
-# ============================================================
+# ===== УДАЛЕНИЕ ЗАКАЗА =====
 @app.delete("/api/orders/by-number/{order_number}")
 async def delete_order_by_number(
     order_number: str,
@@ -273,9 +246,7 @@ async def delete_order_by_number(
         conn.commit()
     return JSONResponse({"success": True, "message": f"Заказ #{order_number} удален"})
 
-# ============================================================
-# ПРИЕМ ЗАКАЗОВ ИЗ 1С - ОСНОВНОЙ (С ПОДРОБНЫМИ ЛОГАМИ)
-# ============================================================
+# ===== ПРИЕМ ЗАКАЗОВ ИЗ 1С =====
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
     order_data: OrderFrom1C,
@@ -284,22 +255,7 @@ async def receive_order_from_1c(
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Неверный API-ключ")
     try:
-        print("=" * 70)
-        print("📦 ПОЛУЧЕН ЗАКАЗ ИЗ 1С")
-        print(f"   Номер: {order_data.order_number}")
-        print(f"   Статус: '{order_data.status}'")
-        print(f"   Клиент: {order_data.client_name}")
-        print(f"   Телефон: {order_data.phone}")
-        print(f"   Устройство: {order_data.device}")
-        print(f"   Мастер: {order_data.master}")
-        print("=" * 70)
-        
         existing = db.get_order(order_data.order_number)
-        if existing:
-            print(f"📌 Заказ существует, текущий статус: '{existing.get('status')}'")
-        else:
-            print("📌 Новый заказ")
-        
         order = Order(
             order_number=order_data.order_number,
             date=order_data.date,
@@ -315,12 +271,9 @@ async def receive_order_from_1c(
             telegram_message_date=datetime.now().isoformat(),
             raw_message_text=f"Отправлено из 1С через API: {order_data.order_number}"
         )
-        
         order_id = db.save_order(order)
         action = "обновлен" if existing else "создан"
         print(f"✅ Заказ #{order_data.order_number} {action} из 1С (API)")
-        print("=" * 70)
-        
         return JSONResponse({
             "success": True,
             "message": f"Заказ #{order_data.order_number} {action}",
@@ -331,9 +284,7 @@ async def receive_order_from_1c(
         print(f"❌ Ошибка при приеме заказа из 1С: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# ЗАКАЗЫ
-# ============================================================
+# ===== ЗАКАЗЫ =====
 @app.get("/api/orders")
 async def get_orders(
     limit: int = Query(50, ge=1, le=200),
@@ -422,9 +373,7 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# МАСТЕРА
-# ============================================================
+# ===== МАСТЕРА =====
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
     try:
@@ -433,9 +382,7 @@ async def get_masters(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# ПОДСЧЁТ ЗАКАЗОВ ПО СТАТУСАМ
-# ============================================================
+# ===== ПОДСЧЁТ СТАТУСОВ =====
 @app.get("/api/status-counts")
 async def get_status_counts(current_user: dict = Depends(get_current_user)):
     try:
@@ -447,9 +394,7 @@ async def get_status_counts(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# СТАТИСТИКА
-# ============================================================
+# ===== СТАТИСТИКА =====
 @app.get("/api/statistics")
 async def get_statistics(current_user: dict = Depends(get_current_user)):
     try:
@@ -471,21 +416,48 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# АДМИНСКАЯ АНАЛИТИКА
-# ============================================================
+# ===== АДМИНСКАЯ АНАЛИТИКА (ИСПРАВЛЕНА) =====
 @app.get("/api/admin/dashboard")
-async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
+async def get_dashboard_stats(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    current_user: dict = Depends(get_current_user)
+):
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен. Требуются права администратора.")
     try:
-        stats = db.get_detailed_stats()
+        stats = db.get_detailed_stats(month, year)
+        
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" GROUP BY master ORDER BY count DESC')
+            
+            date_filter = ""
+            params = []
+            if month and year:
+                date_filter = " WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?"
+                params = [str(month).zfill(2), str(year)]
+            
+            cursor.execute(f'''
+                SELECT master, COUNT(*) as count 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
+                GROUP BY master
+                ORDER BY count DESC
+            ''', params)
             by_master = [dict(row) for row in cursor.fetchall()]
-            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" AND status = "Выдано (оплачено)" GROUP BY master ORDER BY count DESC')
+            
+            cursor.execute(f'''
+                SELECT master, COUNT(*) as count 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                AND status = 'Выдано (оплачено)'
+                {date_filter.replace('WHERE', 'AND') if date_filter else ''}
+                GROUP BY master
+                ORDER BY count DESC
+            ''', params)
             by_master_done = [dict(row) for row in cursor.fetchall()]
+        
         return JSONResponse({
             "success": True,
             "data": {
@@ -497,9 +469,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# ПОИСК
-# ============================================================
+# ===== ПОИСК =====
 @app.get("/api/search")
 async def search_orders(
     q: str = Query(..., min_length=1),
@@ -521,9 +491,7 @@ async def search_orders(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# HEALTH
-# ============================================================
+# ===== HEALTH =====
 @app.get("/health")
 async def health_check():
     try:
