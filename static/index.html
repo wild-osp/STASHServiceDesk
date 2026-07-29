@@ -1640,13 +1640,12 @@
             }
 
             try {
-                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&phone=' + encodeURIComponent(phone) + '&role=' + role, { method: 'POST' });
+                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&role=' + role, { method: 'POST' });
                 alert('✅ Пользователь добавлен');
                 document.getElementById('addUserForm').style.display = 'none';
                 document.getElementById('newUserId').value = '';
                 document.getElementById('newUserName').value = '';
                 document.getElementById('newUserUsername').value = '';
-                document.getElementById('newUserPhone').value = '';
                 loadUsers();
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
