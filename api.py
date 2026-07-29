@@ -19,7 +19,11 @@ os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 from database import get_db
 from models import Order
 
+# ============================================================
+# АВТОЗАПУСК БОТА ИЗ API
+# ============================================================
 def run_bot():
+    """Запускает бота в отдельном процессе при старте API"""
     time.sleep(5)
     try:
         subprocess.Popen(["python", "orders_bot.py"])
@@ -27,10 +31,15 @@ def run_bot():
     except Exception as e:
         print(f"❌ Ошибка запуска бота: {e}")
 
+# Запускаем бота в фоновом потоке
 bot_thread = threading.Thread(target=run_bot, daemon=True)
 bot_thread.start()
 
+# ============================================================
+# FASTAPI APP
+# ============================================================
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,11 +47,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 db = get_db()
 
+# ============================================================
+# API-КЛЮЧ ДЛЯ ЗАЩИТЫ ЭНДПОИНТА (1С)
+# ============================================================
 API_KEY = os.getenv('API_KEY', 'STASH2024SecretKey!')
 
+# ============================================================
+# МОДЕЛЬ ДЛЯ ПРИЕМА ЗАКАЗА ИЗ 1С
+# ============================================================
 class OrderFrom1C(BaseModel):
     order_number: str
     date: Optional[str] = None
@@ -57,23 +73,30 @@ class OrderFrom1C(BaseModel):
     cost: Optional[float] = None
     notes: Optional[str] = None
 
+# ============================================================
+# АВТОРИЗАЦИЯ
+# ============================================================
 async def get_current_user(
     x_user_id: str = Header(default='anonymous')
 ):
     if x_user_id == 'anonymous':
         raise HTTPException(status_code=401, detail="Не авторизован")
+    
     user = db.get_user(x_user_id)
     if not user:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
     return {
         "user_id": user['telegram_id'],
         "username": user['username'] or '',
         "full_name": user['full_name'] or '',
         "role": user['role'] or 'user',
-        "master": user.get('master', ''),
-        "phone": user.get('phone', '')
+        "master": user.get('master', '')
     }
 
+# ============================================================
+# ЭНДПОИНТЫ
+# ============================================================
 @app.get("/")
 async def root():
     return {"name": "STASHServiceDesk API", "status": "running", "timestamp": datetime.now().isoformat()}
@@ -115,12 +138,13 @@ async def check_user(
             "username": user['username'] or '',
             "full_name": user['full_name'] or '',
             "role": user['role'] or 'user',
-            "master": user.get('master', ''),
-            "phone": user.get('phone', '')
+            "master": user.get('master', '')
         }
     })
 
-# ===== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ =====
+# ============================================================
+# УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (БЕЗ ПОЛЯ PHONE)
+# ============================================================
 @app.get("/api/users")
 async def get_users(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ['admin', 'superadmin']:
@@ -130,8 +154,10 @@ async def get_users(current_user: dict = Depends(get_current_user)):
 
 @app.get("/api/users/{telegram_id}")
 async def get_user(telegram_id: str, current_user: dict = Depends(get_current_user)):
+    """Получить данные пользователя по ID (только для суперадмина)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может просматривать пользователей")
+    
     user = db.get_user(telegram_id)
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
@@ -144,19 +170,22 @@ async def add_user(
     full_name: str = "",
     role: str = "user",
     master: str = "",
-    phone: str = "",
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
     if current_user["role"] == 'admin' and role != 'user':
         raise HTTPException(status_code=403, detail="Админ может назначать только роль 'user'")
+    
     if not telegram_id:
         raise HTTPException(status_code=400, detail="telegram_id обязателен")
+    
     existing = db.get_user(telegram_id)
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
-    success = db.add_user(telegram_id, username, full_name, role, master, phone)
+    
+    success = db.add_user(telegram_id, username, full_name, role, master)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь добавлен"})
     else:
@@ -169,14 +198,16 @@ async def update_user(
     username: str = "",
     role: str = "",
     master: str = "",
-    phone: str = "",
     current_user: dict = Depends(get_current_user)
 ):
+    """Обновить данные пользователя (только для суперадмина)"""
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может редактировать пользователей")
+    
     user = db.get_user(telegram_id)
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
     updates = {}
     if full_name:
         updates['full_name'] = full_name
@@ -186,10 +217,10 @@ async def update_user(
         updates['role'] = role
     if master is not None:
         updates['master'] = master
-    if phone is not None:
-        updates['phone'] = phone
+    
     if not updates:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
+    
     success = db.update_user(telegram_id, updates)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь обновлен"})
@@ -204,10 +235,13 @@ async def update_user_role(
 ):
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может менять роли")
+    
     if not new_role in ['superadmin', 'admin', 'user']:
         raise HTTPException(status_code=400, detail="Недопустимая роль")
+    
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя изменить свою роль")
+    
     success = db.update_user_role(telegram_id, new_role)
     if success:
         return JSONResponse({"success": True, "message": "Роль обновлена"})
@@ -221,15 +255,19 @@ async def delete_user(
 ):
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может удалять пользователей")
+    
     if telegram_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
+    
     success = db.delete_user(telegram_id)
     if success:
         return JSONResponse({"success": True, "message": "Пользователь удален"})
     else:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-# ===== УДАЛЕНИЕ ЗАКАЗА =====
+# ============================================================
+# УДАЛЕНИЕ ЗАКАЗА
+# ============================================================
 @app.delete("/api/orders/by-number/{order_number}")
 async def delete_order_by_number(
     order_number: str,
@@ -237,16 +275,23 @@ async def delete_order_by_number(
 ):
     if current_user["role"] not in ['admin', 'superadmin']:
         raise HTTPException(status_code=403, detail="Только администратор может удалять заказы")
+    
     with db.get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM order_history WHERE order_id IN (SELECT id FROM orders WHERE order_number = ?)', (order_number,))
+        cursor.execute('''
+            DELETE FROM order_history 
+            WHERE order_id IN (SELECT id FROM orders WHERE order_number = ?)
+        ''', (order_number,))
         cursor.execute('DELETE FROM orders WHERE order_number = ?', (order_number,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Заказ не найден")
         conn.commit()
+    
     return JSONResponse({"success": True, "message": f"Заказ #{order_number} удален"})
 
-# ===== ПРИЕМ ЗАКАЗОВ ИЗ 1С =====
+# ============================================================
+# ПРИЕМ ЗАКАЗОВ ИЗ 1С
+# ============================================================
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
     order_data: OrderFrom1C,
@@ -284,7 +329,9 @@ async def receive_order_from_1c(
         print(f"❌ Ошибка при приеме заказа из 1С: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== ЗАКАЗЫ =====
+# ============================================================
+# ЗАКАЗЫ
+# ============================================================
 @app.get("/api/orders")
 async def get_orders(
     limit: int = Query(50, ge=1, le=200),
@@ -312,8 +359,10 @@ async def get_orders(
                 search_lower = search.lower()
                 results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
             results = results[offset:offset + limit]
+        
         if master:
             results = [o for o in results if o.get('master') == master]
+        
         return JSONResponse({
             "success": True,
             "data": results,
@@ -373,28 +422,49 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== МАСТЕРА =====
+# ============================================================
+# МАСТЕРА
+# ============================================================
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
+    """Получить список всех мастеров из поля master"""
     try:
-        masters = db.get_masters()
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT master as name 
+                FROM orders 
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
+            ''')
+            masters = [row['name'] for row in cursor.fetchall()]
         return JSONResponse({"success": True, "data": masters})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== ПОДСЧЁТ СТАТУСОВ =====
+# ============================================================
+# ПОДСЧЁТ ЗАКАЗОВ ПО СТАТУСАМ
+# ============================================================
 @app.get("/api/status-counts")
 async def get_status_counts(current_user: dict = Depends(get_current_user)):
+    """Получить количество заказов по статусам"""
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT status, COUNT(*) as count FROM orders GROUP BY status ORDER BY count DESC')
+            cursor.execute('''
+                SELECT status, COUNT(*) as count 
+                FROM orders 
+                GROUP BY status
+                ORDER BY count DESC
+            ''')
             status_counts = [dict(row) for row in cursor.fetchall()]
         return JSONResponse({"success": True, "data": status_counts})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== СТАТИСТИКА =====
+# ============================================================
+# СТАТИСТИКА
+# ============================================================
 @app.get("/api/statistics")
 async def get_statistics(current_user: dict = Depends(get_current_user)):
     try:
@@ -416,7 +486,9 @@ async def get_statistics(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== АДМИНСКАЯ АНАЛИТИКА (ИСПРАВЛЕНА) =====
+# ============================================================
+# АДМИНСКАЯ АНАЛИТИКА (С ПОДДЕРЖКОЙ МЕСЯЦА/ГОДА)
+# ============================================================
 @app.get("/api/admin/dashboard")
 async def get_dashboard_stats(
     month: Optional[int] = None,
@@ -469,7 +541,9 @@ async def get_dashboard_stats(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== ПОИСК =====
+# ============================================================
+# ПОИСК
+# ============================================================
 @app.get("/api/search")
 async def search_orders(
     q: str = Query(..., min_length=1),
@@ -491,7 +565,9 @@ async def search_orders(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ===== HEALTH =====
+# ============================================================
+# HEALTH
+# ============================================================
 @app.get("/health")
 async def health_check():
     try:
