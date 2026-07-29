@@ -102,7 +102,6 @@
         }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
 
-        /* НОВАЯ СТРОКА ДЛЯ СОРТИРОВКИ */
         .sorting-row {
             display: flex;
             flex-wrap: wrap;
@@ -452,7 +451,6 @@
         .nav-btn.active { color: var(--accent); background: rgba(245, 166, 35, 0.1); }
         .nav-btn:active { transform: scale(0.95); }
 
-        /* СТИЛИ ДЛЯ АНАЛИТИКИ */
         .analytics-filters {
             display: flex;
             gap: 10px;
@@ -544,7 +542,6 @@
             <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
         </div>
         
-        <!-- КАРУСЕЛЬ СО СТАТУСАМИ -->
         <div class="filter-row">
             <div class="filters" id="filters">
                 <button class="filter-btn active" data-filter="all">Все</button>
@@ -559,7 +556,6 @@
             </div>
         </div>
         
-        <!-- СОРТИРОВКА ОТДЕЛЬНОЙ СТРОКОЙ -->
         <div class="sorting-row">
             <div class="control-group">
                 <label for="masterFilter">👨‍🔧 По мастеру:</label>
@@ -611,7 +607,6 @@
                 <div><h1>Аналитика</h1></div>
             </div>
         </div>
-        <!-- ФИЛЬТРЫ ДЛЯ АНАЛИТИКИ -->
         <div class="analytics-filters" id="analyticsFilters">
             <select id="analyticsMonth">
                 <option value="1">Январь</option>
@@ -652,6 +647,7 @@
             <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserPhone" placeholder="Телефон" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
             <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
                 <option value="user">Сотрудник</option>
                 <option value="admin">Администратор</option>
@@ -693,6 +689,10 @@
             <div class="form-group">
                 <label>Username</label>
                 <input id="editUsername" placeholder="Введите username">
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input id="editPhone" placeholder="Введите телефон">
             </div>
             <div class="form-group">
                 <label>Роль</label>
@@ -750,7 +750,7 @@
                     USER_ROLE = currentUser.role;
                     document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
                     document.getElementById('profileName').textContent = currentUser.full_name;
-                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
+                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div><div style="font-size:13px;color:var(--text-secondary);">📱 ' + (currentUser.phone || 'Не указан') + '</div></div></div></div>';
                     
                     if (USER_ROLE !== 'superadmin') {
                         const addBtn = document.getElementById('addUserBtn');
@@ -825,13 +825,11 @@
                 const r = await apiFetch('/masters');
                 if (r.success) {
                     mastersList = r.data;
-                    // Обновляем фильтр мастеров
                     const select = document.getElementById('masterFilter');
                     select.innerHTML = '<option value="">Все мастера</option>';
                     mastersList.forEach(master => {
                         select.innerHTML += `<option value="${master}">${master}</option>`;
                     });
-                    // Обновляем список в модалке
                     await loadMastersForModal();
                 }
             } catch(e) {
@@ -890,12 +888,34 @@
             }
         }
 
-        // ===== ДЕТАЛИ ЗАКАЗА =====
+        // ===== ДЕТАЛИ ЗАКАЗА - ИСПРАВЛЕНО =====
         function showDetail(order) {
+            // Переключаем страницу на детали
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-detail').classList.add('active');
             document.getElementById('detailTitle').textContent = 'Заказ #' + order.order_number;
+            
+            // Показываем загрузку
+            document.getElementById('detailContent').innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            // ЗАПРАШИВАЕМ ПОЛНЫЕ ДАННЫЕ ЗАКАЗА С ИСТОРИЕЙ
+            const orderNumber = order.order_number;
+            
+            apiFetch('/orders/by-number/' + orderNumber)
+                .then(r => {
+                    if (r.success) {
+                        const fullOrder = r.data;
+                        renderOrderDetail(fullOrder);
+                    } else {
+                        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки заказа</p></div>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('detailContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки заказа</p></div>';
+                });
+        }
 
+        function renderOrderDetail(order) {
             let phone = order.phone || '';
             let cleanPhone = phone.replace(/[^0-9+]/g, '');
             if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
@@ -963,19 +983,25 @@
             apiFetch('/orders?search=' + encodeURIComponent(phone)).then(r => {
                 if (r.success) {
                     let orders = r.data;
-                    let total = orders.length;
+                    let cleanPhone = phone.replace(/[^0-9+]/g, '');
+                    let filteredOrders = orders.filter(o => {
+                        let orderPhone = (o.phone || '').replace(/[^0-9+]/g, '');
+                        return orderPhone === cleanPhone || orderPhone.includes(cleanPhone);
+                    });
+
+                    let total = filteredOrders.length;
                     let statusCount = {};
                     let devices = new Set();
-                    orders.forEach(o => {
+                    filteredOrders.forEach(o => {
                         let s = o.status || 'Без статуса';
                         statusCount[s] = (statusCount[s] || 0) + 1;
                         if (o.device) devices.add(o.device);
                     });
                     let topStatus = Object.entries(statusCount).sort((a,b) => b[1]-a[1])[0];
 
-                    let listHtml = orders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
+                    let listHtml = filteredOrders.map(o => '<div class="client-order-item" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div><span style="font-weight:600;">#' + o.order_number + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">' + (o.device || '—') + '</span></div><span class="order-status status-' + getStatusClass(o.status) + '" style="font-size:11px;">' + (o.status || 'Новый') + '</span></div>').join('');
 
-                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (orders[0]?.client_name || 'Клиент') + '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + total + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
+                    container.innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;"><div style="font-size:40px;">👤</div><div><div style="font-size:18px;font-weight:700;">' + (filteredOrders[0]?.client_name || 'Клиент') + '</div><div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ' + phone + '</div></div></div><div class="client-stats-grid"><div class="client-stat-item"><div class="num">' + filteredOrders.length + '</div><div class="label">Заказов</div></div><div class="client-stat-item"><div class="num">' + (topStatus ? topStatus[0] : '—') + '</div><div class="label">Частый статус</div></div><div class="client-stat-item"><div class="num">' + devices.size + '</div><div class="label">Устройств</div></div></div></div><div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>' + (listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>');
                 } else {
                     container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
                 }
@@ -1135,7 +1161,6 @@
                     '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
                 return;
             }
-            // Загружаем данные за текущий месяц по умолчанию
             const now = new Date();
             document.getElementById('analyticsMonth').value = now.getMonth() + 1;
             document.getElementById('analyticsYear').value = now.getFullYear();
@@ -1183,7 +1208,6 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Загружаем мастеров перед открытием модалки
             loadMastersForModal().then(() => {
                 apiFetch('/users/' + telegram_id).then(r => {
                     if (r.success) {
@@ -1191,8 +1215,8 @@
                         document.getElementById('editUserId').value = u.telegram_id;
                         document.getElementById('editFullName').value = u.full_name || '';
                         document.getElementById('editUsername').value = u.username || '';
+                        document.getElementById('editPhone').value = u.phone || '';
                         document.getElementById('editRole').value = u.role || 'user';
-                        // Устанавливаем мастера
                         const masterSelect = document.getElementById('editMaster');
                         if (u.master) {
                             masterSelect.value = u.master;
@@ -1216,6 +1240,7 @@
             if (!editingTelegramId) return;
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
@@ -1234,6 +1259,7 @@
                     body: JSON.stringify({ 
                         full_name, 
                         username, 
+                        phone,
                         role, 
                         master: master || null
                     })
@@ -1268,6 +1294,7 @@
             const telegram_id = document.getElementById('newUserId').value.trim();
             const full_name = document.getElementById('newUserName').value.trim();
             const username = document.getElementById('newUserUsername').value.trim();
+            const phone = document.getElementById('newUserPhone').value.trim();
             const role = document.getElementById('newUserRole').value;
 
             if (!telegram_id || !full_name) {
@@ -1276,12 +1303,13 @@
             }
 
             try {
-                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&role=' + role, { method: 'POST' });
+                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&phone=' + encodeURIComponent(phone) + '&role=' + role, { method: 'POST' });
                 alert('✅ Пользователь добавлен');
                 document.getElementById('addUserForm').style.display = 'none';
                 document.getElementById('newUserId').value = '';
                 document.getElementById('newUserName').value = '';
                 document.getElementById('newUserUsername').value = '';
+                document.getElementById('newUserPhone').value = '';
                 loadUsers();
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
