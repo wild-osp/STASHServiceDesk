@@ -372,6 +372,14 @@
             padding: 10px 14px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             font-size: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .user-item .user-info {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 8px;
         }
         .user-item .role-badge {
             font-size: 11px;
@@ -383,6 +391,14 @@
         .role-superadmin { background: #f5a623; color: #0b1a2f; }
         .role-admin { background: #3b82f6; color: white; }
         .role-user { background: #6b7280; color: white; }
+        .user-item .master-badge {
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(245, 166, 35, 0.15);
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+        }
         .user-actions {
             display: flex;
             gap: 4px;
@@ -586,6 +602,8 @@
             .client-list-item .client-orders-count { align-self: flex-start; }
             .detail-grid { grid-template-columns: 1fr; }
             .status-date-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .user-item { flex-direction: column; align-items: flex-start; }
+            .user-actions { align-self: flex-start; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -748,6 +766,7 @@
             <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);" id="addUserBtn">➕ Добавить</button>
         </div>
         <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+        
         <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
             <h3 style="color:var(--accent);margin-bottom:8px;">Добавить пользователя</h3>
             <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
@@ -763,6 +782,7 @@
                 <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:10px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:15px;">Отмена</button>
             </div>
         </div>
+    </div>
 
     <!-- ===== СТРАНИЦА ПРОФИЛЯ ===== -->
     <div class="page" id="page-profile">
@@ -851,7 +871,7 @@
                     USER_ROLE = currentUser.role;
                     document.getElementById('userGreeting').innerHTML = currentUser.full_name + ' <small style="display:block;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</small>';
                     document.getElementById('profileName').textContent = currentUser.full_name;
-                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div><div style="font-size:13px;color:var(--text-secondary);">📱 ' + (currentUser.phone || 'Не указан') + '</div></div></div></div>';
+                    document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
                     
                     if (USER_ROLE !== 'superadmin') {
                         const addBtn = document.getElementById('addUserBtn');
@@ -1509,6 +1529,9 @@
             await loadAnalytics();
         }
 
+        // ============================================================
+        // ПОЛЬЗОВАТЕЛИ - ОСНОВНЫЕ ФУНКЦИИ
+        // ============================================================
         async function loadUsers() {
             if (USER_ROLE !== 'superadmin') {
                 document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Только суперадмин может управлять пользователями</h3></div>';
@@ -1529,7 +1552,17 @@
                                 <button class="danger" onclick="deleteUser('${u.telegram_id}')">🗑️</button>
                             `;
                         }
-                        html += '<div class="user-item"><div><span style="font-weight:600;">' + escapeHtml(u.full_name) + '</span><span style="color:var(--text-secondary);font-size:13px;margin-left:8px;">@' + (u.username || 'нет') + '</span><span class="role-badge ' + roleClass + '" style="margin-left:8px;">' + u.role + '</span></div><div class="user-actions">' + actions + '</div></div>';
+                        html += `
+                            <div class="user-item">
+                                <div class="user-info">
+                                    <span style="font-weight:600;">${escapeHtml(u.full_name)}</span>
+                                    <span style="color:var(--text-secondary);font-size:13px;">@${escapeHtml(u.username || 'нет')}</span>
+                                    <span class="role-badge ${roleClass}">${u.role}</span>
+                                    ${u.master ? `<span class="master-badge">👨‍🔧 ${escapeHtml(u.master)}</span>` : ''}
+                                </div>
+                                <div class="user-actions">${actions}</div>
+                            </div>
+                        `;
                     });
                     document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3></div>';
                 }
@@ -1538,98 +1571,6 @@
             }
         }
 
-        function openUserEdit(telegram_id) {
-            if (USER_ROLE !== 'superadmin') {
-                alert('Только суперадмин может редактировать пользователей');
-                return;
-            }
-            editingTelegramId = telegram_id;
-            const modal = document.getElementById('userEditModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            loadMastersForModal().then(() => {
-                apiFetch('/users/' + telegram_id).then(r => {
-                    if (r.success) {
-                        const u = r.data;
-                        document.getElementById('editUserId').value = u.telegram_id;
-                        document.getElementById('editFullName').value = u.full_name || '';
-                        document.getElementById('editUsername').value = u.username || '';
-                        document.getElementById('editRole').value = u.role || 'user';
-                        const masterSelect = document.getElementById('editMaster');
-                        console.log('📝 Загружен мастер из БД:', u.master);
-                        // Устанавливаем значение мастера
-                        if (u.master) {
-                            masterSelect.value = u.master;
-                        } else {
-                            masterSelect.value = '';
-                        }
-                        document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
-                    }
-                }).catch(e => {
-                    alert('Ошибка загрузки данных пользователя');
-                    closeUserModal();
-                });
-            });
-        }
-
-        function closeUserModal() {
-            document.getElementById('userEditModal').classList.remove('active');
-            document.body.style.overflow = '';
-            editingTelegramId = null;
-        }
-
-        async function saveUserEdit() {
-            if (!editingTelegramId) return;
-            
-            const full_name = document.getElementById('editFullName').value.trim();
-            const username = document.getElementById('editUsername').value.trim();
-            const role = document.getElementById('editRole').value;
-            const master = document.getElementById('editMaster').value;
-            
-            console.log('📝 СОХРАНЕНИЕ:');
-            console.log('   editingTelegramId:', editingTelegramId);
-            console.log('   full_name:', full_name);
-            console.log('   username:', username);
-            console.log('   role:', role);
-            console.log('   master:', master);
-            
-            if (!full_name && !username && !role && !master) {
-                alert('Нет данных для сохранения');
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-User-Id': userId || 'anonymous'
-                    },
-                    body: JSON.stringify({ 
-                        full_name, 
-                        username, 
-                        role, 
-                        master: master || ''
-                    })
-                });
-                
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.detail || 'Ошибка обновления');
-                }
-                
-                const data = await response.json();
-                console.log('📝 Ответ сервера:', data);
-                
-                alert('✅ Пользователь обновлен');
-                closeUserModal();
-                loadUsers();
-            } catch(e) {
-                alert('❌ Ошибка: ' + e.message);
-                console.error('❌ Ошибка:', e);
-            }
-        }
         function showAddUserForm() {
             if (USER_ROLE !== 'superadmin') {
                 alert('Только суперадмин может добавлять пользователей');
@@ -1666,6 +1607,114 @@
             }
         }
 
+        // ============================================================
+        // РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ - ИСПРАВЛЕНО
+        // ============================================================
+        function openUserEdit(telegram_id) {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может редактировать пользователей');
+                return;
+            }
+            editingTelegramId = telegram_id;
+            const modal = document.getElementById('userEditModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Загружаем мастеров
+            loadMastersForModal().then(() => {
+                apiFetch('/users/' + telegram_id).then(r => {
+                    if (r.success) {
+                        const u = r.data;
+                        console.log('📝 Загружен пользователь:', u);
+                        
+                        document.getElementById('editUserId').value = u.telegram_id;
+                        document.getElementById('editFullName').value = u.full_name || '';
+                        document.getElementById('editUsername').value = u.username || '';
+                        document.getElementById('editRole').value = u.role || 'user';
+                        
+                        // Устанавливаем мастера
+                        const masterSelect = document.getElementById('editMaster');
+                        console.log('📝 Мастер из БД:', u.master);
+                        if (u.master) {
+                            masterSelect.value = u.master;
+                        } else {
+                            masterSelect.value = '';
+                        }
+                        
+                        document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
+                    }
+                }).catch(e => {
+                    console.error('❌ Ошибка загрузки пользователя:', e);
+                    alert('Ошибка загрузки данных пользователя');
+                    closeUserModal();
+                });
+            });
+        }
+
+        function closeUserModal() {
+            document.getElementById('userEditModal').classList.remove('active');
+            document.body.style.overflow = '';
+            editingTelegramId = null;
+        }
+
+        async function saveUserEdit() {
+            if (!editingTelegramId) {
+                alert('Ошибка: не выбран пользователь');
+                return;
+            }
+            
+            const full_name = document.getElementById('editFullName').value.trim();
+            const username = document.getElementById('editUsername').value.trim();
+            const role = document.getElementById('editRole').value;
+            const master = document.getElementById('editMaster').value;
+            
+            console.log('📝 СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЯ:');
+            console.log('   editingTelegramId:', editingTelegramId);
+            console.log('   full_name:', full_name);
+            console.log('   username:', username);
+            console.log('   role:', role);
+            console.log('   master:', master);
+            
+            // Проверяем, есть ли что сохранять
+            if (!full_name && !username && !role && !master) {
+                alert('Нет данных для сохранения');
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-User-Id': userId || 'anonymous'
+                    },
+                    body: JSON.stringify({ 
+                        full_name, 
+                        username, 
+                        role, 
+                        master: master || ''
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('📝 Ответ сервера:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Ошибка обновления');
+                }
+                
+                alert('✅ Пользователь обновлен');
+                closeUserModal();
+                loadUsers();
+            } catch(e) {
+                console.error('❌ Ошибка сохранения:', e);
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ
+        // ============================================================
         async function deleteUser(telegram_id) {
             if (USER_ROLE !== 'superadmin') {
                 alert('Только суперадмин может удалять пользователей');
@@ -1681,6 +1730,9 @@
             }
         }
 
+        // ============================================================
+        // УДАЛЕНИЕ ЗАКАЗА
+        // ============================================================
         async function deleteOrder(orderNumber) {
             if (USER_ROLE !== 'superadmin' && USER_ROLE !== 'admin') {
                 alert('Только администратор может удалять заказы');
@@ -1697,6 +1749,9 @@
             }
         }
 
+        // ============================================================
+        // АВТООБНОВЛЕНИЕ
+        // ============================================================
         setInterval(() => {
             if (document.getElementById('page-orders').classList.contains('active')) {
                 loadOrders();
