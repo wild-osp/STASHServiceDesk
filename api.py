@@ -624,11 +624,11 @@ async def health_check():
 # ============================================================
 # ЗАПУСК ПРИ СТАРТЕ (в конце файла)
 # ============================================================
-# Запускаем бота в фоновом потоке после инициализации приложения
-thread = threading.Thread(target=run_bot, daemon=True)
-thread.start()
-print("🔄 Бот будет запущен через 3 секунды...")
-
 if __name__ == "__main__":
+    print("🔄 Бот будет запущен через 3 секунды...")
+    # Запускаем бота в фоновом потоке
+    thread = threading.Thread(target=run_bot, daemon=True)
+    thread.start()
+    
     import uvicorn
     uvicorn.run("api:app", host="0.0.0.0", port=3000)
