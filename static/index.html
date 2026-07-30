@@ -1614,6 +1614,8 @@
                             const masters = res.data;
                             const masterSelect = document.getElementById('editMaster');
                             
+                            console.log('📝 Загружены мастера:', masters);  // <-- ДОБАВЬТЕ
+                            
                             // Очищаем и заполняем список мастеров
                             masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
                             masters.forEach(master => {
@@ -1624,6 +1626,7 @@
                             });
                             
                             // Устанавливаем текущего мастера
+                            console.log('📝 Мастер из БД:', u.master);  // <-- ДОБАВЬТЕ
                             if (u.master) {
                                 masterSelect.value = u.master;
                             } else {
@@ -1639,7 +1642,6 @@
                 closeUserModal();
             });
         }
-
         function closeUserModal() {
             document.getElementById('userEditModal').classList.remove('active');
             document.body.style.overflow = '';
