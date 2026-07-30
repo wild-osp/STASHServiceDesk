@@ -134,7 +134,6 @@ class Database:
                 return False
 
     def update_user(self, telegram_id: str, updates: Dict[str, Any]) -> bool:
-        """Обновляет данные пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
