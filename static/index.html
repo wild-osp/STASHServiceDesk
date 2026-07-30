@@ -373,7 +373,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.05);
             font-size: 14px;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
         .user-item .user-info {
             display: flex;
@@ -384,7 +384,7 @@
         .user-item .role-badge {
             font-size: 11px;
             font-weight: 600;
-            padding: 3px 10px;
+            padding: 2px 10px;
             border-radius: 12px;
             text-transform: uppercase;
         }
@@ -394,8 +394,7 @@
         .user-item .master-badge {
             font-size: 11px;
             color: var(--accent);
-            background: rgba(245, 166, 35, 0.15);
-            padding: 2px 10px;
+            padding: 2px 8px;
             border-radius: 12px;
             border: 1px solid var(--accent);
         }
@@ -979,30 +978,9 @@
                     mastersList.forEach(master => {
                         select.innerHTML += `<option value="${master}">${master}</option>`;
                     });
-                    await loadMastersForModal();
                 }
             } catch(e) {
                 console.error('Ошибка загрузки мастеров:', e);
-            }
-        }
-
-        async function loadMastersForModal() {
-            try {
-                const r = await apiFetch('/masters');
-                if (r.success) {
-                    const masters = r.data;
-                    const editSelect = document.getElementById('editMaster');
-                    const currentValue = editSelect.value;
-                    editSelect.innerHTML = '<option value="">— Не мастер —</option>';
-                    masters.forEach(master => {
-                        editSelect.innerHTML += `<option value="${master}">${master}</option>`;
-                    });
-                    if (currentValue) {
-                        editSelect.value = currentValue;
-                    }
-                }
-            } catch(e) {
-                console.error('Ошибка загрузки мастеров для модалки:', e);
             }
         }
 
@@ -1620,34 +1598,45 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Загружаем мастеров
-            loadMastersForModal().then(() => {
-                apiFetch('/users/' + telegram_id).then(r => {
-                    if (r.success) {
-                        const u = r.data;
-                        console.log('📝 Загружен пользователь:', u);
-                        
-                        document.getElementById('editUserId').value = u.telegram_id;
-                        document.getElementById('editFullName').value = u.full_name || '';
-                        document.getElementById('editUsername').value = u.username || '';
-                        document.getElementById('editRole').value = u.role || 'user';
-                        
-                        // Устанавливаем мастера
-                        const masterSelect = document.getElementById('editMaster');
-                        console.log('📝 Мастер из БД:', u.master);
-                        if (u.master) {
-                            masterSelect.value = u.master;
-                        } else {
-                            masterSelect.value = '';
+            // Загружаем данные пользователя
+            apiFetch('/users/' + telegram_id).then(r => {
+                if (r.success) {
+                    const u = r.data;
+                    
+                    document.getElementById('editUserId').value = u.telegram_id;
+                    document.getElementById('editFullName').value = u.full_name || '';
+                    document.getElementById('editUsername').value = u.username || '';
+                    document.getElementById('editRole').value = u.role || 'user';
+                    
+                    // Загружаем мастеров
+                    apiFetch('/masters').then(res => {
+                        if (res.success) {
+                            const masters = res.data;
+                            const masterSelect = document.getElementById('editMaster');
+                            
+                            // Очищаем и заполняем список мастеров
+                            masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
+                            masters.forEach(master => {
+                                const option = document.createElement('option');
+                                option.value = master;
+                                option.textContent = master;
+                                masterSelect.appendChild(option);
+                            });
+                            
+                            // Устанавливаем текущего мастера
+                            if (u.master) {
+                                masterSelect.value = u.master;
+                            } else {
+                                masterSelect.value = '';
+                            }
                         }
-                        
-                        document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
-                    }
-                }).catch(e => {
-                    console.error('❌ Ошибка загрузки пользователя:', e);
-                    alert('Ошибка загрузки данных пользователя');
-                    closeUserModal();
-                });
+                    });
+                    
+                    document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
+                }
+            }).catch(e => {
+                alert('Ошибка загрузки данных пользователя');
+                closeUserModal();
             });
         }
 
@@ -1674,12 +1663,6 @@
             console.log('   username:', username);
             console.log('   role:', role);
             console.log('   master:', master);
-            
-            // Проверяем, есть ли что сохранять
-            if (!full_name && !username && !role && !master) {
-                alert('Нет данных для сохранения');
-                return;
-            }
             
             try {
                 const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
