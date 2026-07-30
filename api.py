@@ -228,6 +228,7 @@ async def update_user(
     master: str = "",
     current_user: dict = Depends(get_current_user)
 ):
+    """Обновить данные пользователя (только для суперадмина)"""
     print("=" * 60)
     print(f"🔍 update_user: telegram_id={telegram_id}")
     print(f"   full_name='{full_name}'")
@@ -250,7 +251,12 @@ async def update_user(
         updates['username'] = username
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
-    updates['master'] = master
+    
+    # ИСПРАВЛЕНО: master может быть пустой строкой или None
+    # Если master пришёл как пустая строка, но мы хотим снять мастера
+    # То нужно передать None или пустую строку в БД
+    if master is not None:
+        updates['master'] = master if master != '' else None
     
     print(f"   updates: {updates}")
     
@@ -261,9 +267,9 @@ async def update_user(
     print(f"   success: {success}")
     
     if success:
-        # Проверяем, что мастер действительно сохранился
+        # Проверяем, что сохранилось
         updated_user = db.get_user(telegram_id)
-        print(f"   после обновления master='{updated_user.get('master', '')}'")
+        print(f"   после обновления master='{updated_user.get('master')}'")
         return JSONResponse({"success": True, "message": "Пользователь обновлен"})
     else:
         raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
