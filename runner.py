@@ -3,10 +3,11 @@ import subprocess
 import time
 import threading
 import os
+import sys
 
 def run_bot():
-    time.sleep(2)
-    subprocess.Popen(["python", "orders_bot.py"])
+    # Запускаем бота с перенаправлением вывода в консоль
+    subprocess.Popen(["python", "-u", "orders_bot.py"])
 
 def run_api():
     subprocess.Popen(["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "3000"])
