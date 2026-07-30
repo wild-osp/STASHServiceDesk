@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
-"""
-STASHServiceDesk Orders Bot
-С поддержкой синхронизации БД с GitHub и кнопкой Mini App
-"""
-
-import logging
 import os
+import time
 import sys
+import logging
 from datetime import datetime
+
+# ============================================================
+# УСТАНОВКА ЧАСОВОГО ПОЯСА (Минск, UTC+3)
+# ============================================================
+os.environ['TZ'] = 'Europe/Minsk'
+try:
+    time.tzset()
+    print(f"✅ Часовой пояс бота установлен: {time.tzname}")
+except Exception as e:
+    print(f"⚠️ Не удалось установить часовой пояс: {e}")
+
+print(f"🕐 Текущее время бота: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
@@ -16,6 +24,7 @@ from database import get_db
 from order_parser import OrderParser
 from models import Order
 from db_sync import db_sync
+
 
 # Настройка логирования
 logging.basicConfig(
