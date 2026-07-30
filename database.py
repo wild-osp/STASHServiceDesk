@@ -21,6 +21,8 @@ class Database:
         self.db_path = db_path
         self.init_database()
         self.init_users_table()
+        # ДОБАВЛЯЕМ ПРОВЕРКУ И ДОБАВЛЕНИЕ КОЛОНКИ
+        self.ensure_master_column()
     
     def get_connection(self):
         """Получает соединение с БД"""
@@ -81,10 +83,10 @@ class Database:
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
     # ============================================================
-    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (БЕЗ ПОЛЯ PHONE)
+    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (С АВТОДОБАВЛЕНИЕМ КОЛОНКИ)
     # ============================================================
     def init_users_table(self):
-        """Создает таблицу пользователей с полем master (без phone)"""
+        """Создает таблицу пользователей с полем master"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -101,6 +103,25 @@ class Database:
             ''')
             conn.commit()
             print("✅ Таблица пользователей создана")
+    
+    def ensure_master_column(self):
+        """Проверяет и добавляет колонку master, если её нет"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                # Проверяем, есть ли колонка master
+                cursor.execute("PRAGMA table_info(users)")
+                columns = [row['name'] for row in cursor.fetchall()]
+                
+                if 'master' not in columns:
+                    print("🔧 Добавляем колонку master в таблицу users...")
+                    cursor.execute("ALTER TABLE users ADD COLUMN master TEXT")
+                    conn.commit()
+                    print("✅ Колонка master успешно добавлена")
+                else:
+                    print("✅ Колонка master уже существует")
+        except Exception as e:
+            print(f"⚠️ Ошибка при проверке/добавлении колонки master: {e}")
 
     def get_user(self, telegram_id: str) -> Optional[Dict[str, Any]]:
         """Получает пользователя по Telegram ID"""
@@ -134,6 +155,7 @@ class Database:
                 return False
 
     def update_user(self, telegram_id: str, updates: Dict[str, Any]) -> bool:
+        """Обновляет данные пользователя"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
@@ -376,7 +398,6 @@ class Database:
                 'by_status': by_status
             }
     
-    # ===== МЕТОД С ФИЛЬТРОМ ПО МЕСЯЦУ/ГОДУ =====
     def get_detailed_stats(self, month: int = None, year: int = None) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
