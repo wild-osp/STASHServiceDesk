@@ -3,6 +3,7 @@ import os
 import threading
 import subprocess
 import time
+import sys
 from fastapi import FastAPI, HTTPException, Query, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
@@ -11,6 +12,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 import json
+import socket
 
 DATA_DIR = os.getenv('DATA_DIR', '/app/data')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -20,7 +22,49 @@ from database import get_db
 from models import Order
 
 # ============================================================
-# FASTAPI APP (БЕЗ АВТОЗАПУСКА БОТА)
+# ЗАПУСК БОТА С ПРОВЕРКОЙ (ТОЛЬКО ЕСЛИ НЕ ЗАПУЩЕН)
+# ============================================================
+def is_bot_running():
+    """Проверяет, запущен ли бот"""
+    try:
+        # Проверяем через pidfile
+        pidfile = '/tmp/orders_bot.pid'
+        if os.path.exists(pidfile):
+            with open(pidfile, 'r') as f:
+                pid = int(f.read().strip())
+            try:
+                os.kill(pid, 0)  # Проверяем, жив ли процесс
+                return True
+            except OSError:
+                os.remove(pidfile)  # PID файл есть, но процесса нет
+                return False
+        return False
+    except Exception:
+        return False
+
+def run_bot():
+    """Запускает бота, если он ещё не запущен"""
+    # Проверяем, не запущен ли уже бот
+    if is_bot_running():
+        print("✅ Бот уже запущен, пропускаю...")
+        return
+    
+    time.sleep(3)  # Даем время API запуститься
+    try:
+        proc = subprocess.Popen(
+            ["python", "orders_bot.py"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        # Сохраняем PID
+        with open('/tmp/orders_bot.pid', 'w') as f:
+            f.write(str(proc.pid))
+        print(f"🚀 Бот автоматически запущен из API (PID: {proc.pid})")
+    except Exception as e:
+        print(f"❌ Ошибка запуска бота: {e}")
+
+# ============================================================
+# FASTAPI APP
 # ============================================================
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
 
@@ -576,6 +620,14 @@ async def health_check():
                 "timestamp": datetime.now().isoformat()
             }
         )
+
+# ============================================================
+# ЗАПУСК ПРИ СТАРТЕ (в конце файла)
+# ============================================================
+# Запускаем бота в фоновом потоке после инициализации приложения
+thread = threading.Thread(target=run_bot, daemon=True)
+thread.start()
+print("🔄 Бот будет запущен через 3 секунды...")
 
 if __name__ == "__main__":
     import uvicorn
