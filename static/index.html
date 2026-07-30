@@ -131,6 +131,20 @@
             color: var(--text-secondary);
             font-weight: 600;
         }
+        .sorting-row .sort-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .sorting-row .sort-btn:active { transform: scale(0.95); }
+        .sorting-row .sort-btn.active { background: var(--accent); color: var(--bg-primary); }
 
         .order-list { display: flex; flex-direction: column; gap: 10px; }
         .order-card {
@@ -674,11 +688,13 @@
             <div class="control-group">
                 <label for="sortSelect">📅 Сортировка:</label>
                 <select id="sortSelect" onchange="changeSort(this.value)">
-                    <option value="number">По номеру</option>
-                    <option value="date">По дате</option>
-                    <option value="new">Новые сверху</option>
+                    <option value="number">По номеру (старые сверху)</option>
+                    <option value="number_desc">По номеру (новые сверху)</option>
+                    <option value="date">По дате (старые сверху)</option>
+                    <option value="date_desc">По дате (новые сверху)</option>
                 </select>
             </div>
+            <button class="sort-btn" onclick="toggleSortOrder()" id="sortOrderBtn">⬆️ По возрастанию</button>
         </div>
         
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
@@ -846,6 +862,7 @@
         let currentMaster = '';
         let allUsers = [];
         let sortMode = 'number';
+        let sortAscending = false;
         let editingTelegramId = null;
         let mastersList = [];
         let allClients = [];
@@ -963,8 +980,60 @@
             return phone.startsWith('+') ? phone : '+' + phone;
         }
 
+        // ===== ФУНКЦИИ СОРТИРОВКИ =====
         function changeSort(value) {
             sortMode = value;
+            // Обновляем название кнопки
+            updateSortButton();
+            renderOrders();
+        }
+
+        function toggleSortOrder() {
+            sortAscending = !sortAscending;
+            updateSortButton();
+            renderOrders();
+        }
+
+        function updateSortButton() {
+            const btn = document.getElementById('sortOrderBtn');
+            if (sortAscending) {
+                btn.textContent = '⬆️ По возрастанию';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '⬇️ По убыванию';
+                btn.classList.remove('active');
+            }
+        }
+
+        function getComparator(sortMode, ascending) {
+            const direction = ascending ? 1 : -1;
+            
+            if (sortMode === 'number' || sortMode === 'number_desc') {
+                return (a, b) => {
+                    const numA = parseInt(a.order_number) || 0;
+                    const numB = parseInt(b.order_number) || 0;
+                    return (numA - numB) * direction;
+                };
+            } else if (sortMode === 'date' || sortMode === 'date_desc') {
+                return (a, b) => {
+                    const dateA = new Date(a.date || a.created_at);
+                    const dateB = new Date(b.date || b.created_at);
+                    return (dateA - dateB) * direction;
+                };
+            } else {
+                // 'new' - новые сверху
+                return (a, b) => {
+                    const dateA = new Date(a.updated_at || a.created_at);
+                    const dateB = new Date(b.updated_at || b.created_at);
+                    return (dateB - dateA);
+                };
+            }
+        }
+
+        function changeSort(value) {
+            sortMode = value;
+            sortAscending = false; // Сбрасываем при смене режима
+            updateSortButton();
             renderOrders();
         }
 
@@ -1376,6 +1445,7 @@
             } catch(e) { console.error(e); }
         }
 
+        // ===== ОСНОВНАЯ ФУНКЦИЯ РЕНДЕРИНГА С ПРАВИЛЬНОЙ СОРТИРОВКОЙ =====
         function renderOrders() {
             let filtered = allOrders;
             if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
@@ -1384,19 +1454,9 @@
                 filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
             }
             
-            filtered.sort((a, b) => {
-                if (sortMode === 'number') {
-                    return parseInt(a.order_number) - parseInt(b.order_number);
-                } else if (sortMode === 'date') {
-                    const dateA = new Date(a.date || a.created_at);
-                    const dateB = new Date(b.date || b.created_at);
-                    return dateA - dateB;
-                } else {
-                    const dateA = new Date(a.updated_at || a.created_at);
-                    const dateB = new Date(b.updated_at || b.created_at);
-                    return dateB - dateA;
-                }
-            });
+            // СОРТИРОВКА С УЧЕТОМ ПОРЯДКА
+            const comparator = getComparator(sortMode, sortAscending);
+            filtered.sort(comparator);
 
             let container = document.getElementById('orderList');
             if (!filtered.length) {
@@ -1514,7 +1574,7 @@
         }
 
         // ============================================================
-        // ПОЛЬЗОВАТЕЛИ - ОСНОВНЫЕ ФУНКЦИИ
+        // ПОЛЬЗОВАТЕЛИ
         // ============================================================
         async function loadUsers() {
             if (USER_ROLE !== 'superadmin') {
@@ -1592,7 +1652,7 @@
         }
 
         // ============================================================
-        // РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ - ИСПРАВЛЕНО
+        // РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ
         // ============================================================
         let editUserData = null;
 
@@ -1607,13 +1667,11 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Загружаем мастеров сначала
             apiFetch('/masters').then(res => {
                 if (res.success) {
                     const masters = res.data;
                     const masterSelect = document.getElementById('editMaster');
                     
-                    // Очищаем и заполняем список мастеров
                     masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
                     masters.forEach(master => {
                         const option = document.createElement('option');
@@ -1622,7 +1680,6 @@
                         masterSelect.appendChild(option);
                     });
                     
-                    // Теперь загружаем данные пользователя
                     apiFetch('/users/' + telegram_id).then(r => {
                         if (r.success) {
                             editUserData = r.data;
@@ -1632,9 +1689,7 @@
                             document.getElementById('editUsername').value = editUserData.username || '';
                             document.getElementById('editRole').value = editUserData.role || 'user';
                             
-                            // Устанавливаем мастера
                             if (editUserData.master) {
-                                // Проверяем, есть ли такой мастер в списке
                                 let found = false;
                                 for (let i = 0; i < masterSelect.options.length; i++) {
                                     if (masterSelect.options[i].value === editUserData.master) {
@@ -1643,7 +1698,6 @@
                                         break;
                                     }
                                 }
-                                // Если мастера нет в списке, добавляем его
                                 if (!found) {
                                     const option = document.createElement('option');
                                     option.value = editUserData.master;
@@ -1684,12 +1738,9 @@
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
             const role = document.getElementById('editRole').value;
-            
-            // ВАЖНО: получаем значение мастера из select
             const masterSelect = document.getElementById('editMaster');
             const master = masterSelect ? masterSelect.value : '';
             
-            // Проверяем, есть ли изменения
             if (!full_name && !username && !role && !master) {
                 alert('Нет данных для сохранения');
                 return;
@@ -1725,7 +1776,7 @@
         }
 
         // ============================================================
-        // УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ
+        // УДАЛЕНИЕ
         // ============================================================
         async function deleteUser(telegram_id) {
             if (USER_ROLE !== 'superadmin') {
@@ -1742,9 +1793,6 @@
             }
         }
 
-        // ============================================================
-        // УДАЛЕНИЕ ЗАКАЗА
-        // ============================================================
         async function deleteOrder(orderNumber) {
             if (USER_ROLE !== 'superadmin' && USER_ROLE !== 'admin') {
                 alert('Только администратор может удалять заказы');
@@ -1778,6 +1826,9 @@
                 loadClients();
             }
         }, 60000);
+
+        // Инициализация кнопки сортировки
+        updateSortButton();
     </script>
 </body>
 </html>
