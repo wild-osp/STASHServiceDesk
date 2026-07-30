@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
+import time
 import threading
 import subprocess
-import time
 import sys
 from fastapi import FastAPI, HTTPException, Query, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +12,19 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 import json
-import socket
+
+# ============================================================
+# УСТАНОВКА ЧАСОВОГО ПОЯСА (Минск, UTC+3)
+# ============================================================
+os.environ['TZ'] = 'Europe/Minsk'
+try:
+    time.tzset()
+    print(f"✅ Часовой пояс установлен: {time.tzname}")
+except Exception as e:
+    print(f"⚠️ Не удалось установить часовой пояс: {e}")
+
+# Проверка времени
+print(f"🕐 Текущее время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 DATA_DIR = os.getenv('DATA_DIR', '/app/data')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -20,6 +32,7 @@ os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
 from database import get_db
 from models import Order
+
 
 # ============================================================
 # ЗАПУСК БОТА С ПРОВЕРКОЙ (ТОЛЬКО ЕСЛИ НЕ ЗАПУЩЕН)
