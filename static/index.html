@@ -1583,8 +1583,9 @@
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
-            if (!full_name) {
-                alert('Введите имя');
+            // Проверяем, есть ли хоть какие-то изменения
+            if (!full_name && !username && !role && !master) {
+                alert('Нет данных для сохранения');
                 return;
             }
             
