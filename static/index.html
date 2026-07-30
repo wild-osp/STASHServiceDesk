@@ -968,6 +968,7 @@
             renderOrders();
         }
 
+        // ===== МАСТЕРА =====
         async function loadMasters() {
             try {
                 const r = await apiFetch('/masters');
@@ -989,6 +990,7 @@
             renderOrders();
         }
 
+        // ===== ПОДСЧЁТ СТАТУСОВ =====
         async function loadStatusCounts() {
             try {
                 const r = await apiFetch('/status-counts');
@@ -1014,6 +1016,7 @@
             }
         }
 
+        // ===== ДЕТАЛИ ЗАКАЗА =====
         function showDetail(order) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-detail').classList.add('active');
@@ -1129,6 +1132,7 @@
             `;
         }
 
+        // ===== КЛИЕНТЫ =====
         function loadClients() {
             let container = document.getElementById('clientsList');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
@@ -1352,6 +1356,7 @@
             renderClients(filtered);
         });
 
+        // ===== ЗАГРУЗКА ЗАКАЗОВ =====
         async function loadOrders() {
             try {
                 let url = '/orders?limit=200';
@@ -1418,6 +1423,7 @@
             renderOrders();
         });
 
+        // ===== АНАЛИТИКА =====
         async function loadAnalytics() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
                 document.getElementById('dashboardContent').innerHTML = 
@@ -1588,64 +1594,85 @@
         // ============================================================
         // РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ - ИСПРАВЛЕНО
         // ============================================================
+        let editUserData = null;
+
         function openUserEdit(telegram_id) {
             if (USER_ROLE !== 'superadmin') {
                 alert('Только суперадмин может редактировать пользователей');
                 return;
             }
+            
             editingTelegramId = telegram_id;
             const modal = document.getElementById('userEditModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Загружаем данные пользователя
-            apiFetch('/users/' + telegram_id).then(r => {
-                if (r.success) {
-                    const u = r.data;
+            // Загружаем мастеров сначала
+            apiFetch('/masters').then(res => {
+                if (res.success) {
+                    const masters = res.data;
+                    const masterSelect = document.getElementById('editMaster');
                     
-                    document.getElementById('editUserId').value = u.telegram_id;
-                    document.getElementById('editFullName').value = u.full_name || '';
-                    document.getElementById('editUsername').value = u.username || '';
-                    document.getElementById('editRole').value = u.role || 'user';
+                    // Очищаем и заполняем список мастеров
+                    masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
+                    masters.forEach(master => {
+                        const option = document.createElement('option');
+                        option.value = master;
+                        option.textContent = master;
+                        masterSelect.appendChild(option);
+                    });
                     
-                    // Загружаем мастеров
-                    apiFetch('/masters').then(res => {
-                        if (res.success) {
-                            const masters = res.data;
-                            const masterSelect = document.getElementById('editMaster');
+                    // Теперь загружаем данные пользователя
+                    apiFetch('/users/' + telegram_id).then(r => {
+                        if (r.success) {
+                            editUserData = r.data;
                             
-                            console.log('📝 Загружены мастера:', masters);  // <-- ДОБАВЬТЕ
+                            document.getElementById('editUserId').value = editUserData.telegram_id;
+                            document.getElementById('editFullName').value = editUserData.full_name || '';
+                            document.getElementById('editUsername').value = editUserData.username || '';
+                            document.getElementById('editRole').value = editUserData.role || 'user';
                             
-                            // Очищаем и заполняем список мастеров
-                            masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
-                            masters.forEach(master => {
-                                const option = document.createElement('option');
-                                option.value = master;
-                                option.textContent = master;
-                                masterSelect.appendChild(option);
-                            });
-                            
-                            // Устанавливаем текущего мастера
-                            console.log('📝 Мастер из БД:', u.master);  // <-- ДОБАВЬТЕ
-                            if (u.master) {
-                                masterSelect.value = u.master;
+                            // Устанавливаем мастера
+                            if (editUserData.master) {
+                                // Проверяем, есть ли такой мастер в списке
+                                let found = false;
+                                for (let i = 0; i < masterSelect.options.length; i++) {
+                                    if (masterSelect.options[i].value === editUserData.master) {
+                                        masterSelect.selectedIndex = i;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                // Если мастера нет в списке, добавляем его
+                                if (!found) {
+                                    const option = document.createElement('option');
+                                    option.value = editUserData.master;
+                                    option.textContent = editUserData.master + ' (текущий)';
+                                    option.selected = true;
+                                    masterSelect.appendChild(option);
+                                }
                             } else {
                                 masterSelect.value = '';
                             }
+                            
+                            document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (editUserData.full_name || editUserData.telegram_id);
                         }
+                    }).catch(e => {
+                        alert('Ошибка загрузки данных пользователя');
+                        closeUserModal();
                     });
-                    
-                    document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
                 }
             }).catch(e => {
-                alert('Ошибка загрузки данных пользователя');
+                alert('Ошибка загрузки мастеров');
                 closeUserModal();
             });
         }
+
         function closeUserModal() {
             document.getElementById('userEditModal').classList.remove('active');
             document.body.style.overflow = '';
             editingTelegramId = null;
+            editUserData = null;
         }
 
         async function saveUserEdit() {
@@ -1657,14 +1684,16 @@
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
             const role = document.getElementById('editRole').value;
-            const master = document.getElementById('editMaster').value;
             
-            console.log('📝 СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЯ:');
-            console.log('   editingTelegramId:', editingTelegramId);
-            console.log('   full_name:', full_name);
-            console.log('   username:', username);
-            console.log('   role:', role);
-            console.log('   master:', master);
+            // ВАЖНО: получаем значение мастера из select
+            const masterSelect = document.getElementById('editMaster');
+            const master = masterSelect ? masterSelect.value : '';
+            
+            // Проверяем, есть ли изменения
+            if (!full_name && !username && !role && !master) {
+                alert('Нет данных для сохранения');
+                return;
+            }
             
             try {
                 const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
@@ -1682,7 +1711,6 @@
                 });
                 
                 const data = await response.json();
-                console.log('📝 Ответ сервера:', data);
                 
                 if (!response.ok) {
                     throw new Error(data.detail || 'Ошибка обновления');
@@ -1692,7 +1720,6 @@
                 closeUserModal();
                 loadUsers();
             } catch(e) {
-                console.error('❌ Ошибка сохранения:', e);
                 alert('❌ Ошибка: ' + e.message);
             }
         }
