@@ -794,7 +794,6 @@
                 <label>Username</label>
                 <input id="editUsername" placeholder="Введите username">
             </div>
-            <!-- ПОЛЕ PHONE УБРАНО -->
             <div class="form-group">
                 <label>Роль</label>
                 <select id="editRole">
@@ -1582,20 +1581,19 @@
 
         async function saveUserEdit() {
             if (!editingTelegramId) return;
+            
             const full_name = document.getElementById('editFullName').value.trim();
             const username = document.getElementById('editUsername').value.trim();
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
-            console.log('📝 СOХРАНЯЕМ:');
+            console.log('📝 СОХРАНЕНИЕ:');
             console.log('   editingTelegramId:', editingTelegramId);
-            console.log('   master:', master);
             console.log('   full_name:', full_name);
             console.log('   username:', username);
             console.log('   role:', role);
+            console.log('   master:', master);
             
-            
-            // Проверяем, есть ли хоть какие-то изменения
             if (!full_name && !username && !role && !master) {
                 alert('Нет данных для сохранения');
                 return;
@@ -1621,14 +1619,17 @@
                     throw new Error(err.detail || 'Ошибка обновления');
                 }
                 
+                const data = await response.json();
+                console.log('📝 Ответ сервера:', data);
+                
                 alert('✅ Пользователь обновлен');
                 closeUserModal();
                 loadUsers();
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
+                console.error('❌ Ошибка:', e);
             }
         }
-
         function showAddUserForm() {
             if (USER_ROLE !== 'superadmin') {
                 alert('Только суперадмин может добавлять пользователей');
