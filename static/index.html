@@ -102,7 +102,7 @@
         }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
 
-        /* НОВЫЕ СТИЛИ ДЛЯ СОРТИРОВКИ */
+        /* СТРОКА СОРТИРОВКИ */
         .sorting-row {
             display: flex;
             flex-wrap: wrap;
@@ -115,7 +115,7 @@
             align-items: center;
             gap: 6px;
             background: var(--bg-secondary);
-            padding: 4px 12px 4px 16px;
+            padding: 4px 8px 4px 16px;
             border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.05);
         }
@@ -163,6 +163,30 @@
             color: var(--accent);
         }
         .sort-icon-btn:active { transform: scale(0.9); }
+
+        .reset-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 50%;
+            transition: 0.3s;
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .reset-btn:hover {
+            opacity: 1;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .reset-btn.active {
+            opacity: 1;
+            color: var(--accent);
+        }
 
         .order-list { display: flex; flex-direction: column; gap: 10px; }
         .order-card {
@@ -696,20 +720,18 @@
             </div>
         </div>
         
-        <!-- НОВАЯ СТРОКА СОРТИРОВКИ -->
+        <!-- СТРОКА СОРТИРОВКИ -->
         <div class="sorting-row">
-            <!-- ГРУППА 1: По мастеру + иконка сортировки -->
+            <!-- ГРУППА 1: По мастеру + крестик -->
             <div class="sorting-group">
                 <label for="masterFilter">👨‍🔧</label>
                 <select id="masterFilter" onchange="applyMasterFilter(this.value)">
                     <option value="">Все мастера</option>
                 </select>
-                <button class="sort-icon-btn" id="sortMasterBtn" onclick="toggleMasterSort()" title="Сортировать по мастеру">
-                    <span id="masterSortIcon">↕</span>
-                </button>
+                <button class="reset-btn" id="resetMasterBtn" onclick="resetMasterFilter()" title="Сбросить фильтр по мастеру">✕</button>
             </div>
             
-            <!-- ГРУППА 2: По номеру/дате + иконка сортировки -->
+            <!-- ГРУППА 2: По номеру/дате + иконка сортировки + крестик -->
             <div class="sorting-group">
                 <label for="sortSelect">📅</label>
                 <select id="sortSelect" onchange="changeSort(this.value)">
@@ -719,6 +741,7 @@
                 <button class="sort-icon-btn active" id="sortOrderBtn" onclick="toggleSortOrder()" title="Изменить порядок сортировки">
                     <span id="sortOrderIcon">⬇</span>
                 </button>
+                <button class="reset-btn" id="resetSortBtn" onclick="resetSort()" title="Сбросить сортировку">✕</button>
             </div>
         </div>
         
@@ -888,7 +911,6 @@
         let allUsers = [];
         let sortMode = 'number';      // 'number' или 'date'
         let sortAscending = false;     // false = по убыванию (новые сверху), true = по возрастанию (старые сверху)
-        let masterSortAscending = false; // сортировка по мастеру
         let editingTelegramId = null;
         let mastersList = [];
         let allClients = [];
@@ -1021,56 +1043,48 @@
             renderOrders();
         }
 
-        function toggleMasterSort() {
-            masterSortAscending = !masterSortAscending;
+        function resetSort() {
+            sortMode = 'number';
+            sortAscending = false;
+            document.getElementById('sortSelect').value = 'number';
             updateSortIcons();
             renderOrders();
         }
 
+        function resetMasterFilter() {
+            currentMaster = '';
+            document.getElementById('masterFilter').value = '';
+            renderOrders();
+        }
+
         function updateSortIcons() {
-            // Иконка для сортировки по номеру/дате
             const orderIcon = document.getElementById('sortOrderIcon');
+            const sortBtn = document.getElementById('sortOrderBtn');
             if (sortAscending) {
-                orderIcon.textContent = '⬆';  // по возрастанию (старые сверху)
-                document.getElementById('sortOrderBtn').classList.remove('active');
+                orderIcon.textContent = '⬆';
+                sortBtn.classList.remove('active');
             } else {
-                orderIcon.textContent = '⬇';  // по убыванию (новые сверху) - ПО УМОЛЧАНИЮ
-                document.getElementById('sortOrderBtn').classList.add('active');
-            }
-            
-            // Иконка для сортировки по мастеру
-            const masterIcon = document.getElementById('masterSortIcon');
-            if (masterSortAscending) {
-                masterIcon.textContent = '⬆';
-                document.getElementById('sortMasterBtn').classList.remove('active');
-            } else {
-                masterIcon.textContent = '⬇';
-                document.getElementById('sortMasterBtn').classList.add('active');
+                orderIcon.textContent = '⬇';
+                sortBtn.classList.add('active');
             }
         }
 
         function getComparator() {
             const direction = sortAscending ? 1 : -1;
             
-            // Сначала сортируем по мастеру
-            return (a, b) => {
-                // 1. Сортировка по мастеру
-                const masterA = a.master || '';
-                const masterB = b.master || '';
-                const masterCompare = masterA.localeCompare(masterB) * (masterSortAscending ? 1 : -1);
-                if (masterCompare !== 0) return masterCompare;
-                
-                // 2. Сортировка по номеру или дате
-                if (sortMode === 'number') {
+            if (sortMode === 'number') {
+                return (a, b) => {
                     const numA = parseInt(a.order_number) || 0;
                     const numB = parseInt(b.order_number) || 0;
                     return (numA - numB) * direction;
-                } else { // date
+                };
+            } else { // date
+                return (a, b) => {
                     const dateA = new Date(a.date || a.created_at);
                     const dateB = new Date(b.date || b.created_at);
                     return (dateA - dateB) * direction;
-                }
-            };
+                };
+            }
         }
 
         // ===== МАСТЕРА =====
@@ -1481,7 +1495,7 @@
             } catch(e) { console.error(e); }
         }
 
-        // ===== ОСНОВНАЯ ФУНКЦИЯ РЕНДЕРИНГА С СОРТИРОВКОЙ =====
+        // ===== ОСНОВНАЯ ФУНКЦИЯ РЕНДЕРИНГА =====
         function renderOrders() {
             let filtered = allOrders;
             if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
@@ -1519,8 +1533,7 @@
             renderOrders();
         });
 
-        // ===== АНАЛИТИКА =====
-        async function loadAnalytics() {
+        // ===== АНАЛИТИКА =====        async function loadAnalytics() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
                 document.getElementById('dashboardContent').innerHTML = 
                     '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
