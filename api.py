@@ -200,11 +200,14 @@ async def update_user(
     master: str = "",
     current_user: dict = Depends(get_current_user)
 ):
-    """Обновить данные пользователя (только для суперадмина)"""
+    print(f"🔍 UPDATE USER: telegram_id={telegram_id}")
+    print(f"   full_name={full_name}, username={username}, role={role}, master={master}")
+    
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может редактировать пользователей")
     
     user = db.get_user(telegram_id)
+    print(f"   user found: {user is not None}")
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     
@@ -218,14 +221,21 @@ async def update_user(
     if master is not None:
         updates['master'] = master
     
+    print(f"   updates: {updates}")
+    
     if not updates:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
     
-    success = db.update_user(telegram_id, updates)
-    if success:
-        return JSONResponse({"success": True, "message": "Пользователь обновлен"})
-    else:
-        raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
+    try:
+        success = db.update_user(telegram_id, updates)
+        print(f"   success: {success}")
+        if success:
+            return JSONResponse({"success": True, "message": "Пользователь обновлен"})
+        else:
+            raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
+    except Exception as e:
+        print(f"   ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/users/{telegram_id}/role")
 async def update_user_role(
