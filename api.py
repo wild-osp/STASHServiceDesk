@@ -250,8 +250,7 @@ async def update_user(
         updates['username'] = username
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
-    if master and master != '':
-        updates['master'] = master
+    updates['master'] = master
     
     print(f"   updates: {updates}")
     
