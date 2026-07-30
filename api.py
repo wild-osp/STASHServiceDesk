@@ -204,58 +204,34 @@ async def update_user(
     current_user: dict = Depends(get_current_user)
 ):
     """Обновить данные пользователя (только для суперадмина)"""
-    print("=" * 60)
-    print(f"🔍 UPDATE USER: telegram_id={telegram_id}")
-    print(f"   full_name='{full_name}'")
-    print(f"   username='{username}'")
-    print(f"   role='{role}'")
-    print(f"   master='{master}'")
-    print(f"   current_user role: {current_user['role']}")
-    
     if current_user["role"] != 'superadmin':
-        print("❌ Не суперадмин")
         raise HTTPException(status_code=403, detail="Только суперадмин может редактировать пользователей")
     
     user = db.get_user(telegram_id)
-    print(f"   user found: {user is not None}")
     if not user:
-        print("❌ Пользователь не найден")
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     
     updates = {}
-    if full_name:
+    # ИСПРАВЛЕНО: проверяем, что поле не пустое
+    if full_name and full_name != '':
         updates['full_name'] = full_name
-        print(f"   ✅ добавлено full_name: {full_name}")
-    if username:
+    if username and username != '':
         updates['username'] = username
-        print(f"   ✅ добавлено username: {username}")
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
-        print(f"   ✅ добавлено role: {role}")
     if master and master != '':
         updates['master'] = master
-        print(f"   ✅ добавлено master: {master}")
-    
-    print(f"   updates: {updates}")
     
     if not updates:
-        print("❌ Нет данных для обновления")
-        raise HTTPException(status_code=400, detail="Нет данных для обновления")
+        # Если ничего не изменилось, возвращаем успех без изменений
+        return JSONResponse({"success": True, "message": "Нет изменений"})
     
-    try:
-        success = db.update_user(telegram_id, updates)
-        print(f"   success: {success}")
-        if success:
-            print("✅ Пользователь обновлен")
-            return JSONResponse({"success": True, "message": "Пользователь обновлен"})
-        else:
-            print("❌ Не удалось обновить пользователя")
-            raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
-    except Exception as e:
-        print(f"❌ ОШИБКА: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    success = db.update_user(telegram_id, updates)
+    if success:
+        return JSONResponse({"success": True, "message": "Пользователь обновлен"})
+    else:
+        raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
+
 @app.put("/api/users/{telegram_id}/role")
 async def update_user_role(
     telegram_id: str,
