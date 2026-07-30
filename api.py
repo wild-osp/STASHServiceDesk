@@ -228,7 +228,14 @@ async def update_user(
     master: str = "",
     current_user: dict = Depends(get_current_user)
 ):
-    """Обновить данные пользователя (только для суперадмина)"""
+    print("=" * 60)
+    print(f"🔍 update_user: telegram_id={telegram_id}")
+    print(f"   full_name='{full_name}'")
+    print(f"   username='{username}'")
+    print(f"   role='{role}'")
+    print(f"   master='{master}'")
+    print("=" * 60)
+    
     if current_user["role"] != 'superadmin':
         raise HTTPException(status_code=403, detail="Только суперадмин может редактировать пользователей")
     
@@ -246,11 +253,18 @@ async def update_user(
     if master and master != '':
         updates['master'] = master
     
+    print(f"   updates: {updates}")
+    
     if not updates:
         return JSONResponse({"success": True, "message": "Нет изменений"})
     
     success = db.update_user(telegram_id, updates)
+    print(f"   success: {success}")
+    
     if success:
+        # Проверяем, что мастер действительно сохранился
+        updated_user = db.get_user(telegram_id)
+        print(f"   после обновления master='{updated_user.get('master', '')}'")
         return JSONResponse({"success": True, "message": "Пользователь обновлен"})
     else:
         raise HTTPException(status_code=400, detail="Не удалось обновить пользователя")
