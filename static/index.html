@@ -1583,11 +1583,13 @@
             const role = document.getElementById('editRole').value;
             const master = document.getElementById('editMaster').value;
             
-            console.log('📝 Сохраняем пользователя:', editingTelegramId);
+            console.log('📝 СOХРАНЯЕМ:');
+            console.log('   editingTelegramId:', editingTelegramId);
             console.log('   master:', master);
             console.log('   full_name:', full_name);
             console.log('   username:', username);
             console.log('   role:', role);
+            
             
             // Проверяем, есть ли хоть какие-то изменения
             if (!full_name && !username && !role && !master) {
