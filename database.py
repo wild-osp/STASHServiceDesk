@@ -5,11 +5,25 @@
 
 import sqlite3
 import os
+import time
 import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from models import Order, OrderHistory
 from db_sync import db_sync
+
+# ============================================================
+# УСТАНОВКА ЧАСОВОГО ПОЯСА ДЛЯ DATABASE (Минск, UTC+3)
+# ============================================================
+os.environ['TZ'] = 'Europe/Minsk'
+try:
+    time.tzset()
+except:
+    pass
+
+def now_iso():
+    """Возвращает текущее время в Минске в формате ISO"""
+    return datetime.now().isoformat()
 
 
 class Database:
@@ -21,7 +35,6 @@ class Database:
         self.db_path = db_path
         self.init_database()
         self.init_users_table()
-        # ДОБАВЛЯЕМ ПРОВЕРКУ И ДОБАВЛЕНИЕ КОЛОНКИ
         self.ensure_master_column()
     
     def get_connection(self):
@@ -82,9 +95,6 @@ class Database:
             count = cursor.fetchone()['count']
             print(f"✅ База данных готова: {self.db_path} ({count} заказов)")
     
-    # ============================================================
-    # ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ (С АВТОДОБАВЛЕНИЕМ КОЛОНКИ)
-    # ============================================================
     def init_users_table(self):
         """Создает таблицу пользователей с полем master"""
         with self.get_connection() as conn:
@@ -109,7 +119,6 @@ class Database:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                # Проверяем, есть ли колонка master
                 cursor.execute("PRAGMA table_info(users)")
                 columns = [row['name'] for row in cursor.fetchall()]
                 
@@ -146,7 +155,7 @@ class Database:
                 cursor.execute('''
                     INSERT INTO users (telegram_id, username, full_name, role, master, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (telegram_id, username, full_name, role, master, datetime.now().isoformat(), datetime.now().isoformat()))
+                ''', (telegram_id, username, full_name, role, master, now_iso(), now_iso()))
                 conn.commit()
                 print(f"✅ Пользователь {full_name} добавлен с ролью {role} и мастером {master}")
                 return True
@@ -163,7 +172,7 @@ class Database:
             cursor.execute(f'''
                 UPDATE users SET {set_clause}, updated_at = ?
                 WHERE telegram_id = ?
-            ''', values + [datetime.now().isoformat()])
+            ''', values + [now_iso()])
             conn.commit()
             return cursor.rowcount > 0
 
@@ -174,7 +183,7 @@ class Database:
             cursor.execute('''
                 UPDATE users SET role = ?, updated_at = ?
                 WHERE telegram_id = ?
-            ''', (new_role, datetime.now().isoformat(), telegram_id))
+            ''', (new_role, now_iso(), telegram_id))
             conn.commit()
             if cursor.rowcount > 0:
                 print(f"✅ Роль пользователя {telegram_id} изменена на {new_role}")
@@ -192,9 +201,6 @@ class Database:
                 return True
             return False
     
-    # ============================================================
-    # МЕТОДЫ ДЛЯ ЗАКАЗОВ
-    # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
         """Сохраняет или обновляет заказ"""
         with self.get_connection() as conn:
@@ -241,7 +247,7 @@ class Database:
                     order.telegram_message_id,
                     order.telegram_message_date,
                     order.raw_message_text,
-                    datetime.now().isoformat(),
+                    now_iso(),
                     order.order_number
                 ))
                 
@@ -253,7 +259,7 @@ class Database:
                     ''', (
                         order_id,
                         order.status,
-                        datetime.now().isoformat()
+                        now_iso()
                     ))
                     conn.commit()
                     print(f"✅ История записана для заказа #{order.order_number}")
@@ -290,8 +296,8 @@ class Database:
                     order.telegram_message_id,
                     order.telegram_message_date,
                     order.raw_message_text,
-                    datetime.now().isoformat(),
-                    datetime.now().isoformat()
+                    now_iso(),
+                    now_iso()
                 ))
                 
                 order_id = cursor.lastrowid
@@ -304,7 +310,7 @@ class Database:
                     ''', (
                         order_id,
                         order.status,
-                        datetime.now().isoformat()
+                        now_iso()
                     ))
                     conn.commit()
                     print(f"✅ Начальный статус записан")
@@ -472,9 +478,6 @@ class Database:
             
             return [dict(row) for row in cursor.fetchall()]
 
-    # ============================================================
-    # МЕТОДЫ ДЛЯ МАСТЕРОВ
-    # ============================================================
     def get_masters(self) -> List[str]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
