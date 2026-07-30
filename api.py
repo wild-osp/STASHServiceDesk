@@ -20,22 +20,6 @@ from database import get_db
 from models import Order
 
 # ============================================================
-# АВТОЗАПУСК БОТА ИЗ API
-# ============================================================
-def run_bot():
-    """Запускает бота в отдельном процессе при старте API"""
-    time.sleep(5)
-    try:
-        subprocess.Popen(["python", "orders_bot.py"])
-        print("🚀 Бот автоматически запущен из API")
-    except Exception as e:
-        print(f"❌ Ошибка запуска бота: {e}")
-
-# Запускаем бота в фоновом потоке
-bot_thread = threading.Thread(target=run_bot, daemon=True)
-bot_thread.start()
-
-# ============================================================
 # FASTAPI APP
 # ============================================================
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
@@ -191,9 +175,6 @@ async def add_user(
     else:
         raise HTTPException(status_code=400, detail="Не удалось добавить пользователя")
 
-# ============================================================
-# ИСПРАВЛЕННАЯ ФУНКЦИЯ UPDATE_USER
-# ============================================================
 @app.put("/api/users/{telegram_id}")
 async def update_user(
     telegram_id: str,
@@ -212,7 +193,6 @@ async def update_user(
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     
     updates = {}
-    # ИСПРАВЛЕНО: проверяем, что поле не пустое
     if full_name and full_name != '':
         updates['full_name'] = full_name
     if username and username != '':
@@ -223,7 +203,6 @@ async def update_user(
         updates['master'] = master
     
     if not updates:
-        # Если ничего не изменилось, возвращаем успех без изменений
         return JSONResponse({"success": True, "message": "Нет изменений"})
     
     success = db.update_user(telegram_id, updates)
