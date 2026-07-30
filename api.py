@@ -20,7 +20,7 @@ from database import get_db
 from models import Order
 
 # ============================================================
-# FASTAPI APP
+# FASTAPI APP (БЕЗ АВТОЗАПУСКА БОТА)
 # ============================================================
 app = FastAPI(title="STASHServiceDesk API", version="1.0.0")
 
