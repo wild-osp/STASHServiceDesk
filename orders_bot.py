@@ -20,11 +20,10 @@ print(f"🕐 Текущее время бота: {datetime.now().strftime('%Y-%m
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
 
-from database import get_db
+from database import get_db, now_iso
 from order_parser import OrderParser
 from models import Order
 from db_sync import db_sync
-
 
 # Настройка логирования
 logging.basicConfig(
@@ -49,54 +48,13 @@ os.environ['DB_PATH'] = os.getenv('DB_PATH', '/app/data/orders.db')
 db = get_db()
 parser = OrderParser()
 
-# URL Mini App (без user_id в URL — он добавляется динамически)
+# URL Mini App
 APP_URL_BASE = "https://bot-1784782201-8409-wild-osp.bothost.tech/app"
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик всех сообщений в группе"""
-    message = update.effective_message
-    chat = update.effective_chat
-    
-    if not message or chat.type not in ['group', 'supergroup']:
-        return
-    
-    text = message.text or message.caption or ""
-    if not text or not parser.is_order_message(text):
-        return
-    
-    logger.info("=" * 80)
-    logger.info("📦 ОБНАРУЖЕН ЗАКАЗ")
-    logger.info(f"🆔 Chat ID: {chat.id}")
-    logger.info(f"📌 Группа: {chat.title or 'Без названия'}")
-    logger.info(f"🔢 Message ID: {message.message_id}")
-    logger.info("-" * 40)
-    
-    order = parser.parse(text)
-    if not order:
-        logger.warning("❌ Не удалось распарсить заказ")
-        return
-    
-    order.telegram_chat_id = str(chat.id)
-    order.telegram_message_id = message.message_id
-    order.telegram_message_date = datetime.fromtimestamp(message.date.timestamp()).isoformat()
-    order.raw_message_text = text
-    
-    try:
-        order_id = db.save_order(order)
-        logger.info(f"✅ Заказ #{order.order_number} обработан (ID: {order_id})")
-        logger.info(f"  Статус: {order.status}")
-        logger.info(f"  Клиент: {order.client_name}")
-        logger.info(f"  Устройство: {order.device}")
-        
-        stats = db.get_statistics()
-        logger.info(f"📊 Всего заказов: {stats['total']}, сегодня: {stats['today']}")
-    except Exception as e:
-        logger.error(f"❌ Ошибка при сохранении заказа: {e}")
-    
-    logger.info("=" * 80)
-
-
+# ============================================================
+# ОБРАБОТЧИКИ КОМАНД
+# ============================================================
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /start с кнопкой Mini App"""
     user = update.effective_user
@@ -115,7 +73,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     stats = db.get_statistics()
     
-    # Передаём user_id в URL
     user_id = str(user.id)
     app_url = f"{APP_URL_BASE}?user_id={user_id}"
     
@@ -269,16 +226,48 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /sync - принудительная синхронизация с GitHub"""
-    await update.message.reply_text("🔄 Синхронизация с GitHub...")
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик всех сообщений в группе"""
+    message = update.effective_message
+    chat = update.effective_chat
     
-    success = db_sync.push_to_github("Manual sync from bot")
+    if not message or chat.type not in ['group', 'supergroup']:
+        return
     
-    if success:
-        await update.message.reply_text("✅ База данных синхронизирована с GitHub")
-    else:
-        await update.message.reply_text("❌ Ошибка синхронизации с GitHub")
+    text = message.text or message.caption or ""
+    if not text or not parser.is_order_message(text):
+        return
+    
+    logger.info("=" * 80)
+    logger.info("📦 ОБНАРУЖЕН ЗАКАЗ")
+    logger.info(f"🆔 Chat ID: {chat.id}")
+    logger.info(f"📌 Группа: {chat.title or 'Без названия'}")
+    logger.info(f"🔢 Message ID: {message.message_id}")
+    logger.info("-" * 40)
+    
+    order = parser.parse(text)
+    if not order:
+        logger.warning("❌ Не удалось распарсить заказ")
+        return
+    
+    order.telegram_chat_id = str(chat.id)
+    order.telegram_message_id = message.message_id
+    order.telegram_message_date = now_iso()
+    order.raw_message_text = text
+    
+    try:
+        order_id = db.save_order(order)
+        logger.info(f"✅ Заказ #{order.order_number} обработан (ID: {order_id})")
+        logger.info(f"  Статус: {order.status}")
+        logger.info(f"  Клиент: {order.client_name}")
+        logger.info(f"  Устройство: {order.device}")
+        
+        stats = db.get_statistics()
+        logger.info(f"📊 Всего заказов: {stats['total']}, сегодня: {stats['today']}")
+    except Exception as e:
+        logger.error(f"❌ Ошибка при сохранении заказа: {e}")
+    
+    logger.info("=" * 80)
 
 
 def main():
@@ -288,30 +277,26 @@ def main():
         logger.info(f"⏰ Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
-        # Синхронизация с GitHub
-        logger.info("🔄 Загрузка базы данных из GitHub...")
-        db_sync.sync_on_startup()
-        
         db.init_database()
         
         application = Application.builder().token(BOT_TOKEN).build()
         
-        # Команды
+        # Регистрируем команды
         application.add_handler(CommandHandler("start", start_command))
         application.add_handler(CommandHandler("status", status_command))
         application.add_handler(CommandHandler("search", search_command))
         application.add_handler(CommandHandler("stats", stats_command))
         application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("sync", sync_command))
         
-        # Обработчик сообщений
+        # Обработчик сообщений (для заказов из группы)
         application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
         
         logger.info("✅ Бот успешно инициализирован")
         logger.info("📡 Начинаю прослушивание сообщений...")
-        logger.info("📌 Команды: /start, /status, /search, /stats, /help, /sync")
+        logger.info("📌 Команды: /start, /status, /search, /stats, /help")
         logger.info("=" * 60)
         
+        # Запускаем бота
         application.run_polling(
             allowed_updates=Update.ALL_TYPES,
             drop_pending_updates=True,
