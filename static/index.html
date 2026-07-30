@@ -1558,8 +1558,12 @@
                         document.getElementById('editUsername').value = u.username || '';
                         document.getElementById('editRole').value = u.role || 'user';
                         const masterSelect = document.getElementById('editMaster');
+                        console.log('📝 Загружен мастер из БД:', u.master);
+                        // Устанавливаем значение мастера
                         if (u.master) {
                             masterSelect.value = u.master;
+                        } else {
+                            masterSelect.value = '';
                         }
                         document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
                     }
