@@ -9,15 +9,12 @@
             --bg-primary: #0b1a2f;
             --bg-secondary: #112240;
             --bg-card: #1a2d4a;
-            --bg-card-hover: #1f3a5f;
             --text-primary: #e8edf3;
             --text-secondary: #8ba0c7;
             --accent: #f5a623;
-            --accent-glow: rgba(245, 166, 35, 0.2);
             --radius: 12px;
             --nav-height: 64px;
             --font-base: 16px;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -29,13 +26,9 @@
             padding-bottom: calc(var(--nav-height) + 20px);
             font-size: var(--font-base);
             line-height: 1.5;
-            touch-action: pan-y;
-            user-select: none;
-            -webkit-user-select: none;
         }
         .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .page.active { display: block; }
 
         .header {
             display: flex;
@@ -62,27 +55,20 @@
         .stat-card {
             background: var(--bg-secondary);
             border-radius: var(--radius);
-            padding: 14px 12px;
+            padding: 12px 8px;
             text-align: center;
             border-bottom: 3px solid var(--accent);
-            transition: 0.3s;
         }
-        .stat-card:hover { background: var(--bg-card); }
         .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
         .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
         .search-wrapper { margin-bottom: 14px; }
         .search-wrapper input {
             width: 100%; padding: 12px 16px;
-            border: 1px solid var(--bg-secondary);
-            border-radius: var(--radius);
-            font-size: 16px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            outline: none;
-            transition: 0.3s;
+            border: 1px solid var(--bg-secondary); border-radius: var(--radius);
+            font-size: 16px; background: var(--bg-secondary); color: var(--text-primary); outline: none;
         }
-        .search-wrapper input:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .search-wrapper input:focus { border-color: var(--accent); }
 
         .filter-row {
             display: flex;
@@ -93,7 +79,6 @@
             overflow-x: auto;
             padding: 4px 0;
             scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
         }
         .filter-row::-webkit-scrollbar { display: none; }
         
@@ -114,12 +99,8 @@
             cursor: pointer;
             white-space: nowrap;
             flex-shrink: 0;
-            transition: 0.3s;
-            touch-action: manipulation;
         }
-        .filter-btn:hover { background: var(--bg-card); }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
-        .filter-btn:active { transform: scale(0.95); }
 
         .sorting-row {
             display: flex;
@@ -154,7 +135,6 @@
             cursor: pointer;
             outline: none;
             min-width: 100px;
-            touch-action: manipulation;
         }
         .sorting-group select:focus { border-color: var(--accent); }
         .sorting-group select option { background: var(--bg-primary); }
@@ -173,10 +153,14 @@
             justify-content: center;
             width: 28px;
             height: 28px;
-            touch-action: manipulation;
         }
-        .sort-icon-btn:hover { background: var(--bg-card); color: var(--accent); }
-        .sort-icon-btn.active { color: var(--accent); }
+        .sort-icon-btn:hover {
+            background: var(--bg-card);
+            color: var(--accent);
+        }
+        .sort-icon-btn.active {
+            color: var(--accent);
+        }
         .sort-icon-btn:active { transform: scale(0.9); }
 
         .reset-btn {
@@ -192,180 +176,65 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            touch-action: manipulation;
         }
-        .reset-btn:hover { opacity: 1; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .reset-btn.active { opacity: 1; color: var(--accent); }
-        .reset-btn:active { transform: scale(0.9); }
+        .reset-btn:hover {
+            opacity: 1;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .reset-btn.active {
+            opacity: 1;
+            color: var(--accent);
+        }
 
-        .order-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            touch-action: pan-y;
-        }
+        .order-list { display: flex; flex-direction: column; gap: 10px; }
         .order-card {
             background: var(--bg-secondary);
             border-radius: var(--radius);
-            padding: 14px 16px;
+            padding: 16px;
             cursor: pointer;
             border-left: 4px solid var(--accent);
-            transition: 0.3s;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .order-card:hover { 
-            background: var(--bg-card-hover);
-            transform: translateX(4px);
-            box-shadow: var(--shadow);
         }
         .order-card:active { transform: scale(0.98); }
-
-        .order-card-top {
+        .order-card .top-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .order-number {
-            font-weight: 700;
-            font-size: 17px;
-            color: var(--accent);
-        }
-        .order-card-top-right {
-            display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
         }
+        .order-number { font-weight: 700; font-size: 17px; }
         .order-status {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
             border-radius: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .order-date-small {
-            font-size: 12px;
-            color: var(--text-secondary);
-            background: var(--bg-primary);
-            padding: 2px 10px;
-            border-radius: 10px;
             white-space: nowrap;
         }
+        .status-new { background: #1e3a5f; color: #93bbfc; }
+        .status-repair { background: #5f3a1e; color: #fbbf7c; }
+        .status-consultation { background: #4a1e5f; color: #d8b4fe; }
+        .status-waiting { background: #5f4a1e; color: #fcd34d; }
+        .status-warranty { background: #1e4a3a; color: #6ee7a7; }
+        .status-ready { background: #1e3a2a; color: #34d399; }
+        .status-notpaid { background: #4a1e1e; color: #fca5a5; }
+        .status-paid { background: #1a3a2a; color: #86efac; }
+        .status-default { background: #2d2d3f; color: #9ca3af; }
 
-        .order-card-middle {
+        .order-card .info {
+            margin-top: 8px;
+            font-size: 15px;
+            color: var(--text-secondary);
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 6px 14px;
-            font-size: 14px;
+            gap: 6px 16px;
         }
-        .order-client {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .order-phone {
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .order-card-bottom {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 6px;
-            margin-top: 2px;
-        }
-        .order-device {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
+        .order-card .phone { font-weight: 600; font-size: 16px; color: var(--text-primary); }
+        .order-card .device {
+            margin-top: 6px;
+            font-size: 15px;
             color: var(--text-primary);
             font-weight: 500;
-        }
-        .order-device .device-icon { font-size: 16px; }
-        .order-master {
-            font-size: 12px;
-            color: var(--accent);
-            background: rgba(245, 166, 35, 0.12);
-            padding: 2px 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(245, 166, 35, 0.2);
-            white-space: nowrap;
-        }
-        .order-master-empty {
-            font-size: 11px;
-            color: var(--text-secondary);
-            opacity: 0.5;
-        }
-
-        .client-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer;
-            transition: 0.2s;
-            background: var(--bg-secondary);
-            border-radius: var(--radius);
-            margin-bottom: 6px;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .client-list-item:hover { 
-            background: var(--bg-card-hover);
-            transform: translateX(4px);
-        }
-        .client-list-item:active { transform: scale(0.98); }
-        
-        .client-list-item .client-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex: 1;
-        }
-        .client-list-item .client-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: var(--text-primary);
-        }
-        .client-list-item .client-phone {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .client-list-item .client-devices-info {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-        .client-list-item .client-devices-info span {
-            color: var(--accent);
-            font-weight: 700;
-        }
-        
-        .client-badge {
-            background: var(--accent);
-            color: var(--bg-primary);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-            min-width: 40px;
-            justify-content: center;
         }
 
         .detail-section {
@@ -373,24 +242,19 @@
             border-radius: var(--radius);
             padding: 14px 16px;
             margin-bottom: 10px;
-            transition: 0.3s;
         }
-        .detail-section:hover { background: var(--bg-card); }
         .status-date-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .status-date-row .status-big {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
         }
         .status-date-row .date-text {
             font-size: 14px;
             color: var(--text-secondary);
-            background: var(--bg-primary);
-            padding: 4px 12px;
-            border-radius: 12px;
         }
         .detail-row {
             display: flex;
@@ -435,7 +299,6 @@
             cursor: pointer;
             color: white;
             transition: 0.2s;
-            touch-action: manipulation;
         }
         .client-contact-grid .contact-btn:active { transform: scale(0.95); }
         .client-contact-grid .contact-btn.call { background: #22c55e; }
@@ -464,12 +327,8 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
-            touch-action: manipulation;
         }
-        .action-btn:hover { background: var(--accent); color: var(--bg-primary); }
         .action-btn.danger { border-color: #ef4444; color: #fca5a5; }
-        .action-btn.danger:hover { background: #ef4444; color: white; }
         .action-btn.client-btn { 
             width: 100%; 
             border-color: var(--accent);
@@ -479,8 +338,7 @@
             font-size: 14px;
             margin-top: 8px;
         }
-        .action-btn.client-btn:hover { background: var(--accent); color: var(--bg-primary); }
-        .action-btn:active { transform: scale(0.95); }
+        .action-btn.client-btn:active { transform: scale(0.98); }
 
         .client-order-item {
             cursor: pointer;
@@ -491,10 +349,28 @@
             align-items: center;
             font-size: 14px;
             transition: 0.2s;
-            touch-action: manipulation;
         }
         .client-order-item:hover { background: var(--bg-card); }
-        .client-order-item:active { transform: scale(0.98); }
+        .client-order-item .order-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .client-order-item .order-device {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .client-order-item .order-status-small {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .client-order-item .order-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
 
         .client-stats-grid {
             display: grid;
@@ -510,6 +386,39 @@
         }
         .client-stat-item .num { font-size: 20px; font-weight: 700; color: var(--accent); }
         .client-stat-item .label { font-size: 11px; color: var(--text-secondary); }
+
+        .client-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .client-list-item:hover { background: var(--bg-card); }
+        .client-list-item:active { transform: scale(0.98); }
+        .client-list-item .client-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .client-list-item .client-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .client-list-item .client-phone {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .client-list-item .client-orders-count {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
 
         .user-item {
             display: flex;
@@ -558,12 +467,10 @@
             font-size: 12px;
             cursor: pointer;
             transition: 0.2s;
-            touch-action: manipulation;
         }
         .user-actions button:hover { background: var(--bg-secondary); }
         .user-actions button.danger { border-color: #ef4444; color: #fca5a5; }
         .user-actions button.edit { border-color: var(--accent); color: var(--accent); }
-        .user-actions button:active { transform: scale(0.9); }
 
         .user-modal {
             display: none;
@@ -575,9 +482,8 @@
             padding: 20px;
             align-items: center;
             justify-content: center;
-            touch-action: none;
         }
-        .user-modal.active { display: flex; animation: fadeIn 0.3s ease; }
+        .user-modal.active { display: flex; animation: modalIn 0.3s ease; }
         .user-modal .modal-content {
             background: var(--bg-secondary);
             border-radius: var(--radius);
@@ -586,9 +492,7 @@
             max-height: 85vh;
             overflow-y: auto;
             padding: 24px;
-            box-shadow: var(--shadow);
-            touch-action: pan-y;
-            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         .user-modal .modal-header {
             display: flex;
@@ -609,9 +513,7 @@
             font-size: 24px;
             color: var(--text-secondary);
             cursor: pointer;
-            touch-action: manipulation;
         }
-        .user-modal .modal-close:active { transform: scale(0.9); }
         .user-modal .form-group {
             margin-bottom: 12px;
         }
@@ -631,7 +533,6 @@
             color: var(--text-primary);
             font-size: 15px;
             outline: none;
-            touch-action: manipulation;
         }
         .user-modal .form-group input:focus,
         .user-modal .form-group select:focus { border-color: var(--accent); }
@@ -649,18 +550,15 @@
             font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
-            touch-action: manipulation;
         }
         .user-modal .form-actions .save-btn {
             background: var(--accent);
             color: var(--bg-primary);
         }
-        .user-modal .form-actions .save-btn:hover { opacity: 0.85; }
         .user-modal .form-actions .cancel-btn {
             background: var(--bg-card);
             color: var(--text-secondary);
         }
-        .user-modal .form-actions button:active { transform: scale(0.95); }
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
@@ -689,7 +587,6 @@
             align-items: center;
             padding: 0 8px;
             z-index: 100;
-            touch-action: manipulation;
         }
         .nav-btn {
             background: none;
@@ -704,8 +601,6 @@
             flex-direction: column;
             align-items: center;
             gap: 2px;
-            transition: 0.3s;
-            touch-action: manipulation;
         }
         .nav-btn .icon { font-size: 20px; }
         .nav-btn.active { color: var(--accent); background: rgba(245, 166, 35, 0.1); }
@@ -729,7 +624,6 @@
             outline: none;
             flex: 1;
             min-width: 100px;
-            touch-action: manipulation;
         }
         .analytics-filters select:focus { border-color: var(--accent); }
         .analytics-filters button {
@@ -741,10 +635,7 @@
             font-weight: 700;
             cursor: pointer;
             font-size: 15px;
-            transition: 0.3s;
-            touch-action: manipulation;
         }
-        .analytics-filters button:hover { opacity: 0.85; }
         .analytics-filters button:active { transform: scale(0.95); }
 
         @media (max-width: 480px) {
@@ -754,21 +645,19 @@
             .order-number { font-size: 15px; }
             .nav-btn { font-size: 10px; padding: 6px 10px; }
             .nav-btn .icon { font-size: 18px; }
+            .order-card .phone { font-size: 14px; }
             .client-contact-grid { grid-template-columns: 1fr 1fr; }
             .filter-row { flex-direction: row; overflow-x: auto; }
             .sorting-row { flex-direction: column; align-items: stretch; }
             .sorting-group { justify-content: space-between; }
             .sorting-group select { flex: 1; min-width: 80px; }
             .analytics-filters select { min-width: 60px; }
-            .client-list-item { flex-direction: column; align-items: flex-start; gap: 6px; }
-            .client-badge { align-self: flex-start; }
+            .client-list-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .client-list-item .client-orders-count { align-self: flex-start; }
             .detail-grid { grid-template-columns: 1fr; }
             .status-date-row { flex-direction: column; align-items: flex-start; gap: 4px; }
             .user-item { flex-direction: column; align-items: flex-start; }
             .user-actions { align-self: flex-start; }
-            .order-card-top { flex-direction: column; align-items: flex-start; }
-            .order-card-top-right { width: 100%; justify-content: flex-start; }
-            .order-card-bottom { flex-direction: column; align-items: flex-start; }
         }
         @media (min-width: 600px) {
             .order-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -776,14 +665,6 @@
         @media (min-width: 900px) {
             .order-list { grid-template-columns: 1fr 1fr 1fr; }
             body { max-width: 1100px; margin: 0 auto; }
-        }
-
-        /* ЖЕСТЫ ДЛЯ ВОЗВРАТА НАЗАД (свайп вправо) */
-        .swipe-container {
-            touch-action: pan-y;
-        }
-        .swipe-back {
-            transition: transform 0.3s ease, opacity 0.3s ease;
         }
     </style>
 </head>
@@ -808,7 +689,7 @@
     </div>
 
     <!-- ===== СТРАНИЦА ЗАКАЗОВ ===== -->
-    <div class="page active swipe-container" id="page-orders">
+    <div class="page active" id="page-orders">
         <div class="header">
             <div class="header-left">
                 <div class="header-icon">📋</div>
@@ -864,7 +745,7 @@
     </div>
 
     <!-- ===== СТРАНИЦА КЛИЕНТОВ ===== -->
-    <div class="page swipe-container" id="page-clients">
+    <div class="page" id="page-clients">
         <div class="header">
             <div class="header-left">
                 <div class="header-icon">👤</div>
@@ -879,7 +760,7 @@
     </div>
 
     <!-- ===== СТРАНИЦА ДЕТАЛЕЙ ЗАКАЗА ===== -->
-    <div class="page swipe-back" id="page-detail">
+    <div class="page" id="page-detail">
         <div class="header">
             <div class="header-left">
                 <button class="back-btn" onclick="navigateTo('orders')">‹</button>
@@ -891,7 +772,7 @@
     </div>
 
     <!-- ===== СТРАНИЦА КЛИЕНТА (ДЕТАЛИ) ===== -->
-    <div class="page swipe-back" id="page-client">
+    <div class="page" id="page-client">
         <div class="header">
             <div class="header-left">
                 <button class="back-btn" onclick="navigateTo('clients')">‹</button>
@@ -1029,9 +910,6 @@
         let editingTelegramId = null;
         let mastersList = [];
         let allClients = [];
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let isSwiping = false;
 
         function showAccessDenied(message) {
             document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">' +
@@ -1040,65 +918,6 @@
                 '<p style="color:var(--text-secondary);font-size:16px;max-width:400px;">' + message + '</p>' +
                 '<p style="color:var(--text-secondary);font-size:14px;margin-top:16px;opacity:0.7;">Пожалуйста, откройте приложение через кнопку в боте</p>' +
                 '</div>';
-        }
-
-        // ===== УПРАВЛЕНИЕ ЖЕСТАМИ =====
-        function initSwipeGestures() {
-            document.addEventListener('touchstart', function(e) {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-                isSwiping = false;
-            }, { passive: true });
-
-            document.addEventListener('touchmove', function(e) {
-                if (!touchStartX) return;
-                const touchEndX = e.changedTouches[0].screenX;
-                const touchEndY = e.changedTouches[0].screenY;
-                const diffX = touchStartX - touchEndX;
-                const diffY = touchStartY - touchEndY;
-                
-                // Определяем, что это свайп (горизонтальное движение больше вертикального)
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    isSwiping = true;
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchend', function(e) {
-                if (!touchStartX) return;
-                const touchEndX = e.changedTouches[0].screenX;
-                const touchEndY = e.changedTouches[0].screenY;
-                const diffX = touchStartX - touchEndX;
-                const diffY = touchStartY - touchEndY;
-                
-                // Свайп влево (diffX > 0) — переход на следующую страницу
-                // Свайп вправо (diffX < 0) — возврат назад
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    // Определяем, на какой странице находимся
-                    const activePage = document.querySelector('.page.active');
-                    if (!activePage) return;
-                    
-                    const pageId = activePage.id;
-                    
-                    // Свайп вправо (назад)
-                    if (diffX < 0) {
-                        if (pageId === 'page-detail' || pageId === 'page-client') {
-                            const backBtn = activePage.querySelector('.back-btn');
-                            if (backBtn) backBtn.click();
-                        } else if (pageId === 'page-clients') {
-                            navigateTo('orders');
-                        }
-                    }
-                    // Свайп влево (вперед) - только если мы на главной странице заказов
-                    else if (diffX > 0) {
-                        if (pageId === 'page-orders') {
-                            // Ничего не делаем, уже на главной
-                        }
-                    }
-                }
-                
-                touchStartX = 0;
-                touchStartY = 0;
-            }, { passive: true });
         }
 
         if (!userId) {
@@ -1119,10 +938,6 @@
                         if (addBtn) addBtn.style.display = 'none';
                     }
                     
-                    // Инициализация жестов
-                    initSwipeGestures();
-                    
-                    syncMastersFromOrders();
                     loadMasters();
                     loadOrders();
                     loadDashboard();
@@ -1209,34 +1024,6 @@
             return phone.startsWith('+') ? phone : '+' + phone;
         }
 
-        async function syncMastersFromOrders() {
-            try {
-                const r = await apiFetch('/orders?limit=500');
-                if (r.success) {
-                    const orders = r.data;
-                    const mastersFromOrders = new Set();
-                    orders.forEach(o => {
-                        if (o.master && o.master.trim()) {
-                            mastersFromOrders.add(o.master.trim());
-                        }
-                    });
-                    mastersList = Array.from(mastersFromOrders).sort();
-                    
-                    const select = document.getElementById('masterFilter');
-                    const currentValue = select.value;
-                    select.innerHTML = '<option value="">Все мастера</option>';
-                    mastersList.forEach(master => {
-                        select.innerHTML += `<option value="${master}">${master}</option>`;
-                    });
-                    if (currentValue && mastersList.includes(currentValue)) {
-                        select.value = currentValue;
-                    }
-                }
-            } catch(e) {
-                console.error('Ошибка синхронизации мастеров:', e);
-            }
-        }
-
         function changeSort(value) {
             sortMode = value;
             sortAscending = false;
@@ -1294,7 +1081,19 @@
         }
 
         async function loadMasters() {
-            await syncMastersFromOrders();
+            try {
+                const r = await apiFetch('/masters');
+                if (r.success) {
+                    mastersList = r.data;
+                    const select = document.getElementById('masterFilter');
+                    select.innerHTML = '<option value="">Все мастера</option>';
+                    mastersList.forEach(master => {
+                        select.innerHTML += `<option value="${master}">${master}</option>`;
+                    });
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки мастеров:', e);
+            }
         }
 
         function applyMasterFilter(value) {
@@ -1518,25 +1317,14 @@
             let html = '';
             clients.forEach(client => {
                 const displayPhone = formatPhone(client.phone || client.cleanPhone);
-                const name = client.name && client.name !== '-' ? client.name : 'Без имени';
-                const devicesCount = client.devices_count || 0;
-                const ordersCount = client.orders_count || 0;
-                
-                let ordersText = ordersCount + ' заказ';
-                if (ordersCount % 10 >= 2 && ordersCount % 10 <= 4 && !(ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
-                    ordersText = ordersCount + ' заказа';
-                } else if (ordersCount % 10 === 0 || (ordersCount % 10 >= 5 && ordersCount % 10 <= 9) || (ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
-                    ordersText = ordersCount + ' заказов';
-                }
-                
                 html += `
                     <div class="client-list-item" onclick="showClientDetail('${client.cleanPhone}')">
                         <div class="client-info">
-                            <div class="client-name">👤 ${escapeHtml(name)}</div>
+                            <div class="client-name">${escapeHtml(client.name)}</div>
                             <div class="client-phone">📱 ${escapeHtml(displayPhone)}</div>
-                            <div class="client-devices-info">🖥️ <span>${devicesCount}</span> устройств • ${ordersText}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);">🖥️ ${client.devices_count} устройств • Последний заказ #${client.last_order?.order_number || '—'}</div>
                         </div>
-                        <div class="client-badge">${ordersCount}</div>
+                        <div class="client-orders-count">${client.orders_count}</div>
                     </div>
                 `;
             });
@@ -1691,7 +1479,6 @@
                     document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
                     renderOrders();
                     loadStatusCounts();
-                    syncMastersFromOrders();
                 }
             } catch(e) { console.error(e); }
         }
@@ -1712,47 +1499,13 @@
                 container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
                 return;
             }
-            
             container.innerHTML = filtered.map(o => {
                 let phone = o.phone || '';
                 let cleanPhone = phone.replace(/[^0-9+]/g, '');
                 if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
                 if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
                 let formattedPhone = formatPhone(cleanPhone || phone);
-                
-                const deviceIcon = o.device?.toLowerCase().includes('apple') ? '🍎' : 
-                                   o.device?.toLowerCase().includes('samsung') ? '📱' :
-                                   o.device?.toLowerCase().includes('ноутбук') ? '💻' :
-                                   o.device?.toLowerCase().includes('телевизор') ? '📺' :
-                                   o.device?.toLowerCase().includes('принтер') ? '🖨️' : '🖥️';
-                
-                const clientName = o.client_name && o.client_name !== '-' ? o.client_name : 'Без имени';
-                const statusText = o.status || 'Новый';
-                const orderDate = o.date ? o.date.slice(0, 10) : '';
-                const masterName = o.master || '';
-                
-                return `
-                    <div class="order-card" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
-                        <div class="order-card-top">
-                            <span class="order-number">#${o.order_number}</span>
-                            <div class="order-card-top-right">
-                                <span class="order-status status-${getStatusClass(o.status)}">${statusText}</span>
-                                ${orderDate ? `<span class="order-date-small">📅 ${orderDate}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="order-card-middle">
-                            <span class="order-client">👤 ${escapeHtml(clientName)}</span>
-                            ${formattedPhone && formattedPhone !== '+' ? `<span class="order-phone">📱 ${escapeHtml(formattedPhone)}</span>` : ''}
-                        </div>
-                        <div class="order-card-bottom">
-                            <span class="order-device">
-                                <span class="device-icon">${deviceIcon}</span>
-                                ${escapeHtml(o.device || 'Устройство не указано')}
-                            </span>
-                            ${masterName ? `<span class="order-master">👨‍🔧 ${escapeHtml(masterName)}</span>` : '<span class="order-master-empty">без мастера</span>'}
-                        </div>
-                    </div>
-                `;
+                return '<div class="order-card" onclick="showDetail(' + JSON.stringify(o).replace(/"/g, '&quot;') + ')"><div class="top-row"><span class="order-number">#' + o.order_number + '</span><span class="order-status status-' + getStatusClass(o.status) + '">' + (o.status || 'Новый') + '</span></div><div class="info"><span>👤 ' + (o.client_name || 'Не указан') + '</span><span class="phone">📱 ' + formattedPhone + '</span></div><div class="device">🖥️ ' + (o.device || 'Устройство не указано') + '</div></div>';
             }).join('');
         }
 
