@@ -3,38 +3,10 @@
 Модуль для парсинга заказов из текста сообщений 1С
 """
 
-import os
 import re
-import sys
 from datetime import datetime
 from typing import Optional, Dict, Any
 from models import Order
-
-# ============================================================
-# ЕДИНЫЙ ПУТЬ К БАЗЕ ДАННЫХ
-# ============================================================
-# Устанавливаем путь к БД из переменных окружения или используем стандартный
-DATA_DIR = os.getenv('DATA_DIR', '/app/data')
-DB_PATH = os.getenv('DB_PATH', os.path.join(DATA_DIR, 'orders.db'))
-
-# Убеждаемся, что папка существует
-os.makedirs(DATA_DIR, exist_ok=True)
-
-# Устанавливаем переменную окружения для других модулей
-os.environ['DB_PATH'] = DB_PATH
-
-print(f"📂 Бот использует базу данных: {DB_PATH}")
-
-# Проверяем, существует ли база данных
-if os.path.exists(DB_PATH):
-    size = os.path.getsize(DB_PATH)
-    print(f"✅ База данных найдена, размер: {size} байт")
-else:
-    print(f"⚠️ База данных не найдена, будет создана новая: {DB_PATH}")
-
-# Импортируем Database только после установки DB_PATH
-from database import get_db
-db = get_db()
 
 
 class OrderParser:
@@ -44,12 +16,6 @@ class OrderParser:
     def parse(text: str) -> Optional[Order]:
         """
         Парсит текст сообщения и возвращает объект заказа
-        
-        Args:
-            text: Текст сообщения из Telegram
-            
-        Returns:
-            Объект Order или None, если парсинг не удался
         """
         if not text or not isinstance(text, str):
             return None
@@ -62,7 +28,6 @@ class OrderParser:
             if not line:
                 continue
                 
-            # Парсим каждую строку
             if 'Номер заказа:' in line or 'Номер заказа' in line:
                 parts = line.split(':', 1)
                 if len(parts) > 1:
@@ -104,11 +69,9 @@ class OrderParser:
                 if len(parts) > 1:
                     order_data['problem'] = parts[1].strip()
         
-        # Проверяем, что обязательные поля есть
         if 'order_number' not in order_data:
             return None
         
-        # Создаем объект заказа
         return Order(
             order_number=order_data.get('order_number'),
             date=order_data.get('date'),
@@ -155,36 +118,3 @@ class OrderParser:
         
         keywords = ['Номер заказа', 'Статус', 'Устройство', 'Неисправность']
         return all(keyword in text for keyword in keywords)
-
-
-def test_parser():
-    """Тестовая функция для проверки парсера"""
-    test_text = """Номер заказа: 043904
-Дата приема: 22 июля 2026 г.
-Статус: Принят в ремонт
-Приёмщик: STASH
-Номер телефона: +375339175570
-ФИО: Дмитрий
-Устройство: Принтер Pantum 5100
-Неисправность: Жуёт листы и странный звук при работе."""
-    
-    parser = OrderParser()
-    order = parser.parse(test_text)
-    
-    if order:
-        print("✅ Заказ успешно распарсен:")
-        print(f"  Номер: {order.order_number}")
-        print(f"  Дата: {order.date}")
-        print(f"  Статус: {order.status}")
-        print(f"  Приёмщик: {order.receiver}")
-        print(f"  Телефон: {order.phone}")
-        print(f"  Клиент: {order.client_name}")
-        print(f"  Устройство: {order.device}")
-        print(f"  Проблема: {order.problem}")
-        print(f"\n  Является заказом: {parser.is_order_message(test_text)}")
-    else:
-        print("❌ Не удалось распарсить заказ")
-
-
-if __name__ == "__main__":
-    test_parser()
