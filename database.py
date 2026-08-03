@@ -36,6 +36,7 @@ class Database:
         self.init_database()
         self.init_users_table()
         self.ensure_master_column()
+        self.clean_master_values()
     
     def get_connection(self):
         """Получает соединение с БД"""
@@ -132,6 +133,19 @@ class Database:
         except Exception as e:
             print(f"⚠️ Ошибка при проверке/добавлении колонки master: {e}")
 
+    def clean_master_values(self):
+        """Очищает записи 'None' в поле master"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE orders SET master = NULL WHERE master = 'None' OR master = ''")
+                conn.commit()
+                count = cursor.rowcount
+                if count > 0:
+                    print(f"🧹 Очищено {count} записей с мастером 'None'")
+        except Exception as e:
+            print(f"⚠️ Ошибка при очистке master: {e}")
+
     def get_user(self, telegram_id: str) -> Optional[Dict[str, Any]]:
         """Получает пользователя по Telegram ID"""
         with self.get_connection() as conn:
@@ -209,7 +223,9 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Обработка мастера
+            # ============================================================
+            # ОБРАБОТКА МАСТЕРА: "None" → None
+            # ============================================================
             master_value = order.master
             if master_value == 'None' or master_value == '' or master_value is None:
                 master_value = None
@@ -239,7 +255,7 @@ class Database:
                 # ============================================================
                 # Если пришло None (мастер не указан), а в БД уже есть мастер - 
                 # НЕ обновляем мастера, оставляем старого
-                if master_value is None and old_master:
+                if master_value is None and old_master and old_master != 'None':
                     print(f"⚠️ Защита: мастер не будет обновлен (в БД уже есть '{old_master}')")
                     master_to_save = old_master
                 else:
@@ -294,6 +310,12 @@ class Database:
                         print(f"ℹ️ Статус не изменился")
                     else:
                         print(f"⚠️ Статус пустой")
+                
+                # Логируем изменение мастера
+                if master_to_save != old_master:
+                    print(f"👨‍🔧 Мастер изменен: '{old_master}' → '{master_to_save}'")
+                else:
+                    print(f"👨‍🔧 Мастер не изменился")
                 
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
