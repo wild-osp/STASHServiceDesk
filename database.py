@@ -201,13 +201,20 @@ class Database:
                 return True
             return False
     
+    # ============================================================
+    # ОСНОВНОЙ МЕТОД СОХРАНЕНИЯ ЗАКАЗА (С РАСШИРЕННЫМИ ЛОГАМИ)
+    # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
         """Сохраняет или обновляет заказ"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
+            print("=" * 60)
+            print(f"📦 СОХРАНЕНИЕ ЗАКАЗА #{order.order_number}")
+            print(f"   Мастер из заказа: '{order.master}'")
+            
             cursor.execute(
-                'SELECT id, status FROM orders WHERE order_number = ?',
+                'SELECT id, status, master FROM orders WHERE order_number = ?',
                 (order.order_number,)
             )
             existing = cursor.fetchone()
@@ -215,8 +222,12 @@ class Database:
             if existing:
                 order_id = existing['id']
                 old_status = existing['status']
+                old_master = existing['master'] or ''
                 
-                print(f"📝 Обновление заказа #{order.order_number}: старый статус '{old_status}', новый статус '{order.status}'")
+                print(f"   Старый статус: '{old_status}'")
+                print(f"   Старый мастер: '{old_master}'")
+                print(f"   Новый статус: '{order.status}'")
+                print(f"   Новый мастер: '{order.master}'")
                 
                 cursor.execute('''
                     UPDATE orders SET
@@ -251,29 +262,37 @@ class Database:
                     order.order_number
                 ))
                 
+                # Записываем историю если статус изменился
                 if order.status and old_status != order.status:
-                    print(f"📝 Записываем историю: статус изменен с '{old_status}' на '{order.status}'")
+                    print(f"📝 Записываем историю: '{old_status}' → '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
-                    ''', (
-                        order_id,
-                        order.status,
-                        now_iso()
-                    ))
+                    ''', (order_id, order.status, now_iso()))
                     conn.commit()
-                    print(f"✅ История записана для заказа #{order.order_number}")
+                    print(f"✅ История записана")
                 else:
                     if order.status == old_status:
-                        print(f"ℹ️ Статус не изменился, история не записана")
+                        print(f"ℹ️ Статус не изменился")
                     else:
-                        print(f"⚠️ Статус пустой, история не записана")
+                        print(f"⚠️ Статус пустой")
+                
+                # Логируем изменение мастера
+                if order.master != old_master:
+                    print(f"👨‍🔧 Мастер изменен: '{old_master}' → '{order.master}'")
                 
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
+                print("=" * 60)
                 return order_id
             else:
                 print(f"📝 Создание нового заказа #{order.order_number}")
+                print(f"   Мастер: '{order.master}'")
+                print(f"   Статус: '{order.status}'")
+                print(f"   Клиент: '{order.client_name}'")
+                print(f"   Телефон: '{order.phone}'")
+                print(f"   Устройство: '{order.device}'")
+                
                 cursor.execute('''
                     INSERT INTO orders (
                         order_number, date, status, receiver, master,
@@ -303,20 +322,17 @@ class Database:
                 order_id = cursor.lastrowid
                 
                 if order.status:
-                    print(f"📝 Записываем начальный статус '{order.status}' для заказа #{order.order_number}")
+                    print(f"📝 Записываем начальный статус '{order.status}'")
                     cursor.execute('''
                         INSERT INTO order_history (order_id, status, changed_at)
                         VALUES (?, ?, ?)
-                    ''', (
-                        order_id,
-                        order.status,
-                        now_iso()
-                    ))
+                    ''', (order_id, order.status, now_iso()))
                     conn.commit()
                     print(f"✅ Начальный статус записан")
                 
                 conn.commit()
                 print(f"✅ Новый заказ #{order.order_number} сохранен")
+                print("=" * 60)
                 return order_id
     
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
@@ -478,7 +494,11 @@ class Database:
             
             return [dict(row) for row in cursor.fetchall()]
 
+    # ============================================================
+    # МЕТОДЫ ДЛЯ МАСТЕРОВ (ОБНОВЛЕНЫ)
+    # ============================================================
     def get_masters(self) -> List[str]:
+        """Получает список всех мастеров из заказов"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -487,7 +507,21 @@ class Database:
                 WHERE master IS NOT NULL AND master != ''
                 ORDER BY master
             ''')
-            return [row['name'] for row in cursor.fetchall()]
+            masters = [row['name'] for row in cursor.fetchall()]
+            print(f"📋 Загружено мастеров из заказов: {len(masters)} - {masters}")
+            return masters
+    
+    def get_all_masters_with_users(self) -> List[Dict[str, Any]]:
+        """Получает мастеров из таблицы users"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT master as name, telegram_id 
+                FROM users 
+                WHERE master IS NOT NULL AND master != ''
+                ORDER BY master
+            ''')
+            return [dict(row) for row in cursor.fetchall()]
     
     def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -500,6 +534,7 @@ class Database:
             return [dict(row) for row in cursor.fetchall()]
     
     def get_master_stats(self) -> Dict[str, Any]:
+        """Получает статистику по мастерам"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
