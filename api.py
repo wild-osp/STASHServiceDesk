@@ -223,9 +223,6 @@ async def update_user(
     if role and role in ['user', 'admin', 'superadmin']:
         updates['role'] = role
     
-    # ИСПРАВЛЕНО: master может быть пустой строкой или None
-    # Если master пришёл как пустая строка, но мы хотим снять мастера
-    # То нужно передать None или пустую строку в БД
     if master is not None:
         updates['master'] = master if master != '' else None
     
@@ -238,7 +235,6 @@ async def update_user(
     print(f"   success: {success}")
     
     if success:
-        # Проверяем, что сохранилось
         updated_user = db.get_user(telegram_id)
         print(f"   после обновления master='{updated_user.get('master')}'")
         return JSONResponse({"success": True, "message": "Пользователь обновлен"})
@@ -308,7 +304,7 @@ async def delete_order_by_number(
     return JSONResponse({"success": True, "message": f"Заказ #{order_number} удален"})
 
 # ============================================================
-# ПРИЕМ ЗАКАЗОВ ИЗ 1С (С ПОДРОБНЫМИ ЛОГАМИ)
+# ПРИЕМ ЗАКАЗОВ ИЗ 1С (С ОБРАБОТКОЙ МАСТЕРА)
 # ============================================================
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
@@ -318,11 +314,26 @@ async def receive_order_from_1c(
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Неверный API-ключ")
     try:
+        # ============================================================
+        # ОБРАБОТКА МАСТЕРА ИЗ 1С
+        # ============================================================
+        master_value = order_data.master
+        
+        # Если пришло None, "None" или пустая строка - значит мастера нет
+        if master_value is None or master_value == 'None' or master_value == '':
+            master_value = None
+            print(f"⚠️ Мастер не указан в 1С")
+        else:
+            # Убираем лишние пробелы
+            master_value = master_value.strip()
+            print(f"✅ Мастер из 1С: '{master_value}'")
+        
         print("=" * 60)
         print(f"📦 ПОЛУЧЕН ЗАКАЗ ИЗ 1С")
         print(f"   Номер: {order_data.order_number}")
         print(f"   Статус: '{order_data.status}'")
-        print(f"   Мастер: '{order_data.master}'")
+        print(f"   Мастер (сырое из 1С): '{order_data.master}'")
+        print(f"   Мастер (после обработки): '{master_value}'")
         print(f"   Клиент: {order_data.client_name}")
         print(f"   Телефон: {order_data.phone}")
         print(f"   Устройство: {order_data.device}")
@@ -334,7 +345,7 @@ async def receive_order_from_1c(
             date=order_data.date,
             status=order_data.status,
             receiver=order_data.receiver,
-            master=order_data.master,
+            master=master_value,
             phone=order_data.phone,
             client_name=order_data.client_name,
             device=order_data.device,
