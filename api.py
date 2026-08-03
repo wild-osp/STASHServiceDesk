@@ -24,57 +24,15 @@ except Exception as e:
     print(f"⚠️ Не удалось установить часовой пояс: {e}")
 
 # Проверка времени
-print(f"🕐 Текущее время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"🕐 Текущее время API: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 DATA_DIR = os.getenv('DATA_DIR', '/app/data')
 os.makedirs(DATA_DIR, exist_ok=True)
 os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
-from database import get_db
+from database import get_db, now_iso
 from models import Order
 
-
-# ============================================================
-# ЗАПУСК БОТА С ПРОВЕРКОЙ (ТОЛЬКО ЕСЛИ НЕ ЗАПУЩЕН)
-# ============================================================
-def is_bot_running():
-    """Проверяет, запущен ли бот"""
-    try:
-        # Проверяем через pidfile
-        pidfile = '/tmp/orders_bot.pid'
-        if os.path.exists(pidfile):
-            with open(pidfile, 'r') as f:
-                pid = int(f.read().strip())
-            try:
-                os.kill(pid, 0)  # Проверяем, жив ли процесс
-                return True
-            except OSError:
-                os.remove(pidfile)  # PID файл есть, но процесса нет
-                return False
-        return False
-    except Exception:
-        return False
-
-# def run_bot():
-#     """Запускает бота, если он ещё не запущен"""
-#     # Проверяем, не запущен ли уже бот
-#     if is_bot_running():
-#         print("✅ Бот уже запущен, пропускаю...")
-#         return
-    
-#     time.sleep(3)  # Даем время API запуститься
-#     try:
-#         proc = subprocess.Popen(
-#             ["python", "orders_bot.py"],
-#             stdout=subprocess.PIPE,
-#             stderr=subprocess.PIPE
-#         )
-#         # Сохраняем PID
-#         with open('/tmp/orders_bot.pid', 'w') as f:
-#             f.write(str(proc.pid))
-#         print(f"🚀 Бот автоматически запущен из API (PID: {proc.pid})")
-#     except Exception as e:
-#         print(f"❌ Ошибка запуска бота: {e}")
 
 # ============================================================
 # FASTAPI APP
@@ -350,7 +308,7 @@ async def delete_order_by_number(
     return JSONResponse({"success": True, "message": f"Заказ #{order_number} удален"})
 
 # ============================================================
-# ПРИЕМ ЗАКАЗОВ ИЗ 1С
+# ПРИЕМ ЗАКАЗОВ ИЗ 1С (С ПОДРОБНЫМИ ЛОГАМИ)
 # ============================================================
 @app.post("/api/orders/from-1c")
 async def receive_order_from_1c(
@@ -360,6 +318,16 @@ async def receive_order_from_1c(
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Неверный API-ключ")
     try:
+        print("=" * 60)
+        print(f"📦 ПОЛУЧЕН ЗАКАЗ ИЗ 1С")
+        print(f"   Номер: {order_data.order_number}")
+        print(f"   Статус: '{order_data.status}'")
+        print(f"   Мастер: '{order_data.master}'")
+        print(f"   Клиент: {order_data.client_name}")
+        print(f"   Телефон: {order_data.phone}")
+        print(f"   Устройство: {order_data.device}")
+        print("=" * 60)
+        
         existing = db.get_order(order_data.order_number)
         order = Order(
             order_number=order_data.order_number,
@@ -373,7 +341,7 @@ async def receive_order_from_1c(
             problem=order_data.problem,
             telegram_chat_id="from_1c_api",
             telegram_message_id=0,
-            telegram_message_date=datetime.now().isoformat(),
+            telegram_message_date=now_iso(),
             raw_message_text=f"Отправлено из 1С через API: {order_data.order_number}"
         )
         order_id = db.save_order(order)
@@ -483,23 +451,17 @@ async def get_order_by_number(order_number: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# МАСТЕРА
+# МАСТЕРА (С ЛОГАМИ)
 # ============================================================
 @app.get("/api/masters")
 async def get_masters(current_user: dict = Depends(get_current_user)):
     """Получить список всех мастеров из поля master"""
     try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT DISTINCT master as name 
-                FROM orders 
-                WHERE master IS NOT NULL AND master != ''
-                ORDER BY master
-            ''')
-            masters = [row['name'] for row in cursor.fetchall()]
+        masters = db.get_masters()
+        print(f"📋 API: Загружено мастеров: {len(masters)} - {masters}")
         return JSONResponse({"success": True, "data": masters})
     except Exception as e:
+        print(f"❌ Ошибка получения мастеров: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
