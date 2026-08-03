@@ -23,7 +23,6 @@ try:
 except Exception as e:
     print(f"⚠️ Не удалось установить часовой пояс: {e}")
 
-# Проверка времени
 print(f"🕐 Текущее время API: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 DATA_DIR = os.getenv('DATA_DIR', '/app/data')
