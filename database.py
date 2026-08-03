@@ -202,16 +202,21 @@ class Database:
             return False
     
     # ============================================================
-    # ОСНОВНОЙ МЕТОД СОХРАНЕНИЯ ЗАКАЗА (С РАСШИРЕННЫМИ ЛОГАМИ)
+    # ОСНОВНОЙ МЕТОД СОХРАНЕНИЯ ЗАКАЗА (С ЗАЩИТОЙ МАСТЕРА)
     # ============================================================
     def save_order(self, order: Order) -> Optional[int]:
         """Сохраняет или обновляет заказ"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
+            # Обработка мастера
+            master_value = order.master
+            if master_value == 'None' or master_value == '' or master_value is None:
+                master_value = None
+            
             print("=" * 60)
             print(f"📦 СОХРАНЕНИЕ ЗАКАЗА #{order.order_number}")
-            print(f"   Мастер из заказа: '{order.master}'")
+            print(f"   Мастер из заказа: '{master_value}'")
             
             cursor.execute(
                 'SELECT id, status, master FROM orders WHERE order_number = ?',
@@ -227,7 +232,20 @@ class Database:
                 print(f"   Старый статус: '{old_status}'")
                 print(f"   Старый мастер: '{old_master}'")
                 print(f"   Новый статус: '{order.status}'")
-                print(f"   Новый мастер: '{order.master}'")
+                print(f"   Новый мастер: '{master_value}'")
+                
+                # ============================================================
+                # ЗАЩИТА: НЕ ЗАТИРАЕМ МАСТЕРА ПУСТЫМ ЗНАЧЕНИЕМ
+                # ============================================================
+                # Если пришло None (мастер не указан), а в БД уже есть мастер - 
+                # НЕ обновляем мастера, оставляем старого
+                if master_value is None and old_master:
+                    print(f"⚠️ Защита: мастер не будет обновлен (в БД уже есть '{old_master}')")
+                    master_to_save = old_master
+                else:
+                    master_to_save = master_value
+                
+                print(f"   Мастер для сохранения: '{master_to_save}'")
                 
                 cursor.execute('''
                     UPDATE orders SET
@@ -249,7 +267,7 @@ class Database:
                     order.date,
                     order.status,
                     order.receiver,
-                    order.master,
+                    master_to_save,
                     order.phone,
                     order.client_name,
                     order.device,
@@ -277,17 +295,14 @@ class Database:
                     else:
                         print(f"⚠️ Статус пустой")
                 
-                # Логируем изменение мастера
-                if order.master != old_master:
-                    print(f"👨‍🔧 Мастер изменен: '{old_master}' → '{order.master}'")
-                
                 conn.commit()
                 print(f"✅ Заказ #{order.order_number} обновлен")
                 print("=" * 60)
                 return order_id
             else:
+                # Новый заказ - сохраняем мастера как есть
                 print(f"📝 Создание нового заказа #{order.order_number}")
-                print(f"   Мастер: '{order.master}'")
+                print(f"   Мастер: '{master_value}'")
                 print(f"   Статус: '{order.status}'")
                 print(f"   Клиент: '{order.client_name}'")
                 print(f"   Телефон: '{order.phone}'")
@@ -306,7 +321,7 @@ class Database:
                     order.date,
                     order.status,
                     order.receiver,
-                    order.master,
+                    master_value,
                     order.phone,
                     order.client_name,
                     order.device,
@@ -338,10 +353,7 @@ class Database:
     def get_order(self, order_number: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                'SELECT * FROM orders WHERE order_number = ?',
-                (order_number,)
-            )
+            cursor.execute('SELECT * FROM orders WHERE order_number = ?', (order_number,))
             row = cursor.fetchone()
             return dict(row) if row else None
     
@@ -376,60 +388,35 @@ class Database:
                     receiver LIKE ?
                 ORDER BY created_at DESC
                 LIMIT 100
-            ''', (
-                search_pattern, search_pattern, search_pattern,
-                search_pattern, search_pattern, search_pattern
-            ))
+            ''', (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_all_orders(self, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM orders 
-                ORDER BY created_at DESC 
-                LIMIT ? OFFSET ?
-            ''', (limit, offset))
+            cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (limit, offset))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_statistics(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
             cursor.execute('SELECT COUNT(*) as total FROM orders')
             total = cursor.fetchone()['total']
-            
-            cursor.execute('''
-                SELECT status, COUNT(*) as count 
-                FROM orders 
-                GROUP BY status
-                ORDER BY count DESC
-            ''')
+            cursor.execute('SELECT status, COUNT(*) as count FROM orders GROUP BY status ORDER BY count DESC')
             by_status = [dict(row) for row in cursor.fetchall()]
-            
             today = datetime.now().strftime('%Y-%m-%d')
-            cursor.execute(
-                'SELECT COUNT(*) as today FROM orders WHERE date = ?',
-                (today,)
-            )
+            cursor.execute('SELECT COUNT(*) as today FROM orders WHERE date = ?', (today,))
             today_count = cursor.fetchone()['today']
-            
-            return {
-                'total': total,
-                'today': today_count,
-                'by_status': by_status
-            }
+            return {'total': total, 'today': today_count, 'by_status': by_status}
     
     def get_detailed_stats(self, month: int = None, year: int = None) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
             date_filter = ""
             params = []
             if month and year:
                 date_filter = " WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?"
                 params = [str(month).zfill(2), str(year)]
-            
             cursor.execute(f'''
                 SELECT date, COUNT(*) as count 
                 FROM orders 
@@ -439,7 +426,6 @@ class Database:
                 LIMIT 7
             ''', params)
             orders_by_day = [dict(row) for row in cursor.fetchall()]
-            
             cursor.execute(f'''
                 SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
                 FROM orders 
@@ -447,7 +433,6 @@ class Database:
                 {date_filter.replace('WHERE', 'AND') if date_filter else ''}
             ''', params)
             avg_repair_time = cursor.fetchone()['avg_days'] or 0
-            
             cursor.execute(f'''
                 SELECT problem, COUNT(*) as count 
                 FROM orders 
@@ -458,7 +443,6 @@ class Database:
                 LIMIT 5
             ''', params)
             top_problems = [dict(row) for row in cursor.fetchall()]
-            
             cursor.execute(f'''
                 SELECT status, COUNT(*) as count 
                 FROM orders 
@@ -469,7 +453,6 @@ class Database:
             total = sum(s['count'] for s in status_counts)
             for s in status_counts:
                 s['percent'] = round((s['count'] / total * 100), 1) if total > 0 else 0
-
             return {
                 "orders_by_day": orders_by_day,
                 "avg_repair_time": round(avg_repair_time, 1),
@@ -481,86 +464,43 @@ class Database:
     def get_user_orders(self, user_id: str, role: str = 'user') -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
             if role in ['admin', 'superadmin']:
                 cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
             else:
-                cursor.execute('''
-                    SELECT * FROM orders 
-                    WHERE phone LIKE ? OR client_name LIKE ? 
-                    ORDER BY created_at DESC 
-                    LIMIT 200
-                ''', (f'%{user_id}%', f'%{user_id}%'))
-            
+                cursor.execute('SELECT * FROM orders WHERE phone LIKE ? OR client_name LIKE ? ORDER BY created_at DESC LIMIT 200', (f'%{user_id}%', f'%{user_id}%'))
             return [dict(row) for row in cursor.fetchall()]
 
     # ============================================================
-    # МЕТОДЫ ДЛЯ МАСТЕРОВ (ОБНОВЛЕНЫ)
+    # МЕТОДЫ ДЛЯ МАСТЕРОВ
     # ============================================================
     def get_masters(self) -> List[str]:
-        """Получает список всех мастеров из заказов"""
+        """Получает список всех мастеров из заказов (исключая None)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT DISTINCT master as name 
                 FROM orders 
-                WHERE master IS NOT NULL AND master != ''
+                WHERE master IS NOT NULL AND master != '' AND master != 'None'
                 ORDER BY master
             ''')
             masters = [row['name'] for row in cursor.fetchall()]
             print(f"📋 Загружено мастеров из заказов: {len(masters)} - {masters}")
             return masters
     
-    def get_all_masters_with_users(self) -> List[Dict[str, Any]]:
-        """Получает мастеров из таблицы users"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT DISTINCT master as name, telegram_id 
-                FROM users 
-                WHERE master IS NOT NULL AND master != ''
-                ORDER BY master
-            ''')
-            return [dict(row) for row in cursor.fetchall()]
-    
     def get_orders_by_master(self, master: str) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM orders 
-                WHERE master = ? 
-                ORDER BY created_at DESC
-            ''', (master,))
+            cursor.execute('SELECT * FROM orders WHERE master = ? ORDER BY created_at DESC', (master,))
             return [dict(row) for row in cursor.fetchall()]
     
     def get_master_stats(self) -> Dict[str, Any]:
-        """Получает статистику по мастерам"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT master, COUNT(*) as count 
-                FROM orders 
-                WHERE master IS NOT NULL AND master != ''
-                GROUP BY master
-                ORDER BY count DESC
-            ''')
+            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" AND master != "None" GROUP BY master ORDER BY count DESC')
             all_stats = [dict(row) for row in cursor.fetchall()]
-            
-            cursor.execute('''
-                SELECT master, COUNT(*) as count 
-                FROM orders 
-                WHERE master IS NOT NULL AND master != ''
-                AND status = 'Выдано (оплачено)'
-                GROUP BY master
-                ORDER BY count DESC
-            ''')
+            cursor.execute('SELECT master, COUNT(*) as count FROM orders WHERE master IS NOT NULL AND master != "" AND master != "None" AND status = "Выдано (оплачено)" GROUP BY master ORDER BY count DESC')
             done_stats = [dict(row) for row in cursor.fetchall()]
-            
-            return {
-                "all": all_stats,
-                "done": done_stats
-            }
+            return {"all": all_stats, "done": done_stats}
 
 
 # Синглтон
