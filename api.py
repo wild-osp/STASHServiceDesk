@@ -725,19 +725,17 @@ async def complete_task(
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM pending_tasks WHERE id = ?", (task_id,))
-            task = cursor.fetchone()
+            task = dict(cursor.fetchone())  # Преобразуем Row в dict
             if not task:
                 raise HTTPException(status_code=404, detail="Задача не найдена")
             
-            # Проверяем, что пользователь является исполнителем или админом
-            if task['taken_by_id'] != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
+            if task.get('taken_by_id') != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
                 raise HTTPException(status_code=403, detail="Вы не можете завершить эту задачу")
             
-            # Переносим в выполненные
             cursor.execute("""
                 INSERT INTO completed_tasks (task_text, author, completed_by, completion_time, order_id)
                 VALUES (?, ?, ?, ?, ?)
-            """, (task['text'], task['author'], current_user['full_name'], now_iso(), task.get('order_id')))
+            """, (task.get('text'), task.get('author'), current_user['full_name'], now_iso(), task.get('order_id')))
             
             # Удаляем из активных
             cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
