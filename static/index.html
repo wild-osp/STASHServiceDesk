@@ -98,29 +98,11 @@
             transform: translateX(4px);
             box-shadow: var(--shadow);
         }
-        .main-menu .menu-btn:active {
-            transform: scale(0.97);
-        }
-        .main-menu .menu-btn .icon {
-            font-size: 32px;
-            min-width: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .main-menu .menu-btn .content {
-            flex: 1;
-        }
-        .main-menu .menu-btn .title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .main-menu .menu-btn .desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
+        .main-menu .menu-btn:active { transform: scale(0.97); }
+        .main-menu .menu-btn .icon { font-size: 32px; min-width: 48px; display: flex; align-items: center; justify-content: center; }
+        .main-menu .menu-btn .content { flex: 1; }
+        .main-menu .menu-btn .title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .main-menu .menu-btn .desc { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
         .main-menu .menu-btn .badge {
             background: var(--accent);
             color: var(--bg-primary);
@@ -131,23 +113,12 @@
             min-width: 24px;
             text-align: center;
         }
-        .main-menu .menu-btn .arrow {
-            color: var(--text-secondary);
-            font-size: 20px;
-            opacity: 0.5;
-        }
+        .main-menu .menu-btn .arrow { color: var(--text-secondary); font-size: 20px; opacity: 0.5; }
+        .main-menu .menu-btn.tasks { border-left: 4px solid #8b5cf6; }
+        .main-menu .menu-btn.tech { border-left: 4px solid var(--accent); }
+        .main-menu .menu-btn.cartridges { border-left: 4px solid #22c55e; }
 
-        .main-menu .menu-btn.tasks {
-            border-left: 4px solid #8b5cf6;
-        }
-        .main-menu .menu-btn.tech {
-            border-left: 4px solid var(--accent);
-        }
-        .main-menu .menu-btn.cartridges {
-            border-left: 4px solid #22c55e;
-        }
-
-        /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
+        /* ===== СТАТИСТИКА ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -166,6 +137,7 @@
         .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
         .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
+        /* ===== ПОИСК И ФИЛЬТРЫ ===== */
         .search-wrapper { margin-bottom: 14px; }
         .search-wrapper input {
             width: 100%; padding: 12px 16px;
@@ -216,6 +188,7 @@
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
         .filter-btn:active { transform: scale(0.95); }
 
+        /* ===== СОРТИРОВКА ===== */
         .sorting-row {
             display: flex;
             flex-wrap: wrap;
@@ -232,12 +205,7 @@
             border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.05);
         }
-        .sorting-group label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            white-space: nowrap;
-        }
+        .sorting-group label { font-size: 13px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
         .sorting-group select {
             padding: 4px 8px;
             border: none;
@@ -293,6 +261,7 @@
         .reset-btn.active { opacity: 1; color: var(--accent); }
         .reset-btn:active { transform: scale(0.9); }
 
+        /* ===== КАРТОЧКИ ===== */
         .order-list {
             display: flex;
             flex-direction: column;
@@ -327,17 +296,8 @@
             flex-wrap: wrap;
             gap: 6px;
         }
-        .order-number {
-            font-weight: 700;
-            font-size: 17px;
-            color: var(--accent);
-        }
-        .order-card-top-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        .order-number { font-weight: 700; font-size: 17px; color: var(--accent); }
+        .order-card-top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .order-status {
             font-size: 11px;
             font-weight: 700;
@@ -362,14 +322,8 @@
             gap: 6px 14px;
             font-size: 14px;
         }
-        .order-client {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .order-phone {
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
+        .order-client { font-weight: 600; color: var(--text-primary); }
+        .order-phone { color: var(--text-secondary); font-weight: 500; }
 
         .order-card-bottom {
             display: flex;
@@ -397,12 +351,9 @@
             border: 1px solid rgba(245, 166, 35, 0.2);
             white-space: nowrap;
         }
-        .order-master-empty {
-            font-size: 11px;
-            color: var(--text-secondary);
-            opacity: 0.5;
-        }
+        .order-master-empty { font-size: 11px; color: var(--text-secondary); opacity: 0.5; }
 
+        /* ===== ДЕТАЛИ ===== */
         .detail-section {
             background: var(--bg-secondary);
             border-radius: var(--radius);
@@ -416,10 +367,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .status-date-row .status-big {
-            font-size: 20px;
-            font-weight: 700;
-        }
+        .status-date-row .status-big { font-size: 20px; font-weight: 700; }
         .status-date-row .date-text {
             font-size: 14px;
             color: var(--text-secondary);
@@ -560,37 +508,18 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
-        .client-list-item:hover { 
-            background: var(--bg-card-hover);
-            transform: translateX(4px);
-        }
+        .client-list-item:hover { background: var(--bg-card-hover); transform: translateX(4px); }
         .client-list-item:active { transform: scale(0.98); }
-        
         .client-list-item .client-info {
             display: flex;
             flex-direction: column;
             gap: 2px;
             flex: 1;
         }
-        .client-list-item .client-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: var(--text-primary);
-        }
-        .client-list-item .client-phone {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .client-list-item .client-devices-info {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-        .client-list-item .client-devices-info span {
-            color: var(--accent);
-            font-weight: 700;
-        }
-        
+        .client-list-item .client-name { font-weight: 600; font-size: 16px; color: var(--text-primary); }
+        .client-list-item .client-phone { color: var(--text-secondary); font-size: 14px; }
+        .client-list-item .client-devices-info { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .client-list-item .client-devices-info span { color: var(--accent); font-weight: 700; }
         .client-badge {
             background: var(--accent);
             color: var(--bg-primary);
@@ -606,6 +535,7 @@
             justify-content: center;
         }
 
+        /* ===== ПОЛЬЗОВАТЕЛИ ===== */
         .user-item {
             display: flex;
             justify-content: space-between;
@@ -660,6 +590,7 @@
         .user-actions button.edit { border-color: var(--accent); color: var(--accent); }
         .user-actions button:active { transform: scale(0.9); }
 
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
         .user-modal {
             display: none;
             position: fixed;
@@ -693,11 +624,7 @@
             padding-bottom: 12px;
             border-bottom: 2px solid var(--accent);
         }
-        .user-modal .modal-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--accent);
-        }
+        .user-modal .modal-header h2 { font-size: 18px; font-weight: 700; color: var(--accent); }
         .user-modal .modal-close {
             background: none;
             border: none;
@@ -707,9 +634,7 @@
             touch-action: manipulation;
         }
         .user-modal .modal-close:active { transform: scale(0.9); }
-        .user-modal .form-group {
-            margin-bottom: 12px;
-        }
+        .user-modal .form-group { margin-bottom: 12px; }
         .user-modal .form-group label {
             display: block;
             font-size: 12px;
@@ -746,17 +671,12 @@
             transition: 0.2s;
             touch-action: manipulation;
         }
-        .user-modal .form-actions .save-btn {
-            background: var(--accent);
-            color: var(--bg-primary);
-        }
+        .user-modal .form-actions .save-btn { background: var(--accent); color: var(--bg-primary); }
         .user-modal .form-actions .save-btn:hover { opacity: 0.85; }
-        .user-modal .form-actions .cancel-btn {
-            background: var(--bg-card);
-            color: var(--text-secondary);
-        }
+        .user-modal .form-actions .cancel-btn { background: var(--bg-card); color: var(--text-secondary); }
         .user-modal .form-actions button:active { transform: scale(0.95); }
 
+        /* ===== EMPTY / LOADER ===== */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
         .empty-state h3 { font-size: 18px; color: var(--text-primary); }
@@ -770,7 +690,8 @@
             margin: 0 auto 10px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
+        /* ===== НАВИГАЦИЯ ===== */
         .nav {
             position: fixed;
             bottom: 0;
@@ -842,6 +763,7 @@
         .analytics-filters button:hover { opacity: 0.85; }
         .analytics-filters button:active { transform: scale(0.95); }
 
+        /* ===== АДАПТИВ ===== */
         @media (max-width: 480px) {
             body { padding: 12px; padding-bottom: calc(var(--nav-height) + 16px); }
             .header h1 { font-size: 17px; }
@@ -898,7 +820,9 @@
         </button>
     </div>
 
-    <!-- ===== ГЛАВНАЯ СТРАНИЦА ===== -->
+    <!-- ============================================================ -->
+    <!-- ГЛАВНАЯ СТРАНИЦА -->
+    <!-- ============================================================ -->
     <div class="page active" id="page-main">
         <div class="header">
             <div class="header-left">
@@ -914,7 +838,6 @@
                 <div class="role" id="mainUserRole">—</div>
             </div>
 
-            <!-- Кнопка: Задачи -->
             <button class="menu-btn tasks" onclick="navigateTo('tasks')">
                 <div class="icon">📋</div>
                 <div class="content">
@@ -925,7 +848,6 @@
                 <div class="arrow">›</div>
             </button>
 
-            <!-- Кнопка: Заказы техника -->
             <button class="menu-btn tech" onclick="navigateTo('orders')">
                 <div class="icon">🖥️</div>
                 <div class="content">
@@ -936,7 +858,6 @@
                 <div class="arrow">›</div>
             </button>
 
-            <!-- Кнопка: Заказы картриджи -->
             <button class="menu-btn cartridges" onclick="navigateTo('cartridges')">
                 <div class="icon">🖨️</div>
                 <div class="content">
@@ -949,7 +870,9 @@
         </div>
     </div>
 
-    <!-- ===== СТРАНИЦА ЗАКАЗОВ (ТЕХНИКА) ===== -->
+    <!-- ============================================================ -->
+    <!-- ЗАКАЗЫ ТЕХНИКА -->
+    <!-- ============================================================ -->
     <div class="page" id="page-orders">
         <div class="header">
             <div class="header-left">
@@ -988,7 +911,6 @@
                 </select>
                 <button class="reset-btn" id="resetMasterBtn" onclick="resetMasterFilter()" title="Сбросить фильтр по мастеру">✕</button>
             </div>
-            
             <div class="sorting-group">
                 <label for="sortSelect">📅</label>
                 <select id="sortSelect" onchange="changeSort(this.value)">
@@ -1005,7 +927,9 @@
         <div class="order-list" id="orderList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ===== СТРАНИЦА ЗАДАЧ ===== -->
+    <!-- ============================================================ -->
+    <!-- ЗАДАЧИ -->
+    <!-- ============================================================ -->
     <div class="page" id="page-tasks">
         <div class="header">
             <div class="header-left">
@@ -1014,27 +938,30 @@
             </div>
             <span class="header-badge" id="tasksTotalBadge">0</span>
         </div>
+        
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-number" id="tasksPending">0</div><div class="stat-label">В работе</div></div>
-            <div class="stat-card"><div class="stat-number" id="tasksCompleted">0</div><div class="stat-label">Выполнено</div></div>
+            <div class="stat-card"><div class="stat-number" id="tasksCompleted">0</div><div class="stat-label">Выполнено сегодня</div></div>
         </div>
         
         <div class="search-wrapper">
             <input type="text" id="tasksSearchInput" placeholder="🔍 Поиск задач..." />
         </div>
         
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
             <button class="filter-btn active" data-filter="all" onclick="filterTasks('all')">Все</button>
-            <button class="filter-btn" data-filter="pending" onclick="filterTasks('pending')">В работе</button>
-            <button class="filter-btn" data-filter="completed" onclick="filterTasks('completed')">Выполнено</button>
             <button class="filter-btn" data-filter="my" onclick="filterTasks('my')">Мои</button>
-            <button class="action-btn" onclick="showCreateTask()" style="margin-left:auto;">➕ Создать</button>
+            <button class="filter-btn" data-filter="pending" onclick="filterTasks('pending')">Доступные</button>
+            <button class="filter-btn" data-filter="completed" onclick="filterTasks('completed')">Выполненные</button>
+            <button class="action-btn" onclick="showCreateTask()" style="margin-left:auto;border-color:var(--accent);">➕ Создать</button>
         </div>
         
-        <div id="tasksList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+        <div class="order-list" id="tasksList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ===== СТРАНИЦА КАРТРИДЖЕЙ ===== -->
+    <!-- ============================================================ -->
+    <!-- ЗАКАЗЫ КАРТРИДЖИ -->
+    <!-- ============================================================ -->
     <div class="page" id="page-cartridges">
         <div class="header">
             <div class="header-left">
@@ -1050,7 +977,9 @@
         </div>
     </div>
 
-    <!-- ===== СТРАНИЦА КЛИЕНТОВ ===== -->
+    <!-- ============================================================ -->
+    <!-- КЛИЕНТЫ -->
+    <!-- ============================================================ -->
     <div class="page" id="page-clients">
         <div class="header">
             <div class="header-left">
@@ -1065,7 +994,9 @@
         <div id="clientsList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ===== СТРАНИЦА АНАЛИТИКИ ===== -->
+    <!-- ============================================================ -->
+    <!-- АНАЛИТИКА -->
+    <!-- ============================================================ -->
     <div class="page" id="page-dashboard">
         <div class="header">
             <div class="header-left">
@@ -1098,7 +1029,9 @@
         <div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ===== СТРАНИЦА ПОЛЬЗОВАТЕЛЕЙ ===== -->
+    <!-- ============================================================ -->
+    <!-- ПОЛЬЗОВАТЕЛИ -->
+    <!-- ============================================================ -->
     <div class="page" id="page-users">
         <div class="header">
             <div class="header-left">
@@ -1108,7 +1041,6 @@
             <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);" id="addUserBtn">➕ Добавить</button>
         </div>
         <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
-        
         <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
             <h3 style="color:var(--accent);margin-bottom:8px;">Добавить пользователя</h3>
             <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
@@ -1126,7 +1058,9 @@
         </div>
     </div>
 
-    <!-- ===== СТРАНИЦА ПРОФИЛЯ ===== -->
+    <!-- ============================================================ -->
+    <!-- ПРОФИЛЬ -->
+    <!-- ============================================================ -->
     <div class="page" id="page-profile">
         <div class="header">
             <div class="header-left">
@@ -1137,7 +1071,9 @@
         <div id="profileContent"></div>
     </div>
 
-    <!-- ===== СТРАНИЦА ДЕТАЛЕЙ ЗАКАЗА ===== -->
+    <!-- ============================================================ -->
+    <!-- ДЕТАЛИ ЗАКАЗА -->
+    <!-- ============================================================ -->
     <div class="page" id="page-detail">
         <div class="header">
             <div class="header-left">
@@ -1149,7 +1085,9 @@
         <div id="detailContent"></div>
     </div>
 
-    <!-- ===== СТРАНИЦА КЛИЕНТА (ДЕТАЛИ) ===== -->
+    <!-- ============================================================ -->
+    <!-- ДЕТАЛИ КЛИЕНТА -->
+    <!-- ============================================================ -->
     <div class="page" id="page-client">
         <div class="header">
             <div class="header-left">
@@ -1160,7 +1098,9 @@
         <div id="clientContent"></div>
     </div>
 
-    <!-- ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ ===== -->
+    <!-- ============================================================ -->
+    <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ -->
+    <!-- ============================================================ -->
     <div class="user-modal" id="userEditModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1200,6 +1140,9 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- JavaScript -->
+    <!-- ============================================================ -->
     <script>
         // ============================================================
         // ОСНОВНЫЕ ПЕРЕМЕННЫЕ
@@ -1208,6 +1151,8 @@
         const userId = urlParams.get('user_id');
         let currentUser = null;
         let USER_ROLE = 'user';
+        
+        // Заказы
         let allOrders = [], currentFilter = 'all', searchQuery = '';
         let currentMaster = '';
         let allUsers = [];
@@ -1216,6 +1161,11 @@
         let editingTelegramId = null;
         let mastersList = [];
         let allClients = [];
+        
+        // Задачи
+        let allTasks = [];
+        let tasksFilter = 'all';
+        let tasksSearchQuery = '';
 
         // ============================================================
         // ПЕРЕХОД МЕЖДУ СТРАНИЦАМИ
@@ -1314,29 +1264,889 @@
         }
 
         // ============================================================
-        // ЗАДАЧИ (заглушка)
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
         // ============================================================
-        function loadTasks() {
+        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('viber://chat?number=' + clean, '_blank'); }
+        function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
+        function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
+
+        function formatPhone(phone) {
+            if (!phone) return '';
+            let clean = phone.replace(/[^0-9]/g, '');
+            if (clean.startsWith('375')) {
+                clean = clean.slice(3);
+                if (clean.length === 9) {
+                    const code = clean.slice(0, 2);
+                    const part1 = clean.slice(2, 5);
+                    const part2 = clean.slice(5, 7);
+                    const part3 = clean.slice(7, 9);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                } else if (clean.length === 10) {
+                    const code = clean.slice(0, 3);
+                    const part1 = clean.slice(3, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 10);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                } else if (clean.length === 11) {
+                    const code = clean.slice(0, 4);
+                    const part1 = clean.slice(4, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 11);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                }
+            }
+            return phone.startsWith('+') ? phone : '+' + phone;
+        }
+
+        const statusMap = {
+            'Принят в ремонт': 'new', 'В ремонте': 'repair',
+            'Согласование с клиентом': 'consultation', 'Ожидание запчасти': 'waiting',
+            'Гарантия': 'warranty', 'Готово': 'ready',
+            'Выдано (не оплачено)': 'notpaid', 'Выдано (оплачено)': 'paid'
+        };
+        const statusColors = {
+            'Принят в ремонт': '#4f46e5', 'В ремонте': '#f59e0b',
+            'Согласование с клиентом': '#8b5cf6', 'Ожидание запчасти': '#f97316',
+            'Гарантия': '#14b8a6', 'Готово': '#22c55e',
+            'Выдано (не оплачено)': '#ef4444', 'Выдано (оплачено)': '#22d3ee'
+        };
+
+        function getStatusClass(s) { return statusMap[s] || 'default'; }
+
+        // ============================================================
+        // ЗАДАЧИ
+        // ============================================================
+        async function loadTasks() {
             const container = document.getElementById('tasksList');
             container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка задач...</div>';
-            setTimeout(() => {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">📋</div>
-                        <h3>Раздел задач в разработке</h3>
-                        <p>Функционал управления задачами будет доступен позже</p>
+            
+            try {
+                const stats = await apiFetch('/tasks/stats');
+                if (stats.success) {
+                    document.getElementById('tasksPending').textContent = stats.data.total_pending || 0;
+                    document.getElementById('tasksCompleted').textContent = stats.data.completed_today || 0;
+                    document.getElementById('tasksTotalBadge').textContent = stats.data.total_pending || 0;
+                    document.getElementById('tasksBadge').textContent = stats.data.total_pending || 0;
+                }
+                
+                let url = '/tasks';
+                if (tasksFilter === 'my') url += '?status=my';
+                else if (tasksFilter === 'pending') url += '?status=pending';
+                else if (tasksFilter === 'completed') url += '?status=completed';
+                
+                const r = await apiFetch(url);
+                if (r.success) {
+                    allTasks = r.data || [];
+                    renderTasks(allTasks);
+                } else {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки задач:', e);
+                container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+            }
+        }
+
+        function renderTasks(tasks) {
+            const container = document.getElementById('tasksList');
+            
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Нет задач</h3><p>Создайте новую задачу или завершите текущие</p></div>';
+                return;
+            }
+            
+            let html = '';
+            tasks.forEach(task => {
+                const isTaken = task.taken_by_id !== null && task.taken_by_id !== undefined;
+                const isMy = task.taken_by_id == userId;
+                const isAdmin = USER_ROLE === 'superadmin' || USER_ROLE === 'admin';
+                const priorityColor = task.priority === 'Срочно' ? '#ef4444' : '#6b7280';
+                const priorityEmoji = task.priority === 'Срочно' ? '🔴' : '🟢';
+                
+                html += `
+                    <div class="order-card" style="border-left-color: ${priorityColor};">
+                        <div class="order-card-top">
+                            <span class="order-number">#${task.id}</span>
+                            <div class="order-card-top-right">
+                                <span style="font-size:12px;color:var(--text-secondary);">${priorityEmoji} ${task.priority || 'Обычный'}</span>
+                                ${task.deadline ? `<span class="order-date-small">⏰ ${task.deadline}</span>` : ''}
+                                ${task.taken_by ? `<span class="order-master">👤 ${escapeHtml(task.taken_by)}</span>` : `<span class="order-master-empty">📌 доступна</span>`}
+                            </div>
+                        </div>
+                        <div class="order-card-middle">
+                            <span style="font-size:15px;color:var(--text-primary);">${escapeHtml(task.text)}</span>
+                        </div>
+                        <div class="order-card-bottom">
+                            <span style="font-size:13px;color:var(--text-secondary);">📢 ${escapeHtml(task.author || '—')}</span>
+                            <span style="font-size:12px;color:var(--text-secondary);">${task.created_at ? task.created_at.slice(0, 10) : ''}</span>
+                        </div>
+                        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                            ${!isTaken ? `<button class="action-btn" onclick="takeTask(${task.id})" style="border-color:#22c55e;color:#22c55e;padding:4px 12px;font-size:12px;">✅ Взять</button>` : ''}
+                            ${isMy ? `<button class="action-btn" onclick="completeTask(${task.id})" style="border-color:#22c55e;color:#22c55e;padding:4px 12px;font-size:12px;">✔️ Завершить</button>` : ''}
+                            ${isMy ? `<button class="action-btn" onclick="cancelTask(${task.id})" style="border-color:#f59e0b;color:#f59e0b;padding:4px 12px;font-size:12px;">↩️ Отказаться</button>` : ''}
+                            ${isAdmin ? `<button class="action-btn danger" onclick="deleteTask(${task.id})" style="padding:4px 12px;font-size:12px;">🗑️</button>` : ''}
+                        </div>
                     </div>
                 `;
-            }, 500);
+            });
+            
+            container.innerHTML = html;
         }
 
         function filterTasks(filter) {
+            tasksFilter = filter;
             document.querySelectorAll('#page-tasks .filter-btn').forEach(b => b.classList.remove('active'));
             document.querySelector(`#page-tasks .filter-btn[data-filter="${filter}"]`)?.classList.add('active');
+            loadTasks();
+        }
+
+        document.getElementById('tasksSearchInput')?.addEventListener('input', function() {
+            tasksSearchQuery = this.value.toLowerCase().trim();
+            if (!tasksSearchQuery) {
+                renderTasks(allTasks);
+                return;
+            }
+            const filtered = allTasks.filter(t => 
+                (t.text || '').toLowerCase().includes(tasksSearchQuery) ||
+                (t.author || '').toLowerCase().includes(tasksSearchQuery) ||
+                (t.taken_by || '').toLowerCase().includes(tasksSearchQuery)
+            );
+            renderTasks(filtered);
+        });
+
+        async function takeTask(taskId) {
+            try {
+                const r = await apiFetch(`/tasks/${taskId}/take`, { method: 'PUT' });
+                if (r.success) {
+                    alert('✅ Задача взята в работу!');
+                    loadTasks();
+                } else {
+                    alert('❌ ' + (r.detail || 'Ошибка'));
+                }
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function completeTask(taskId) {
+            if (!confirm('Завершить задачу?')) return;
+            try {
+                const r = await apiFetch(`/tasks/${taskId}/complete`, { method: 'PUT' });
+                if (r.success) {
+                    alert('✅ Задача завершена!');
+                    loadTasks();
+                } else {
+                    alert('❌ ' + (r.detail || 'Ошибка'));
+                }
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function cancelTask(taskId) {
+            if (!confirm('Отказаться от задачи?')) return;
+            try {
+                const r = await apiFetch(`/tasks/${taskId}/cancel`, { method: 'PUT' });
+                if (r.success) {
+                    alert('✅ Вы отказались от задачи');
+                    loadTasks();
+                } else {
+                    alert('❌ ' + (r.detail || 'Ошибка'));
+                }
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm('Удалить задачу?')) return;
+            try {
+                const r = await apiFetch(`/tasks/${taskId}`, { method: 'DELETE' });
+                if (r.success) {
+                    alert('✅ Задача удалена');
+                    loadTasks();
+                } else {
+                    alert('❌ ' + (r.detail || 'Ошибка'));
+                }
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
         }
 
         function showCreateTask() {
-            alert('Создание задач будет доступно в следующей версии');
+            const text = prompt('Введите текст задачи:');
+            if (!text) return;
+            
+            const priority = confirm('Срочная задача?') ? 'Срочно' : 'Обычный';
+            const deadline = prompt('Введите срок (в формате ДД-ММ-ГГГГ или оставьте пустым):');
+            
+            createTask(text, priority, deadline);
+        }
+
+        async function createTask(text, priority, deadline) {
+            try {
+                const data = { text, priority };
+                if (deadline && deadline.trim()) {
+                    data.deadline = deadline.trim() + ' 23:59';
+                }
+                const r = await apiFetch('/tasks', { 
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                if (r.success) {
+                    alert('✅ Задача создана!');
+                    loadTasks();
+                } else {
+                    alert('❌ ' + (r.detail || 'Ошибка'));
+                }
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // ЗАКАЗЫ
+        // ============================================================
+        async function loadOrders() {
+            try {
+                let url = '/orders?limit=200';
+                if (currentMaster) {
+                    url += '&master=' + encodeURIComponent(currentMaster);
+                }
+                let r = await apiFetch(url);
+                if (r.success) {
+                    allOrders = r.data;
+                    document.getElementById('totalBadge').textContent = r.pagination.total;
+                    document.getElementById('statTotal').textContent = r.pagination.total;
+                    let today = new Date().toISOString().slice(0,10);
+                    document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
+                    renderOrders();
+                    loadStatusCounts();
+                    document.getElementById('techBadge').textContent = r.pagination.total || 0;
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function renderOrders() {
+            let filtered = allOrders;
+            if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
+            let q = searchQuery.trim().toLowerCase();
+            if (q) {
+                filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
+            }
+            
+            const comparator = getComparator();
+            filtered.sort(comparator);
+
+            let container = document.getElementById('orderList');
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(o => {
+                let phone = o.phone || '';
+                let cleanPhone = phone.replace(/[^0-9+]/g, '');
+                if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
+                if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+                let formattedPhone = formatPhone(cleanPhone || phone);
+                
+                const deviceIcon = o.device?.toLowerCase().includes('apple') ? '🍎' : 
+                                   o.device?.toLowerCase().includes('samsung') ? '📱' :
+                                   o.device?.toLowerCase().includes('ноутбук') ? '💻' :
+                                   o.device?.toLowerCase().includes('телевизор') ? '📺' :
+                                   o.device?.toLowerCase().includes('принтер') ? '🖨️' : '🖥️';
+                
+                const clientName = o.client_name && o.client_name !== '-' ? o.client_name : 'Без имени';
+                const statusText = o.status || 'Новый';
+                const orderDate = o.date ? o.date.slice(0, 10) : '';
+                const masterName = o.master || '';
+                
+                return `
+                    <div class="order-card" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
+                        <div class="order-card-top">
+                            <span class="order-number">#${o.order_number}</span>
+                            <div class="order-card-top-right">
+                                <span class="order-status status-${getStatusClass(o.status)}">${statusText}</span>
+                                ${orderDate ? `<span class="order-date-small">📅 ${orderDate}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="order-card-middle">
+                            <span class="order-client">👤 ${escapeHtml(clientName)}</span>
+                            ${formattedPhone && formattedPhone !== '+' ? `<span class="order-phone">📱 ${escapeHtml(formattedPhone)}</span>` : ''}
+                        </div>
+                        <div class="order-card-bottom">
+                            <span class="order-device">
+                                <span class="device-icon">${deviceIcon}</span>
+                                ${escapeHtml(o.device || 'Устройство не указано')}
+                            </span>
+                            ${masterName ? `<span class="order-master">👨‍🔧 ${escapeHtml(masterName)}</span>` : '<span class="order-master-empty">без мастера</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getComparator() {
+            const direction = sortAscending ? 1 : -1;
+            if (sortMode === 'number') {
+                return (a, b) => {
+                    const numA = parseInt(a.order_number) || 0;
+                    const numB = parseInt(b.order_number) || 0;
+                    return (numA - numB) * direction;
+                };
+            } else {
+                return (a, b) => {
+                    const dateA = new Date(a.date || a.created_at);
+                    const dateB = new Date(b.date || b.created_at);
+                    return (dateA - dateB) * direction;
+                };
+            }
+        }
+
+        function applyMasterFilter(value) {
+            currentMaster = value;
+            renderOrders();
+        }
+
+        function resetMasterFilter() {
+            currentMaster = '';
+            document.getElementById('masterFilter').value = '';
+            renderOrders();
+        }
+
+        function changeSort(value) {
+            sortMode = value;
+            sortAscending = false;
+            updateSortIcons();
+            renderOrders();
+        }
+
+        function toggleSortOrder() {
+            sortAscending = !sortAscending;
+            updateSortIcons();
+            renderOrders();
+        }
+
+        function resetSort() {
+            sortMode = 'number';
+            sortAscending = false;
+            document.getElementById('sortSelect').value = 'number';
+            updateSortIcons();
+            renderOrders();
+        }
+
+        function updateSortIcons() {
+            const orderIcon = document.getElementById('sortOrderIcon');
+            const sortBtn = document.getElementById('sortOrderBtn');
+            if (sortAscending) {
+                orderIcon.textContent = '⬆';
+                sortBtn.classList.remove('active');
+            } else {
+                orderIcon.textContent = '⬇';
+                sortBtn.classList.add('active');
+            }
+        }
+
+        async function loadMasters() {
+            try {
+                const r = await apiFetch('/masters');
+                if (r.success) {
+                    mastersList = r.data;
+                    const select = document.getElementById('masterFilter');
+                    select.innerHTML = '<option value="">Все мастера</option>';
+                    mastersList.forEach(master => {
+                        select.innerHTML += `<option value="${master}">${master}</option>`;
+                    });
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки мастеров:', e);
+            }
+        }
+
+        async function loadStatusCounts() {
+            try {
+                const r = await apiFetch('/status-counts');
+                if (r.success) {
+                    const counts = {};
+                    r.data.forEach(item => {
+                        counts[item.status] = item.count;
+                    });
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        const status = btn.dataset.filter;
+                        if (status === 'all') {
+                            const total = Object.values(counts).reduce((a, b) => a + b, 0);
+                            btn.textContent = `Все (${total})`;
+                        } else if (counts[status]) {
+                            btn.textContent = `${status} (${counts[status]})`;
+                        } else {
+                            btn.textContent = `${status} (0)`;
+                        }
+                    });
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки статусов:', e);
+            }
+        }
+
+        function showDetail(order) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-detail').classList.add('active');
+            document.getElementById('detailTitle').textContent = 'Заказ #' + order.order_number;
+            
+            document.getElementById('detailContent').innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            const orderNumber = order.order_number;
+            
+            apiFetch('/orders/by-number/' + orderNumber)
+                .then(r => {
+                    if (r.success) {
+                        const fullOrder = r.data;
+                        renderOrderDetail(fullOrder);
+                    } else {
+                        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки заказа</p></div>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('detailContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки заказа</p></div>';
+                });
+        }
+
+        function renderOrderDetail(order) {
+            let phone = order.phone || '';
+            let cleanPhone = phone.replace(/[^0-9+]/g, '');
+            if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
+            if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+            
+            let formattedPhone = formatPhone(cleanPhone || phone);
+            let displayPhone = formattedPhone || phone || '—';
+
+            let contacts = '';
+            if (cleanPhone && cleanPhone.length > 4) {
+                const callLink = `tel:${cleanPhone}`;
+                contacts = `
+                    <div class="client-contact-grid">
+                        <a href="${callLink}" class="contact-btn call">📞 Позвонить</a>
+                        <button class="contact-btn viber" onclick="openViber('${cleanPhone}')">💬 Viber</button>
+                        <button class="contact-btn telegram" onclick="openTelegram('${cleanPhone}')">✈️ Telegram</button>
+                        <button class="contact-btn copy" onclick="copyPhone('${cleanPhone}')">📋 Копировать</button>
+                    </div>
+                `;
+            }
+
+            let historyHtml = '';
+            if (order.history && order.history.length > 0) {
+                historyHtml = '<div class="detail-section"><div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">📜 История статусов</div>';
+                order.history.forEach(h => {
+                    let color = statusColors[h.status] || '#6b7280';
+                    let fullDate = '';
+                    if (h.changed_at) {
+                        try {
+                            const date = new Date(h.changed_at);
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const year = date.getFullYear();
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            fullDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+                        } catch(e) {
+                            fullDate = h.changed_at.slice(0, 16).replace('T', ' ');
+                        }
+                    }
+                    historyHtml += '<div class="history-item"><span class="h-status"><span class="status-dot" style="background:' + color + ';"></span>' + escapeHtml(h.status) + '</span><span class="h-time">' + fullDate + '</span></div>';
+                });
+                historyHtml += '</div>';
+            } else {
+                historyHtml = '<div class="detail-section"><div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">📜 История статусов</div><div style="color:var(--text-secondary);font-size:14px;padding:8px 0;">Нет истории статусов</div></div>';
+            }
+
+            let actions = '';
+            if (USER_ROLE === 'superadmin' || USER_ROLE === 'admin') {
+                actions = '<button class="action-btn danger" onclick="deleteOrder(\'' + order.order_number + '\')">🗑️ Удалить заказ</button>';
+            }
+            document.getElementById('detailActions').innerHTML = actions;
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="detail-section">
+                    <div class="status-date-row">
+                        <div>
+                            <span class="status-big">${escapeHtml(order.status || 'Новый')}</span>
+                        </div>
+                        <div class="date-text">📅 ${escapeHtml(order.date || '—')}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div style="font-size:16px;font-weight:600;">${escapeHtml(order.client_name || '—')}</div>
+                    <div style="font-size:15px;color:var(--text-primary);margin-top:4px;">📱 ${escapeHtml(displayPhone)}</div>
+                    ${contacts}
+                    <button class="action-btn client-btn" onclick="showClientDetail('${cleanPhone}')">👤 Открыть карточку клиента</button>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-grid">
+                        <div class="detail-row"><span class="label">Приёмщик</span><span class="value">${escapeHtml(order.receiver || '—')}</span></div>
+                        <div class="detail-row"><span class="label">Мастер</span><span class="value">${escapeHtml(order.master || '—')}</span></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🖥️ Устройство</div>
+                    <div style="font-size:16px;">${escapeHtml(order.device || '—')}</div>
+                </div>
+
+                <div class="detail-section">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">🔧 Неисправность</div>
+                    <div class="problem-text">${escapeHtml(order.problem || 'Не указана')}</div>
+                </div>
+
+                ${historyHtml}
+            `;
+        }
+
+        async function deleteOrder(orderNumber) {
+            if (USER_ROLE !== 'superadmin' && USER_ROLE !== 'admin') {
+                alert('Только администратор может удалять заказы');
+                return;
+            }
+            if (!confirm('Удалить заказ #' + orderNumber + '?')) return;
+            try {
+                await apiFetch('/orders/by-number/' + orderNumber, { method: 'DELETE' });
+                alert('✅ Заказ удален');
+                loadOrders();
+                navigateTo('orders');
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // КЛИЕНТЫ
+        // ============================================================
+        function loadClients() {
+            let container = document.getElementById('clientsList');
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            if (allOrders && allOrders.length > 0) {
+                buildClientsFromOrders(allOrders);
+                return;
+            }
+            
+            apiFetch('/orders?limit=500')
+                .then(r => {
+                    if (r.success && r.data.length > 0) {
+                        buildClientsFromOrders(r.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
+                    }
+                })
+                .catch(() => {
+                    if (allOrders && allOrders.length > 0) {
+                        buildClientsFromOrders(allOrders);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>Попробуйте обновить страницу</p></div>';
+                    }
+                });
+        }
+
+        function buildClientsFromOrders(orders) {
+            const clientsMap = new Map();
+            orders.forEach(o => {
+                const phone = o.phone || '';
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                if (!cleanPhone) return;
+                
+                const key = cleanPhone;
+                if (!clientsMap.has(key)) {
+                    clientsMap.set(key, {
+                        phone: phone,
+                        cleanPhone: cleanPhone,
+                        name: o.client_name || 'Без имени',
+                        orders: [],
+                        devices: new Set()
+                    });
+                }
+                const client = clientsMap.get(key);
+                client.orders.push(o);
+                if (o.device) client.devices.add(o.device);
+            });
+            
+            allClients = Array.from(clientsMap.values()).map(c => ({
+                ...c,
+                orders_count: c.orders.length,
+                devices_count: c.devices.size,
+                last_order: c.orders.reduce((a, b) => {
+                    const dateA = new Date(a.created_at || a.date);
+                    const dateB = new Date(b.created_at || b.date);
+                    return dateA > dateB ? a : b;
+                }, c.orders[0])
+            }));
+            
+            allClients.sort((a, b) => b.orders_count - a.orders_count);
+            
+            document.getElementById('clientsBadge').textContent = allClients.length;
+            renderClients(allClients);
+        }
+
+        function renderClients(clients) {
+            const container = document.getElementById('clientsList');
+            
+            if (!clients || clients.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
+                return;
+            }
+            
+            let html = '';
+            clients.forEach(client => {
+                const displayPhone = formatPhone(client.phone || client.cleanPhone);
+                const name = client.name && client.name !== '-' ? client.name : 'Без имени';
+                const devicesCount = client.devices_count || 0;
+                const ordersCount = client.orders_count || 0;
+                
+                let ordersText = ordersCount + ' заказ';
+                if (ordersCount % 10 >= 2 && ordersCount % 10 <= 4 && !(ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
+                    ordersText = ordersCount + ' заказа';
+                } else if (ordersCount % 10 === 0 || (ordersCount % 10 >= 5 && ordersCount % 10 <= 9) || (ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
+                    ordersText = ordersCount + ' заказов';
+                }
+                
+                html += `
+                    <div class="client-list-item" onclick="showClientDetail('${client.cleanPhone}')">
+                        <div class="client-info">
+                            <div class="client-name">👤 ${escapeHtml(name)}</div>
+                            <div class="client-phone">📱 ${escapeHtml(displayPhone)}</div>
+                            <div class="client-devices-info">🖥️ <span>${devicesCount}</span> устройств • ${ordersText}</div>
+                        </div>
+                        <div class="client-badge">${ordersCount}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function showClientDetail(phone) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-client').classList.add('active');
+            document.getElementById('clientTitle').textContent = 'Клиент';
+
+            let container = document.getElementById('clientContent');
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            if (allOrders && allOrders.length > 0) {
+                renderClientDetail(cleanPhone, allOrders);
+                return;
+            }
+            
+            apiFetch('/orders?limit=500')
+                .then(r => {
+                    if (r.success) {
+                        renderClientDetail(cleanPhone, r.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                });
+        }
+
+        function renderClientDetail(cleanPhone, orders) {
+            let container = document.getElementById('clientContent');
+            
+            let filteredOrders = orders.filter(o => {
+                let orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
+                return orderPhone === cleanPhone;
+            });
+
+            let total = filteredOrders.length;
+            let devices = new Set();
+            filteredOrders.forEach(o => {
+                if (o.device) devices.add(o.device);
+            });
+
+            filteredOrders.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.date);
+                const dateB = new Date(b.created_at || b.date);
+                return dateB - dateA;
+            });
+
+            let clientName = filteredOrders[0]?.client_name || 'Клиент';
+            let displayPhone = formatPhone(filteredOrders[0]?.phone || cleanPhone);
+            let rawPhone = filteredOrders[0]?.phone || cleanPhone;
+
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">👤</div><h3>Клиент не найден</h3><p>Заказов с этим номером телефона нет</p></div>';
+                return;
+            }
+
+            let contacts = '';
+            const clean = rawPhone.replace(/[^0-9]/g, '');
+            if (clean && clean.length > 4) {
+                const callLink = `tel:${clean}`;
+                contacts = `
+                    <div class="client-contact-grid">
+                        <a href="${callLink}" class="contact-btn call">📞 Позвонить</a>
+                        <button class="contact-btn viber" onclick="openViber('${clean}')">💬 Viber</button>
+                        <button class="contact-btn telegram" onclick="openTelegram('${clean}')">✈️ Telegram</button>
+                        <button class="contact-btn copy" onclick="copyPhone('${clean}')">📋 Копировать</button>
+                    </div>
+                `;
+            }
+
+            let listHtml = filteredOrders.map(o => {
+                const orderDate = o.date ? o.date.slice(0, 10) : '';
+                return `
+                    <div class="client-order-item" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
+                        <div>
+                            <span style="font-weight:600;">#${o.order_number}</span>
+                            <span class="order-status status-${getStatusClass(o.status)}" style="font-size:11px;margin-left:8px;">${o.status || 'Новый'}</span>
+                            <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(o.device || '—')}</div>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);">${orderDate}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+                        <div style="font-size:40px;">👤</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;">${escapeHtml(clientName)}</div>
+                            <div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ${escapeHtml(displayPhone)}</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">🖥️ ${devices.size} устройств</div>
+                        </div>
+                    </div>
+                    ${contacts}
+                    <div class="client-stats-grid" style="margin-top:8px;">
+                        <div class="client-stat-item"><div class="num">${filteredOrders.length}</div><div class="label">Заказов</div></div>
+                        <div class="client-stat-item"><div class="num">${devices.size}</div><div class="label">Устройств</div></div>
+                    </div>
+                </div>
+                <div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>
+                ${listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>'}
+            `;
+        }
+
+        document.getElementById('clientSearchInput')?.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            if (!query) {
+                renderClients(allClients);
+                return;
+            }
+            
+            const filtered = allClients.filter(c => {
+                const name = (c.name || '').toLowerCase();
+                const phone = (c.phone || '').toLowerCase();
+                const cleanPhone = (c.cleanPhone || '');
+                const devices = Array.from(c.devices || []).join(' ').toLowerCase();
+                const orderNumbers = c.orders.map(o => o.order_number || '').join(' ').toLowerCase();
+                
+                return name.includes(query) || 
+                       phone.includes(query) || 
+                       cleanPhone.includes(query) ||
+                       devices.includes(query) ||
+                       orderNumbers.includes(query);
+            });
+            
+            renderClients(filtered);
+        });
+
+        // ============================================================
+        // АНАЛИТИКА
+        // ============================================================
+        async function loadAnalytics() {
+            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+                return;
+            }
+            
+            const month = document.getElementById('analyticsMonth').value;
+            const year = document.getElementById('analyticsYear').value;
+            
+            document.getElementById('dashboardContent').innerHTML = 
+                '<div class="loader"><div class="spinner"></div>Загрузка аналитики за ' + 
+                month + '/' + year + '...</div>';
+            
+            try {
+                const r = await apiFetch('/admin/dashboard?month=' + month + '&year=' + year);
+                if (r.success) {
+                    const stats = r.data;
+                    const maxCount = stats.orders_by_day && stats.orders_by_day.length > 0 
+                        ? Math.max(...stats.orders_by_day.map(x => x.count)) 
+                        : 1;
+                    
+                    let masterHtml = '';
+                    if (stats.by_master && stats.by_master.length > 0) {
+                        masterHtml = '<div style="margin-top:12px;"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">👨‍🔧 Статистика по мастерам</div>';
+                        stats.by_master.forEach(m => {
+                            const done = stats.by_master_done?.find(d => d.master === m.master);
+                            masterHtml += `<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <span>${m.master}</span>
+                                <span style="color:var(--accent);">${m.count} (выполнено: ${done?.count || 0})</span>
+                            </div>`;
+                        });
+                        masterHtml += '</div>';
+                    }
+                    
+                    document.getElementById('dashboardContent').innerHTML = `
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
+                                <div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div>
+                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.avg_repair_time || 0} дн.</div>
+                            </div>
+                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
+                                <div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div>
+                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.total_orders || 0}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
+                            📊 Аналитика за ${month}.${year}
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>
+                        ${(stats.top_problems || []).map(p => 
+                            '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                            '<span>' + (p.problem || 'Без описания') + '</span>' +
+                            '<span style="color:var(--accent);">' + p.count + '</span></div>'
+                        ).join('')}
+                        ${masterHtml}
+                        <div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>
+                        <div style="display:flex;gap:4px;height:40px;align-items:flex-end;">
+                            ${(stats.orders_by_day || []).slice(0,7).reverse().map(d => 
+                                '<div style="flex:1;display:flex;flex-direction:column;align-items:center;">' +
+                                '<div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + 
+                                Math.max(4, (d.count / maxCount) * 40) + 'px;"></div>' +
+                                '<div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>'
+                            ).join('')}
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dashboardContent').innerHTML = 
+                        '<div class="empty-state"><div class="icon">⚠️</div><p>Нет данных за выбранный период</p></div>';
+                }
+            } catch(e) {
+                console.error('Ошибка загрузки аналитики:', e);
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>' + e.message + '</p></div>';
+            }
+        }
+
+        async function loadDashboard() {
+            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
+                document.getElementById('dashboardContent').innerHTML = 
+                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
+                return;
+            }
+            const now = new Date();
+            document.getElementById('analyticsMonth').value = now.getMonth() + 1;
+            document.getElementById('analyticsYear').value = now.getFullYear();
+            await loadAnalytics();
         }
 
         // ============================================================
@@ -1550,542 +2360,6 @@
         }
 
         // ============================================================
-        // КЛИЕНТЫ
-        // ============================================================
-        function loadClients() {
-            let container = document.getElementById('clientsList');
-            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
-            
-            if (allOrders && allOrders.length > 0) {
-                buildClientsFromOrders(allOrders);
-                return;
-            }
-            
-            apiFetch('/orders?limit=500')
-                .then(r => {
-                    if (r.success && r.data.length > 0) {
-                        buildClientsFromOrders(r.data);
-                    } else {
-                        container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
-                    }
-                })
-                .catch(() => {
-                    if (allOrders && allOrders.length > 0) {
-                        buildClientsFromOrders(allOrders);
-                    } else {
-                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>Попробуйте обновить страницу</p></div>';
-                    }
-                });
-        }
-
-        function buildClientsFromOrders(orders) {
-            const clientsMap = new Map();
-            orders.forEach(o => {
-                const phone = o.phone || '';
-                const cleanPhone = phone.replace(/[^0-9]/g, '');
-                if (!cleanPhone) return;
-                
-                const key = cleanPhone;
-                if (!clientsMap.has(key)) {
-                    clientsMap.set(key, {
-                        phone: phone,
-                        cleanPhone: cleanPhone,
-                        name: o.client_name || 'Без имени',
-                        orders: [],
-                        devices: new Set()
-                    });
-                }
-                const client = clientsMap.get(key);
-                client.orders.push(o);
-                if (o.device) client.devices.add(o.device);
-            });
-            
-            allClients = Array.from(clientsMap.values()).map(c => ({
-                ...c,
-                orders_count: c.orders.length,
-                devices_count: c.devices.size,
-                last_order: c.orders.reduce((a, b) => {
-                    const dateA = new Date(a.created_at || a.date);
-                    const dateB = new Date(b.created_at || b.date);
-                    return dateA > dateB ? a : b;
-                }, c.orders[0])
-            }));
-            
-            allClients.sort((a, b) => b.orders_count - a.orders_count);
-            
-            document.getElementById('clientsBadge').textContent = allClients.length;
-            renderClients(allClients);
-        }
-
-        function renderClients(clients) {
-            const container = document.getElementById('clientsList');
-            
-            if (!clients || clients.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
-                return;
-            }
-            
-            let html = '';
-            clients.forEach(client => {
-                const displayPhone = formatPhone(client.phone || client.cleanPhone);
-                const name = client.name && client.name !== '-' ? client.name : 'Без имени';
-                const devicesCount = client.devices_count || 0;
-                const ordersCount = client.orders_count || 0;
-                
-                let ordersText = ordersCount + ' заказ';
-                if (ordersCount % 10 >= 2 && ordersCount % 10 <= 4 && !(ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
-                    ordersText = ordersCount + ' заказа';
-                } else if (ordersCount % 10 === 0 || (ordersCount % 10 >= 5 && ordersCount % 10 <= 9) || (ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
-                    ordersText = ordersCount + ' заказов';
-                }
-                
-                html += `
-                    <div class="client-list-item" onclick="showClientDetail('${client.cleanPhone}')">
-                        <div class="client-info">
-                            <div class="client-name">👤 ${escapeHtml(name)}</div>
-                            <div class="client-phone">📱 ${escapeHtml(displayPhone)}</div>
-                            <div class="client-devices-info">🖥️ <span>${devicesCount}</span> устройств • ${ordersText}</div>
-                        </div>
-                        <div class="client-badge">${ordersCount}</div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        function showClientDetail(phone) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-client').classList.add('active');
-            document.getElementById('clientTitle').textContent = 'Клиент';
-
-            let container = document.getElementById('clientContent');
-            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
-
-            let cleanPhone = phone.replace(/[^0-9]/g, '');
-            
-            if (allOrders && allOrders.length > 0) {
-                renderClientDetail(cleanPhone, allOrders);
-                return;
-            }
-            
-            apiFetch('/orders?limit=500')
-                .then(r => {
-                    if (r.success) {
-                        renderClientDetail(cleanPhone, r.data);
-                    } else {
-                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
-                    }
-                })
-                .catch(() => {
-                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
-                });
-        }
-
-        function renderClientDetail(cleanPhone, orders) {
-            let container = document.getElementById('clientContent');
-            
-            let filteredOrders = orders.filter(o => {
-                let orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
-                return orderPhone === cleanPhone;
-            });
-
-            let total = filteredOrders.length;
-            let devices = new Set();
-            filteredOrders.forEach(o => {
-                if (o.device) devices.add(o.device);
-            });
-
-            filteredOrders.sort((a, b) => {
-                const dateA = new Date(a.created_at || a.date);
-                const dateB = new Date(b.created_at || b.date);
-                return dateB - dateA;
-            });
-
-            let clientName = filteredOrders[0]?.client_name || 'Клиент';
-            let displayPhone = formatPhone(filteredOrders[0]?.phone || cleanPhone);
-            let rawPhone = filteredOrders[0]?.phone || cleanPhone;
-
-            if (filteredOrders.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="icon">👤</div><h3>Клиент не найден</h3><p>Заказов с этим номером телефона нет</p></div>';
-                return;
-            }
-
-            let contacts = '';
-            const clean = rawPhone.replace(/[^0-9]/g, '');
-            if (clean && clean.length > 4) {
-                const callLink = `tel:${clean}`;
-                contacts = `
-                    <div class="client-contact-grid">
-                        <a href="${callLink}" class="contact-btn call">📞 Позвонить</a>
-                        <button class="contact-btn viber" onclick="openViber('${clean}')">💬 Viber</button>
-                        <button class="contact-btn telegram" onclick="openTelegram('${clean}')">✈️ Telegram</button>
-                        <button class="contact-btn copy" onclick="copyPhone('${clean}')">📋 Копировать</button>
-                    </div>
-                `;
-            }
-
-            let listHtml = filteredOrders.map(o => {
-                const orderDate = o.date ? o.date.slice(0, 10) : '';
-                return `
-                    <div class="client-order-item" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
-                        <div class="order-info">
-                            <div>
-                                <span style="font-weight:600;">#${o.order_number}</span>
-                                <span class="order-status-small status-${getStatusClass(o.status)}" style="margin-left:8px;">${o.status || 'Новый'}</span>
-                            </div>
-                            <div class="order-device">${escapeHtml(o.device || '—')}</div>
-                        </div>
-                        <div class="order-time">${orderDate}</div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = `
-                <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
-                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
-                        <div style="font-size:40px;">👤</div>
-                        <div>
-                            <div style="font-size:18px;font-weight:700;">${escapeHtml(clientName)}</div>
-                            <div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ${escapeHtml(displayPhone)}</div>
-                            <div style="font-size:13px;color:var(--text-secondary);">🖥️ ${devices.size} устройств</div>
-                        </div>
-                    </div>
-                    ${contacts}
-                    <div class="client-stats-grid" style="margin-top:8px;">
-                        <div class="client-stat-item"><div class="num">${filteredOrders.length}</div><div class="label">Заказов</div></div>
-                        <div class="client-stat-item"><div class="num">${devices.size}</div><div class="label">Устройств</div></div>
-                    </div>
-                </div>
-                <div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>
-                ${listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>'}
-            `;
-        }
-
-        document.getElementById('clientSearchInput')?.addEventListener('input', function() {
-            const query = this.value.toLowerCase().trim();
-            if (!query) {
-                renderClients(allClients);
-                return;
-            }
-            
-            const filtered = allClients.filter(c => {
-                const name = (c.name || '').toLowerCase();
-                const phone = (c.phone || '').toLowerCase();
-                const cleanPhone = (c.cleanPhone || '');
-                const devices = Array.from(c.devices || []).join(' ').toLowerCase();
-                const orderNumbers = c.orders.map(o => o.order_number || '').join(' ').toLowerCase();
-                
-                return name.includes(query) || 
-                       phone.includes(query) || 
-                       cleanPhone.includes(query) ||
-                       devices.includes(query) ||
-                       orderNumbers.includes(query);
-            });
-            
-            renderClients(filtered);
-        });
-
-        // ============================================================
-        // АНАЛИТИКА
-        // ============================================================
-        async function loadAnalytics() {
-            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('dashboardContent').innerHTML = 
-                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
-                return;
-            }
-            
-            const month = document.getElementById('analyticsMonth').value;
-            const year = document.getElementById('analyticsYear').value;
-            
-            document.getElementById('dashboardContent').innerHTML = 
-                '<div class="loader"><div class="spinner"></div>Загрузка аналитики за ' + 
-                month + '/' + year + '...</div>';
-            
-            try {
-                const r = await apiFetch('/admin/dashboard?month=' + month + '&year=' + year);
-                if (r.success) {
-                    const stats = r.data;
-                    const maxCount = stats.orders_by_day && stats.orders_by_day.length > 0 
-                        ? Math.max(...stats.orders_by_day.map(x => x.count)) 
-                        : 1;
-                    
-                    let masterHtml = '';
-                    if (stats.by_master && stats.by_master.length > 0) {
-                        masterHtml = '<div style="margin-top:12px;"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">👨‍🔧 Статистика по мастерам</div>';
-                        stats.by_master.forEach(m => {
-                            const done = stats.by_master_done?.find(d => d.master === m.master);
-                            masterHtml += `<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <span>${m.master}</span>
-                                <span style="color:var(--accent);">${m.count} (выполнено: ${done?.count || 0})</span>
-                            </div>`;
-                        });
-                        masterHtml += '</div>';
-                    }
-                    
-                    document.getElementById('dashboardContent').innerHTML = `
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
-                                <div style="font-size:12px;color:var(--text-secondary);">Среднее время ремонта</div>
-                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.avg_repair_time || 0} дн.</div>
-                            </div>
-                            <div style="background:var(--bg-card);padding:12px;border-radius:8px;">
-                                <div style="font-size:12px;color:var(--text-secondary);">Всего заказов</div>
-                                <div style="font-size:22px;font-weight:700;color:var(--accent);">${stats.total_orders || 0}</div>
-                            </div>
-                        </div>
-                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
-                            📊 Аналитика за ${month}.${year}
-                        </div>
-                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Топ-5 неисправностей</div>
-                        ${(stats.top_problems || []).map(p => 
-                            '<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
-                            '<span>' + (p.problem || 'Без описания') + '</span>' +
-                            '<span style="color:var(--accent);">' + p.count + '</span></div>'
-                        ).join('')}
-                        ${masterHtml}
-                        <div style="font-size:13px;color:var(--text-secondary);margin-top:12px;margin-bottom:6px;">Заказы по дням</div>
-                        <div style="display:flex;gap:4px;height:40px;align-items:flex-end;">
-                            ${(stats.orders_by_day || []).slice(0,7).reverse().map(d => 
-                                '<div style="flex:1;display:flex;flex-direction:column;align-items:center;">' +
-                                '<div style="background:var(--accent);width:100%;border-radius:4px;min-height:4px;height:' + 
-                                Math.max(4, (d.count / maxCount) * 40) + 'px;"></div>' +
-                                '<div style="font-size:9px;color:var(--text-secondary);margin-top:2px;">' + (d.date || '—') + '</div></div>'
-                            ).join('')}
-                        </div>
-                    `;
-                } else {
-                    document.getElementById('dashboardContent').innerHTML = 
-                        '<div class="empty-state"><div class="icon">⚠️</div><p>Нет данных за выбранный период</p></div>';
-                }
-            } catch(e) {
-                console.error('Ошибка загрузки аналитики:', e);
-                document.getElementById('dashboardContent').innerHTML = 
-                    '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>' + e.message + '</p></div>';
-            }
-        }
-
-        async function loadDashboard() {
-            if (!['admin', 'superadmin'].includes(USER_ROLE)) {
-                document.getElementById('dashboardContent').innerHTML = 
-                    '<div class="empty-state"><div class="icon">🔒</div><h3>Доступен только администраторам</h3></div>';
-                return;
-            }
-            const now = new Date();
-            document.getElementById('analyticsMonth').value = now.getMonth() + 1;
-            document.getElementById('analyticsYear').value = now.getFullYear();
-            await loadAnalytics();
-        }
-
-        // ============================================================
-        // ЗАКАЗЫ
-        // ============================================================
-        async function loadOrders() {
-            try {
-                let url = '/orders?limit=200';
-                if (currentMaster) {
-                    url += '&master=' + encodeURIComponent(currentMaster);
-                }
-                let r = await apiFetch(url);
-                if (r.success) {
-                    allOrders = r.data;
-                    document.getElementById('totalBadge').textContent = r.pagination.total;
-                    document.getElementById('statTotal').textContent = r.pagination.total;
-                    let today = new Date().toISOString().slice(0,10);
-                    document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
-                    renderOrders();
-                    loadStatusCounts();
-                    document.getElementById('techBadge').textContent = r.pagination.total || 0;
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        function renderOrders() {
-            let filtered = allOrders;
-            if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
-            let q = searchQuery.trim().toLowerCase();
-            if (q) {
-                filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
-            }
-            
-            const comparator = getComparator();
-            filtered.sort(comparator);
-
-            let container = document.getElementById('orderList');
-            if (!filtered.length) {
-                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(o => {
-                let phone = o.phone || '';
-                let cleanPhone = phone.replace(/[^0-9+]/g, '');
-                if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
-                if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
-                let formattedPhone = formatPhone(cleanPhone || phone);
-                
-                const deviceIcon = o.device?.toLowerCase().includes('apple') ? '🍎' : 
-                                   o.device?.toLowerCase().includes('samsung') ? '📱' :
-                                   o.device?.toLowerCase().includes('ноутбук') ? '💻' :
-                                   o.device?.toLowerCase().includes('телевизор') ? '📺' :
-                                   o.device?.toLowerCase().includes('принтер') ? '🖨️' : '🖥️';
-                
-                const clientName = o.client_name && o.client_name !== '-' ? o.client_name : 'Без имени';
-                const statusText = o.status || 'Новый';
-                const orderDate = o.date ? o.date.slice(0, 10) : '';
-                const masterName = o.master || '';
-                
-                return `
-                    <div class="order-card" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
-                        <div class="order-card-top">
-                            <span class="order-number">#${o.order_number}</span>
-                            <div class="order-card-top-right">
-                                <span class="order-status status-${getStatusClass(o.status)}">${statusText}</span>
-                                ${orderDate ? `<span class="order-date-small">📅 ${orderDate}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="order-card-middle">
-                            <span class="order-client">👤 ${escapeHtml(clientName)}</span>
-                            ${formattedPhone && formattedPhone !== '+' ? `<span class="order-phone">📱 ${escapeHtml(formattedPhone)}</span>` : ''}
-                        </div>
-                        <div class="order-card-bottom">
-                            <span class="order-device">
-                                <span class="device-icon">${deviceIcon}</span>
-                                ${escapeHtml(o.device || 'Устройство не указано')}
-                            </span>
-                            ${masterName ? `<span class="order-master">👨‍🔧 ${escapeHtml(masterName)}</span>` : '<span class="order-master-empty">без мастера</span>'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function getComparator() {
-            const direction = sortAscending ? 1 : -1;
-            if (sortMode === 'number') {
-                return (a, b) => {
-                    const numA = parseInt(a.order_number) || 0;
-                    const numB = parseInt(b.order_number) || 0;
-                    return (numA - numB) * direction;
-                };
-            } else {
-                return (a, b) => {
-                    const dateA = new Date(a.date || a.created_at);
-                    const dateB = new Date(b.date || b.created_at);
-                    return (dateA - dateB) * direction;
-                };
-            }
-        }
-
-        function applyMasterFilter(value) {
-            currentMaster = value;
-            renderOrders();
-        }
-
-        function resetMasterFilter() {
-            currentMaster = '';
-            document.getElementById('masterFilter').value = '';
-            renderOrders();
-        }
-
-        function changeSort(value) {
-            sortMode = value;
-            sortAscending = false;
-            updateSortIcons();
-            renderOrders();
-        }
-
-        function toggleSortOrder() {
-            sortAscending = !sortAscending;
-            updateSortIcons();
-            renderOrders();
-        }
-
-        function resetSort() {
-            sortMode = 'number';
-            sortAscending = false;
-            document.getElementById('sortSelect').value = 'number';
-            updateSortIcons();
-            renderOrders();
-        }
-
-        function updateSortIcons() {
-            const orderIcon = document.getElementById('sortOrderIcon');
-            const sortBtn = document.getElementById('sortOrderBtn');
-            if (sortAscending) {
-                orderIcon.textContent = '⬆';
-                sortBtn.classList.remove('active');
-            } else {
-                orderIcon.textContent = '⬇';
-                sortBtn.classList.add('active');
-            }
-        }
-
-        function loadMasters() {
-            // существующая функция
-        }
-
-        function loadStatusCounts() {
-            // существующая функция
-        }
-
-        function showDetail(order) {
-            // существующая функция
-        }
-
-        function deleteOrder(orderNumber) {
-            // существующая функция
-        }
-
-        // ============================================================
-        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-        // ============================================================
-        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-
-        function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('viber://chat?number=' + clean, '_blank'); }
-        function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
-        function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
-
-        function formatPhone(phone) {
-            if (!phone) return '';
-            let clean = phone.replace(/[^0-9]/g, '');
-            if (clean.startsWith('375')) {
-                clean = clean.slice(3);
-                if (clean.length === 9) {
-                    const code = clean.slice(0, 2);
-                    const part1 = clean.slice(2, 5);
-                    const part2 = clean.slice(5, 7);
-                    const part3 = clean.slice(7, 9);
-                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
-                } else if (clean.length === 10) {
-                    const code = clean.slice(0, 3);
-                    const part1 = clean.slice(3, 6);
-                    const part2 = clean.slice(6, 8);
-                    const part3 = clean.slice(8, 10);
-                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
-                } else if (clean.length === 11) {
-                    const code = clean.slice(0, 4);
-                    const part1 = clean.slice(4, 6);
-                    const part2 = clean.slice(6, 8);
-                    const part3 = clean.slice(8, 11);
-                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
-                }
-            }
-            return phone.startsWith('+') ? phone : '+' + phone;
-        }
-
-        const statusMap = {
-            'Принят в ремонт': 'new', 'В ремонте': 'repair',
-            'Согласование с клиентом': 'consultation', 'Ожидание запчасти': 'waiting',
-            'Гарантия': 'warranty', 'Готово': 'ready',
-            'Выдано (не оплачено)': 'notpaid', 'Выдано (оплачено)': 'paid'
-        };
-
-        function getStatusClass(s) { return statusMap[s] || 'default'; }
-
-        // ============================================================
         // АВТООБНОВЛЕНИЕ
         // ============================================================
         setInterval(() => {
@@ -2106,6 +2380,9 @@
             }
         }, 60000);
 
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
         updateSortIcons();
         console.log('✅ Mini App загружен. Привет, ' + (currentUser?.full_name || 'пользователь') + '!');
     </script>
