@@ -306,6 +306,16 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        .status-new { background: #1e3a5f; color: #93bbfc; }
+        .status-repair { background: #5f3a1e; color: #fbbf7c; }
+        .status-consultation { background: #4a1e5f; color: #d8b4fe; }
+        .status-waiting { background: #5f4a1e; color: #fcd34d; }
+        .status-warranty { background: #1e4a3a; color: #6ee7a7; }
+        .status-ready { background: #1e3a2a; color: #34d399; }
+        .status-notpaid { background: #4a1e1e; color: #fca5a5; }
+        .status-paid { background: #1a3a2a; color: #86efac; }
+        .status-default { background: #2d2d3f; color: #9ca3af; }
+
         .order-date-small {
             font-size: 12px;
             color: var(--text-secondary);
@@ -478,6 +488,26 @@
         }
         .client-order-item:hover { background: var(--bg-card); }
         .client-order-item:active { transform: scale(0.98); }
+        .client-order-item .order-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .client-order-item .order-device {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .client-order-item .order-status-small {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .client-order-item .order-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
 
         .client-stats-grid {
             display: grid;
@@ -590,7 +620,7 @@
         .user-actions button.edit { border-color: var(--accent); color: var(--accent); }
         .user-actions button:active { transform: scale(0.9); }
 
-        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        /* ===== МОДАЛЬНЫЕ ОКНА ===== */
         .user-modal {
             display: none;
             position: fixed;
@@ -676,7 +706,6 @@
         .user-modal .form-actions .cancel-btn { background: var(--bg-card); color: var(--text-secondary); }
         .user-modal .form-actions button:active { transform: scale(0.95); }
 
-        /* ===== EMPTY / LOADER ===== */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
         .empty-state h3 { font-size: 18px; color: var(--text-primary); }
@@ -763,7 +792,6 @@
         .analytics-filters button:hover { opacity: 0.85; }
         .analytics-filters button:active { transform: scale(0.95); }
 
-        /* ===== АДАПТИВ ===== */
         @media (max-width: 480px) {
             body { padding: 12px; padding-bottom: calc(var(--nav-height) + 16px); }
             .header h1 { font-size: 17px; }
@@ -1141,6 +1169,37 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ЗАДАЧИ -->
+    <!-- ============================================================ -->
+    <div class="user-modal" id="taskCreateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Создать задачу</h2>
+                <button class="modal-close" onclick="closeTaskModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Текст задачи *</label>
+                <input id="taskTextInput" placeholder="Введите задачу...">
+            </div>
+            <div class="form-group">
+                <label>Приоритет</label>
+                <select id="taskPriorityInput">
+                    <option value="Обычный">🟢 Обычный</option>
+                    <option value="Срочно">🔴 Срочно</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Срок выполнения (дата и время)</label>
+                <input type="datetime-local" id="taskDeadlineInput">
+            </div>
+            <div class="form-actions">
+                <button class="save-btn" onclick="createTaskFromModal()">📌 Создать</button>
+                <button class="cancel-btn" onclick="closeTaskModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
     <!-- JavaScript -->
     <!-- ============================================================ -->
     <script>
@@ -1386,6 +1445,7 @@
                             ${!isTaken ? `<button class="action-btn" onclick="takeTask(${task.id})" style="border-color:#22c55e;color:#22c55e;padding:4px 12px;font-size:12px;">✅ Взять</button>` : ''}
                             ${isMy ? `<button class="action-btn" onclick="completeTask(${task.id})" style="border-color:#22c55e;color:#22c55e;padding:4px 12px;font-size:12px;">✔️ Завершить</button>` : ''}
                             ${isMy ? `<button class="action-btn" onclick="cancelTask(${task.id})" style="border-color:#f59e0b;color:#f59e0b;padding:4px 12px;font-size:12px;">↩️ Отказаться</button>` : ''}
+                            ${isAdmin ? `<button class="action-btn" onclick="editTask(${task.id})" style="border-color:#3b82f6;color:#3b82f6;padding:4px 12px;font-size:12px;">✏️</button>` : ''}
                             ${isAdmin ? `<button class="action-btn danger" onclick="deleteTask(${task.id})" style="padding:4px 12px;font-size:12px;">🗑️</button>` : ''}
                         </div>
                     </div>
@@ -1415,6 +1475,10 @@
             );
             renderTasks(filtered);
         });
+
+        // ============================================================
+        // ДЕЙСТВИЯ С ЗАДАЧАМИ
+        // ============================================================
 
         async function takeTask(taskId) {
             try {
@@ -1476,20 +1540,43 @@
         }
 
         function showCreateTask() {
-            const text = prompt('Введите текст задачи:');
-            if (!text) return;
+            document.getElementById('taskCreateModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
             
-            const priority = confirm('Срочная задача?') ? 'Срочно' : 'Обычный';
-            const deadline = prompt('Введите срок (в формате ДД-ММ-ГГГГ или оставьте пустым):');
-            
-            createTask(text, priority, deadline);
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('taskDeadlineInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('taskTextInput').value = '';
+            document.getElementById('taskPriorityInput').value = 'Обычный';
         }
 
-        async function createTask(text, priority, deadline) {
+        function closeTaskModal() {
+            document.getElementById('taskCreateModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        async function createTaskFromModal() {
+            const text = document.getElementById('taskTextInput').value.trim();
+            if (!text) {
+                alert('Введите текст задачи');
+                return;
+            }
+            
+            const priority = document.getElementById('taskPriorityInput').value;
+            const deadline = document.getElementById('taskDeadlineInput').value;
+            
             try {
                 const data = { text, priority };
-                if (deadline && deadline.trim()) {
-                    data.deadline = deadline.trim() + ' 23:59';
+                if (deadline) {
+                    const parts = deadline.split('T');
+                    const dateParts = parts[0].split('-');
+                    const timeParts = parts[1].split(':');
+                    data.deadline = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]} ${timeParts[0]}:${timeParts[1]}`;
                 }
                 const r = await apiFetch('/tasks', { 
                     method: 'POST',
@@ -1497,6 +1584,7 @@
                 });
                 if (r.success) {
                     alert('✅ Задача создана!');
+                    closeTaskModal();
                     loadTasks();
                 } else {
                     alert('❌ ' + (r.detail || 'Ошибка'));
@@ -1504,6 +1592,10 @@
             } catch(e) {
                 alert('❌ Ошибка: ' + e.message);
             }
+        }
+
+        function editTask(taskId) {
+            alert('Редактирование задач будет доступно в следующей версии');
         }
 
         // ============================================================
@@ -2002,12 +2094,14 @@
                 const orderDate = o.date ? o.date.slice(0, 10) : '';
                 return `
                     <div class="client-order-item" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
-                        <div>
-                            <span style="font-weight:600;">#${o.order_number}</span>
-                            <span class="order-status status-${getStatusClass(o.status)}" style="font-size:11px;margin-left:8px;">${o.status || 'Новый'}</span>
-                            <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(o.device || '—')}</div>
+                        <div class="order-info">
+                            <div>
+                                <span style="font-weight:600;">#${o.order_number}</span>
+                                <span class="order-status-small status-${getStatusClass(o.status)}" style="margin-left:8px;">${o.status || 'Новый'}</span>
+                            </div>
+                            <div class="order-device">${escapeHtml(o.device || '—')}</div>
                         </div>
-                        <div style="font-size:13px;color:var(--text-secondary);">${orderDate}</div>
+                        <div class="order-time">${orderDate}</div>
                     </div>
                 `;
             }).join('');
