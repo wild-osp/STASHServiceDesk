@@ -879,18 +879,19 @@
 </head>
 <body>
 
+    <!-- ===== НАВИГАЦИЯ ===== -->
     <div class="nav" id="nav">
         <button class="nav-btn active" data-page="main" onclick="navigateTo('main')">
             <span class="icon">🏠</span> Главная
         </button>
-        <button class="nav-btn" data-page="orders" onclick="navigateTo('orders')">
-            <span class="icon">📋</span> Заказы
-        </button>
-        <button class="nav-btn" data-page="tasks" onclick="navigateTo('tasks')">
-            <span class="icon">✅</span> Задачи
+        <button class="nav-btn" data-page="clients" onclick="navigateTo('clients')">
+            <span class="icon">👤</span> Клиенты
         </button>
         <button class="nav-btn" data-page="dashboard" onclick="navigateTo('dashboard')">
             <span class="icon">📊</span> Аналитика
+        </button>
+        <button class="nav-btn" data-page="users" onclick="navigateTo('users')">
+            <span class="icon">👥</span> Пользователи
         </button>
         <button class="nav-btn" data-page="profile" onclick="navigateTo('profile')">
             <span class="icon">👤</span> Профиль
@@ -913,6 +914,7 @@
                 <div class="role" id="mainUserRole">—</div>
             </div>
 
+            <!-- Кнопка: Задачи -->
             <button class="menu-btn tasks" onclick="navigateTo('tasks')">
                 <div class="icon">📋</div>
                 <div class="content">
@@ -923,6 +925,7 @@
                 <div class="arrow">›</div>
             </button>
 
+            <!-- Кнопка: Заказы техника -->
             <button class="menu-btn tech" onclick="navigateTo('orders')">
                 <div class="icon">🖥️</div>
                 <div class="content">
@@ -933,6 +936,7 @@
                 <div class="arrow">›</div>
             </button>
 
+            <!-- Кнопка: Заказы картриджи -->
             <button class="menu-btn cartridges" onclick="navigateTo('cartridges')">
                 <div class="icon">🖨️</div>
                 <div class="content">
@@ -945,7 +949,7 @@
         </div>
     </div>
 
-    <!-- ===== СТРАНИЦА ЗАКАЗОВ ===== -->
+    <!-- ===== СТРАНИЦА ЗАКАЗОВ (ТЕХНИКА) ===== -->
     <div class="page" id="page-orders">
         <div class="header">
             <div class="header-left">
@@ -1030,6 +1034,37 @@
         <div id="tasksList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
+    <!-- ===== СТРАНИЦА КАРТРИДЖЕЙ ===== -->
+    <div class="page" id="page-cartridges">
+        <div class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="navigateTo('main')">‹</button>
+                <div><h1>Заказы картриджи</h1></div>
+            </div>
+            <span class="header-badge" id="cartridgesTotalBadge">🚧</span>
+        </div>
+        <div class="empty-state" style="padding:60px 20px;">
+            <div class="icon">🖨️</div>
+            <h3>Раздел в разработке</h3>
+            <p>Функционал для заказов картриджей будет доступен позже</p>
+        </div>
+    </div>
+
+    <!-- ===== СТРАНИЦА КЛИЕНТОВ ===== -->
+    <div class="page" id="page-clients">
+        <div class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="navigateTo('main')">‹</button>
+                <div><h1>Клиенты</h1></div>
+            </div>
+            <span class="header-badge" id="clientsBadge">0</span>
+        </div>
+        <div class="search-wrapper">
+            <input type="text" id="clientSearchInput" placeholder="🔍 Поиск клиентов по имени, телефону, устройству..." />
+        </div>
+        <div id="clientsList"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+    </div>
+
     <!-- ===== СТРАНИЦА АНАЛИТИКИ ===== -->
     <div class="page" id="page-dashboard">
         <div class="header">
@@ -1063,19 +1098,31 @@
         <div id="dashboardContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
     </div>
 
-    <!-- ===== СТРАНИЦА КАРТРИДЖЕЙ ===== -->
-    <div class="page" id="page-cartridges">
+    <!-- ===== СТРАНИЦА ПОЛЬЗОВАТЕЛЕЙ ===== -->
+    <div class="page" id="page-users">
         <div class="header">
             <div class="header-left">
                 <button class="back-btn" onclick="navigateTo('main')">‹</button>
-                <div><h1>Заказы картриджи</h1></div>
+                <div><h1>Пользователи</h1></div>
             </div>
-            <span class="header-badge" id="cartridgesTotalBadge">🚧</span>
+            <button class="action-btn" onclick="showAddUserForm()" style="border-color:var(--accent);" id="addUserBtn">➕ Добавить</button>
         </div>
-        <div class="empty-state" style="padding:60px 20px;">
-            <div class="icon">🖨️</div>
-            <h3>Раздел в разработке</h3>
-            <p>Функционал для заказов картриджей будет доступен позже</p>
+        <div id="usersContent"><div class="loader"><div class="spinner"></div>Загрузка...</div></div>
+        
+        <div id="addUserForm" style="display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-top:12px;">
+            <h3 style="color:var(--accent);margin-bottom:8px;">Добавить пользователя</h3>
+            <input id="newUserId" placeholder="Telegram ID" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserName" placeholder="Имя" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <input id="newUserUsername" placeholder="Username" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+            <select id="newUserRole" style="width:100%;padding:10px;border:1px solid var(--bg-card);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);margin-bottom:8px;font-size:16px;">
+                <option value="user">Сотрудник</option>
+                <option value="admin">Администратор</option>
+                <option value="superadmin">Суперадмин</option>
+            </select>
+            <div style="display:flex;gap:8px;">
+                <button onclick="addUser()" style="flex:1;padding:10px;background:var(--accent);border:none;border-radius:8px;color:var(--bg-primary);font-weight:700;cursor:pointer;font-size:15px;">Сохранить</button>
+                <button onclick="document.getElementById('addUserForm').style.display='none'" style="flex:1;padding:10px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:15px;">Отмена</button>
+            </div>
         </div>
     </div>
 
@@ -1090,7 +1137,7 @@
         <div id="profileContent"></div>
     </div>
 
-    <!-- ===== ОСТАЛЬНЫЕ СТРАНИЦЫ ===== -->
+    <!-- ===== СТРАНИЦА ДЕТАЛЕЙ ЗАКАЗА ===== -->
     <div class="page" id="page-detail">
         <div class="header">
             <div class="header-left">
@@ -1102,6 +1149,7 @@
         <div id="detailContent"></div>
     </div>
 
+    <!-- ===== СТРАНИЦА КЛИЕНТА (ДЕТАЛИ) ===== -->
     <div class="page" id="page-client">
         <div class="header">
             <div class="header-left">
@@ -1112,7 +1160,7 @@
         <div id="clientContent"></div>
     </div>
 
-    <!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
+    <!-- ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ ===== -->
     <div class="user-modal" id="userEditModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1182,7 +1230,9 @@
             window.scrollTo(0, 0);
             
             if (page === 'orders') loadOrders();
+            if (page === 'clients') loadClients();
             if (page === 'dashboard') loadDashboard();
+            if (page === 'users') loadUsers();
             if (page === 'tasks') loadTasks();
             if (page === 'main') updateMainPage();
         }
@@ -1228,9 +1278,16 @@
                     document.getElementById('profileName').textContent = currentUser.full_name;
                     document.getElementById('profileContent').innerHTML = '<div style="background:var(--bg-secondary);border-radius:var(--radius);padding:20px;"><div style="display:flex;gap:16px;align-items:center;"><div style="font-size:48px;">👤</div><div><div style="font-size:20px;font-weight:700;">' + currentUser.full_name + '</div><div style="font-size:14px;color:var(--text-secondary);">' + (currentUser.role === 'superadmin' ? '🌟 Суперадмин' : currentUser.role === 'admin' ? '👔 Администратор' : '👤 Сотрудник') + '</div><div style="font-size:13px;color:var(--text-secondary);">ID: ' + currentUser.id + '</div></div></div></div>';
                     
+                    if (USER_ROLE !== 'superadmin') {
+                        const addBtn = document.getElementById('addUserBtn');
+                        if (addBtn) addBtn.style.display = 'none';
+                    }
+                    
                     loadMasters();
                     loadOrders();
+                    loadClients();
                     loadDashboard();
+                    loadUsers();
                     loadTasks();
                 } else {
                     showAccessDenied(data.detail || 'Пользователь не найден');
@@ -1283,7 +1340,454 @@
         }
 
         // ============================================================
-        // АНАЛИТИКА (существующая функция)
+        // ПОЛЬЗОВАТЕЛИ
+        // ============================================================
+        async function loadUsers() {
+            if (USER_ROLE !== 'superadmin') {
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">🔒</div><h3>Только суперадмин может управлять пользователями</h3></div>';
+                return;
+            }
+            try {
+                let r = await apiFetch('/users');
+                if (r.success) {
+                    allUsers = r.data;
+                    let html = '';
+                    allUsers.forEach(u => {
+                        let roleClass = u.role === 'superadmin' ? 'role-superadmin' : u.role === 'admin' ? 'role-admin' : 'role-user';
+                        let actions = `
+                            <button class="edit" onclick="openUserEdit('${u.telegram_id}')">✏️</button>
+                        `;
+                        if (u.telegram_id !== userId) {
+                            actions += `
+                                <button class="danger" onclick="deleteUser('${u.telegram_id}')">🗑️</button>
+                            `;
+                        }
+                        html += `
+                            <div class="user-item">
+                                <div class="user-info">
+                                    <span style="font-weight:600;">${escapeHtml(u.full_name)}</span>
+                                    <span style="color:var(--text-secondary);font-size:13px;">@${escapeHtml(u.username || 'нет')}</span>
+                                    <span class="role-badge ${roleClass}">${u.role}</span>
+                                    ${u.master ? `<span class="master-badge">👨‍🔧 ${escapeHtml(u.master)}</span>` : ''}
+                                </div>
+                                <div class="user-actions">${actions}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('usersContent').innerHTML = html || '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3></div>';
+                }
+            } catch(e) {
+                document.getElementById('usersContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3></div>';
+            }
+        }
+
+        function showAddUserForm() {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может добавлять пользователей');
+                return;
+            }
+            document.getElementById('addUserForm').style.display = 'block';
+        }
+
+        async function addUser() {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может добавлять пользователей');
+                return;
+            }
+            const telegram_id = document.getElementById('newUserId').value.trim();
+            const full_name = document.getElementById('newUserName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim();
+            const role = document.getElementById('newUserRole').value;
+
+            if (!telegram_id || !full_name) {
+                alert('Заполните ID и Имя');
+                return;
+            }
+
+            try {
+                await apiFetch('/users?telegram_id=' + encodeURIComponent(telegram_id) + '&full_name=' + encodeURIComponent(full_name) + '&username=' + encodeURIComponent(username) + '&role=' + role, { method: 'POST' });
+                alert('✅ Пользователь добавлен');
+                document.getElementById('addUserForm').style.display = 'none';
+                document.getElementById('newUserId').value = '';
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserUsername').value = '';
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        function openUserEdit(telegram_id) {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может редактировать пользователей');
+                return;
+            }
+            editingTelegramId = telegram_id;
+            const modal = document.getElementById('userEditModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            apiFetch('/masters').then(res => {
+                if (res.success) {
+                    const masters = res.data;
+                    const masterSelect = document.getElementById('editMaster');
+                    
+                    masterSelect.innerHTML = '<option value="">— Не мастер —</option>';
+                    masters.forEach(master => {
+                        const option = document.createElement('option');
+                        option.value = master;
+                        option.textContent = master;
+                        masterSelect.appendChild(option);
+                    });
+                    
+                    apiFetch('/users/' + telegram_id).then(r => {
+                        if (r.success) {
+                            const u = r.data;
+                            
+                            document.getElementById('editUserId').value = u.telegram_id;
+                            document.getElementById('editFullName').value = u.full_name || '';
+                            document.getElementById('editUsername').value = u.username || '';
+                            document.getElementById('editRole').value = u.role || 'user';
+                            
+                            if (u.master) {
+                                let found = false;
+                                for (let i = 0; i < masterSelect.options.length; i++) {
+                                    if (masterSelect.options[i].value === u.master) {
+                                        masterSelect.selectedIndex = i;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    const option = document.createElement('option');
+                                    option.value = u.master;
+                                    option.textContent = u.master + ' (текущий)';
+                                    option.selected = true;
+                                    masterSelect.appendChild(option);
+                                }
+                            } else {
+                                masterSelect.value = '';
+                            }
+                            
+                            document.getElementById('userModalTitle').textContent = 'Редактировать: ' + (u.full_name || u.telegram_id);
+                        }
+                    }).catch(e => {
+                        alert('Ошибка загрузки данных пользователя');
+                        closeUserModal();
+                    });
+                }
+            }).catch(e => {
+                alert('Ошибка загрузки мастеров');
+                closeUserModal();
+            });
+        }
+
+        function closeUserModal() {
+            document.getElementById('userEditModal').classList.remove('active');
+            document.body.style.overflow = '';
+            editingTelegramId = null;
+        }
+
+        async function saveUserEdit() {
+            if (!editingTelegramId) {
+                alert('Ошибка: не выбран пользователь');
+                return;
+            }
+            
+            const full_name = document.getElementById('editFullName').value.trim();
+            const username = document.getElementById('editUsername').value.trim();
+            const role = document.getElementById('editRole').value;
+            const masterSelect = document.getElementById('editMaster');
+            const master = masterSelect ? masterSelect.value : '';
+            
+            if (!full_name && !username && !role && !master) {
+                alert('Нет данных для сохранения');
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_BASE + '/users/' + editingTelegramId, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-User-Id': userId || 'anonymous'
+                    },
+                    body: JSON.stringify({ 
+                        full_name, 
+                        username, 
+                        role, 
+                        master: master || ''
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Ошибка обновления');
+                }
+                
+                alert('✅ Пользователь обновлен');
+                closeUserModal();
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteUser(telegram_id) {
+            if (USER_ROLE !== 'superadmin') {
+                alert('Только суперадмин может удалять пользователей');
+                return;
+            }
+            if (!confirm('Удалить пользователя?')) return;
+            try {
+                await apiFetch('/users/' + telegram_id, { method: 'DELETE' });
+                alert('✅ Пользователь удален');
+                loadUsers();
+            } catch(e) {
+                alert('❌ Ошибка: ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // КЛИЕНТЫ
+        // ============================================================
+        function loadClients() {
+            let container = document.getElementById('clientsList');
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+            
+            if (allOrders && allOrders.length > 0) {
+                buildClientsFromOrders(allOrders);
+                return;
+            }
+            
+            apiFetch('/orders?limit=500')
+                .then(r => {
+                    if (r.success && r.data.length > 0) {
+                        buildClientsFromOrders(r.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
+                    }
+                })
+                .catch(() => {
+                    if (allOrders && allOrders.length > 0) {
+                        buildClientsFromOrders(allOrders);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки</h3><p>Попробуйте обновить страницу</p></div>';
+                    }
+                });
+        }
+
+        function buildClientsFromOrders(orders) {
+            const clientsMap = new Map();
+            orders.forEach(o => {
+                const phone = o.phone || '';
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                if (!cleanPhone) return;
+                
+                const key = cleanPhone;
+                if (!clientsMap.has(key)) {
+                    clientsMap.set(key, {
+                        phone: phone,
+                        cleanPhone: cleanPhone,
+                        name: o.client_name || 'Без имени',
+                        orders: [],
+                        devices: new Set()
+                    });
+                }
+                const client = clientsMap.get(key);
+                client.orders.push(o);
+                if (o.device) client.devices.add(o.device);
+            });
+            
+            allClients = Array.from(clientsMap.values()).map(c => ({
+                ...c,
+                orders_count: c.orders.length,
+                devices_count: c.devices.size,
+                last_order: c.orders.reduce((a, b) => {
+                    const dateA = new Date(a.created_at || a.date);
+                    const dateB = new Date(b.created_at || b.date);
+                    return dateA > dateB ? a : b;
+                }, c.orders[0])
+            }));
+            
+            allClients.sort((a, b) => b.orders_count - a.orders_count);
+            
+            document.getElementById('clientsBadge').textContent = allClients.length;
+            renderClients(allClients);
+        }
+
+        function renderClients(clients) {
+            const container = document.getElementById('clientsList');
+            
+            if (!clients || clients.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет клиентов</h3><p>Заказы не найдены</p></div>';
+                return;
+            }
+            
+            let html = '';
+            clients.forEach(client => {
+                const displayPhone = formatPhone(client.phone || client.cleanPhone);
+                const name = client.name && client.name !== '-' ? client.name : 'Без имени';
+                const devicesCount = client.devices_count || 0;
+                const ordersCount = client.orders_count || 0;
+                
+                let ordersText = ordersCount + ' заказ';
+                if (ordersCount % 10 >= 2 && ordersCount % 10 <= 4 && !(ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
+                    ordersText = ordersCount + ' заказа';
+                } else if (ordersCount % 10 === 0 || (ordersCount % 10 >= 5 && ordersCount % 10 <= 9) || (ordersCount % 100 >= 12 && ordersCount % 100 <= 14)) {
+                    ordersText = ordersCount + ' заказов';
+                }
+                
+                html += `
+                    <div class="client-list-item" onclick="showClientDetail('${client.cleanPhone}')">
+                        <div class="client-info">
+                            <div class="client-name">👤 ${escapeHtml(name)}</div>
+                            <div class="client-phone">📱 ${escapeHtml(displayPhone)}</div>
+                            <div class="client-devices-info">🖥️ <span>${devicesCount}</span> устройств • ${ordersText}</div>
+                        </div>
+                        <div class="client-badge">${ordersCount}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function showClientDetail(phone) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-client').classList.add('active');
+            document.getElementById('clientTitle').textContent = 'Клиент';
+
+            let container = document.getElementById('clientContent');
+            container.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка...</div>';
+
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            if (allOrders && allOrders.length > 0) {
+                renderClientDetail(cleanPhone, allOrders);
+                return;
+            }
+            
+            apiFetch('/orders?limit=500')
+                .then(r => {
+                    if (r.success) {
+                        renderClientDetail(cleanPhone, r.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Ошибка загрузки</p></div>';
+                });
+        }
+
+        function renderClientDetail(cleanPhone, orders) {
+            let container = document.getElementById('clientContent');
+            
+            let filteredOrders = orders.filter(o => {
+                let orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
+                return orderPhone === cleanPhone;
+            });
+
+            let total = filteredOrders.length;
+            let devices = new Set();
+            filteredOrders.forEach(o => {
+                if (o.device) devices.add(o.device);
+            });
+
+            filteredOrders.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.date);
+                const dateB = new Date(b.created_at || b.date);
+                return dateB - dateA;
+            });
+
+            let clientName = filteredOrders[0]?.client_name || 'Клиент';
+            let displayPhone = formatPhone(filteredOrders[0]?.phone || cleanPhone);
+            let rawPhone = filteredOrders[0]?.phone || cleanPhone;
+
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">👤</div><h3>Клиент не найден</h3><p>Заказов с этим номером телефона нет</p></div>';
+                return;
+            }
+
+            let contacts = '';
+            const clean = rawPhone.replace(/[^0-9]/g, '');
+            if (clean && clean.length > 4) {
+                const callLink = `tel:${clean}`;
+                contacts = `
+                    <div class="client-contact-grid">
+                        <a href="${callLink}" class="contact-btn call">📞 Позвонить</a>
+                        <button class="contact-btn viber" onclick="openViber('${clean}')">💬 Viber</button>
+                        <button class="contact-btn telegram" onclick="openTelegram('${clean}')">✈️ Telegram</button>
+                        <button class="contact-btn copy" onclick="copyPhone('${clean}')">📋 Копировать</button>
+                    </div>
+                `;
+            }
+
+            let listHtml = filteredOrders.map(o => {
+                const orderDate = o.date ? o.date.slice(0, 10) : '';
+                return `
+                    <div class="client-order-item" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
+                        <div class="order-info">
+                            <div>
+                                <span style="font-weight:600;">#${o.order_number}</span>
+                                <span class="order-status-small status-${getStatusClass(o.status)}" style="margin-left:8px;">${o.status || 'Новый'}</span>
+                            </div>
+                            <div class="order-device">${escapeHtml(o.device || '—')}</div>
+                        </div>
+                        <div class="order-time">${orderDate}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+                        <div style="font-size:40px;">👤</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;">${escapeHtml(clientName)}</div>
+                            <div style="font-size:16px;font-weight:600;color:var(--text-primary);">📱 ${escapeHtml(displayPhone)}</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">🖥️ ${devices.size} устройств</div>
+                        </div>
+                    </div>
+                    ${contacts}
+                    <div class="client-stats-grid" style="margin-top:8px;">
+                        <div class="client-stat-item"><div class="num">${filteredOrders.length}</div><div class="label">Заказов</div></div>
+                        <div class="client-stat-item"><div class="num">${devices.size}</div><div class="label">Устройств</div></div>
+                    </div>
+                </div>
+                <div style="font-weight:600;font-size:14px;color:var(--accent);margin-bottom:6px;">📋 Все заказы</div>
+                ${listHtml || '<div class="empty-state"><div class="icon">📭</div><p>Нет заказов</p></div>'}
+            `;
+        }
+
+        document.getElementById('clientSearchInput')?.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            if (!query) {
+                renderClients(allClients);
+                return;
+            }
+            
+            const filtered = allClients.filter(c => {
+                const name = (c.name || '').toLowerCase();
+                const phone = (c.phone || '').toLowerCase();
+                const cleanPhone = (c.cleanPhone || '');
+                const devices = Array.from(c.devices || []).join(' ').toLowerCase();
+                const orderNumbers = c.orders.map(o => o.order_number || '').join(' ').toLowerCase();
+                
+                return name.includes(query) || 
+                       phone.includes(query) || 
+                       cleanPhone.includes(query) ||
+                       devices.includes(query) ||
+                       orderNumbers.includes(query);
+            });
+            
+            renderClients(filtered);
+        });
+
+        // ============================================================
+        // АНАЛИТИКА
         // ============================================================
         async function loadAnalytics() {
             if (!['admin', 'superadmin'].includes(USER_ROLE)) {
@@ -1375,7 +1879,7 @@
         }
 
         // ============================================================
-        // ЗАГРУЗКА ЗАКАЗОВ
+        // ЗАКАЗЫ
         // ============================================================
         async function loadOrders() {
             try {
@@ -1397,19 +1901,81 @@
             } catch(e) { console.error(e); }
         }
 
-        // ============================================================
-        // ОСТАЛЬНЫЕ ФУНКЦИИ
-        // ============================================================
-        function loadMasters() {
-            // Существующая функция
-        }
-
-        function loadStatusCounts() {
-            // Существующая функция
-        }
-
         function renderOrders() {
-            // Существующая функция
+            let filtered = allOrders;
+            if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
+            let q = searchQuery.trim().toLowerCase();
+            if (q) {
+                filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
+            }
+            
+            const comparator = getComparator();
+            filtered.sort(comparator);
+
+            let container = document.getElementById('orderList');
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Заказов не найдено</h3><p>Попробуйте изменить фильтр или поиск</p></div>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(o => {
+                let phone = o.phone || '';
+                let cleanPhone = phone.replace(/[^0-9+]/g, '');
+                if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '+7' + cleanPhone.slice(1);
+                if (!cleanPhone.startsWith('+') && cleanPhone.length > 0) cleanPhone = '+' + cleanPhone;
+                let formattedPhone = formatPhone(cleanPhone || phone);
+                
+                const deviceIcon = o.device?.toLowerCase().includes('apple') ? '🍎' : 
+                                   o.device?.toLowerCase().includes('samsung') ? '📱' :
+                                   o.device?.toLowerCase().includes('ноутбук') ? '💻' :
+                                   o.device?.toLowerCase().includes('телевизор') ? '📺' :
+                                   o.device?.toLowerCase().includes('принтер') ? '🖨️' : '🖥️';
+                
+                const clientName = o.client_name && o.client_name !== '-' ? o.client_name : 'Без имени';
+                const statusText = o.status || 'Новый';
+                const orderDate = o.date ? o.date.slice(0, 10) : '';
+                const masterName = o.master || '';
+                
+                return `
+                    <div class="order-card" onclick="showDetail(${JSON.stringify(o).replace(/"/g, '&quot;')})">
+                        <div class="order-card-top">
+                            <span class="order-number">#${o.order_number}</span>
+                            <div class="order-card-top-right">
+                                <span class="order-status status-${getStatusClass(o.status)}">${statusText}</span>
+                                ${orderDate ? `<span class="order-date-small">📅 ${orderDate}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="order-card-middle">
+                            <span class="order-client">👤 ${escapeHtml(clientName)}</span>
+                            ${formattedPhone && formattedPhone !== '+' ? `<span class="order-phone">📱 ${escapeHtml(formattedPhone)}</span>` : ''}
+                        </div>
+                        <div class="order-card-bottom">
+                            <span class="order-device">
+                                <span class="device-icon">${deviceIcon}</span>
+                                ${escapeHtml(o.device || 'Устройство не указано')}
+                            </span>
+                            ${masterName ? `<span class="order-master">👨‍🔧 ${escapeHtml(masterName)}</span>` : '<span class="order-master-empty">без мастера</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getComparator() {
+            const direction = sortAscending ? 1 : -1;
+            if (sortMode === 'number') {
+                return (a, b) => {
+                    const numA = parseInt(a.order_number) || 0;
+                    const numB = parseInt(b.order_number) || 0;
+                    return (numA - numB) * direction;
+                };
+            } else {
+                return (a, b) => {
+                    const dateA = new Date(a.date || a.created_at);
+                    const dateB = new Date(b.date || b.created_at);
+                    return (dateA - dateB) * direction;
+                };
+            }
         }
 
         function applyMasterFilter(value) {
@@ -1456,18 +2022,92 @@
             }
         }
 
-        function saveUserEdit() {
-            // Существующая функция
+        function loadMasters() {
+            // существующая функция
         }
 
-        function closeUserModal() {
-            // Существующая функция
+        function loadStatusCounts() {
+            // существующая функция
         }
+
+        function showDetail(order) {
+            // существующая функция
+        }
+
+        function deleteOrder(orderNumber) {
+            // существующая функция
+        }
+
+        // ============================================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // ============================================================
+        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function escapeHtml(t) { if (!t) return '—'; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function openViber(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('viber://chat?number=' + clean, '_blank'); }
+        function openTelegram(phone) { const clean = phone.replace(/[^0-9]/g, ''); if (clean) window.open('tg://resolve?phone=' + clean, '_blank'); }
+        function copyPhone(phone) { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(phone).then(() => alert('📋 Номер скопирован: ' + phone)); } else { alert('📱 Номер: ' + phone); } }
+
+        function formatPhone(phone) {
+            if (!phone) return '';
+            let clean = phone.replace(/[^0-9]/g, '');
+            if (clean.startsWith('375')) {
+                clean = clean.slice(3);
+                if (clean.length === 9) {
+                    const code = clean.slice(0, 2);
+                    const part1 = clean.slice(2, 5);
+                    const part2 = clean.slice(5, 7);
+                    const part3 = clean.slice(7, 9);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                } else if (clean.length === 10) {
+                    const code = clean.slice(0, 3);
+                    const part1 = clean.slice(3, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 10);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                } else if (clean.length === 11) {
+                    const code = clean.slice(0, 4);
+                    const part1 = clean.slice(4, 6);
+                    const part2 = clean.slice(6, 8);
+                    const part3 = clean.slice(8, 11);
+                    return `+375 (${code}) ${part1}-${part2}-${part3}`;
+                }
+            }
+            return phone.startsWith('+') ? phone : '+' + phone;
+        }
+
+        const statusMap = {
+            'Принят в ремонт': 'new', 'В ремонте': 'repair',
+            'Согласование с клиентом': 'consultation', 'Ожидание запчасти': 'waiting',
+            'Гарантия': 'warranty', 'Готово': 'ready',
+            'Выдано (не оплачено)': 'notpaid', 'Выдано (оплачено)': 'paid'
+        };
+
+        function getStatusClass(s) { return statusMap[s] || 'default'; }
+
+        // ============================================================
+        // АВТООБНОВЛЕНИЕ
+        // ============================================================
+        setInterval(() => {
+            if (document.getElementById('page-orders').classList.contains('active')) {
+                loadOrders();
+            }
+            if (document.getElementById('page-clients').classList.contains('active')) {
+                loadClients();
+            }
+            if (document.getElementById('page-dashboard').classList.contains('active')) {
+                loadDashboard();
+            }
+            if (document.getElementById('page-users').classList.contains('active')) {
+                loadUsers();
+            }
+            if (document.getElementById('page-tasks').classList.contains('active')) {
+                loadTasks();
+            }
+        }, 60000);
 
         updateSortIcons();
-
         console.log('✅ Mini App загружен. Привет, ' + (currentUser?.full_name || 'пользователь') + '!');
-        console.log('📋 Всего заказов:', allOrders.length);
     </script>
 </body>
 </html>
