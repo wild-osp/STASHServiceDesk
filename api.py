@@ -72,6 +72,18 @@ class OrderFrom1C(BaseModel):
     notes: Optional[str] = None
 
 # ============================================================
+# МОДЕЛЬ ДЛЯ ЗАДАЧ
+# ============================================================
+class TaskCreate(BaseModel):
+    text: str
+    priority: str = "Обычный"
+    deadline: Optional[str] = None
+    order_id: Optional[int] = None
+
+class TaskReassign(BaseModel):
+    new_executor_id: int
+
+# ============================================================
 # АВТОРИЗАЦИЯ
 # ============================================================
 async def get_current_user(
@@ -595,6 +607,266 @@ async def search_orders(
             results = results[:limit]
         return JSONResponse({"success": True, "data": results, "total": total, "limit": limit})
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# ЗАДАЧИ (НОВЫЙ РАЗДЕЛ)
+# ============================================================
+
+@app.get("/api/tasks")
+async def get_tasks(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Получить список задач"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if status == 'completed':
+                cursor.execute("""
+                    SELECT id, task_text, author, completed_by, completion_time 
+                    FROM completed_tasks 
+                    ORDER BY id DESC 
+                    LIMIT 100
+                """)
+                rows = cursor.fetchall()
+                return JSONResponse({
+                    "success": True,
+                    "data": [dict(row) for row in rows],
+                    "type": "completed"
+                })
+            else:
+                # Активные задачи
+                query = "SELECT * FROM pending_tasks ORDER BY id DESC"
+                params = []
+                
+                if status == 'my':
+                    query = "SELECT * FROM pending_tasks WHERE taken_by_id = ? ORDER BY id DESC"
+                    params = [current_user['user_id']]
+                elif status == 'pending':
+                    query = "SELECT * FROM pending_tasks WHERE taken_by_id IS NULL ORDER BY id DESC"
+                
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+                return JSONResponse({
+                    "success": True,
+                    "data": [dict(row) for row in rows],
+                    "type": "pending"
+                })
+    except Exception as e:
+        print(f"❌ Ошибка получения задач: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tasks")
+async def create_task(
+    task_data: TaskCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Создать новую задачу"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO pending_tasks 
+                (text, author, author_id, priority, deadline, order_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                task_data.text,
+                current_user['full_name'],
+                current_user['user_id'],
+                task_data.priority,
+                task_data.deadline,
+                task_data.order_id,
+                now_iso()
+            ))
+            task_id = cursor.lastrowid
+            conn.commit()
+            return JSONResponse({
+                "success": True,
+                "message": "Задача создана",
+                "task_id": task_id
+            })
+    except Exception as e:
+        print(f"❌ Ошибка создания задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}/take")
+async def take_task(
+    task_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """Взять задачу в работу"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pending_tasks 
+                SET taken_by = ?, taken_by_id = ?, taken_at = ?
+                WHERE id = ? AND taken_by_id IS NULL
+            """, (current_user['full_name'], current_user['user_id'], now_iso(), task_id))
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=400, detail="Задача уже взята или не найдена")
+            conn.commit()
+            return JSONResponse({"success": True, "message": "Задача взята в работу"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка взятия задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}/complete")
+async def complete_task(
+    task_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """Завершить задачу"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM pending_tasks WHERE id = ?", (task_id,))
+            task = cursor.fetchone()
+            if not task:
+                raise HTTPException(status_code=404, detail="Задача не найдена")
+            
+            # Проверяем, что пользователь является исполнителем или админом
+            if task['taken_by_id'] != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
+                raise HTTPException(status_code=403, detail="Вы не можете завершить эту задачу")
+            
+            # Переносим в выполненные
+            cursor.execute("""
+                INSERT INTO completed_tasks (task_text, author, completed_by, completion_time, order_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, (task['text'], task['author'], current_user['full_name'], now_iso(), task.get('order_id')))
+            
+            # Удаляем из активных
+            cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
+            conn.commit()
+            return JSONResponse({"success": True, "message": "Задача завершена"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка завершения задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/tasks/{task_id}")
+async def delete_task(
+    task_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """Удалить задачу (только админ)"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Задача не найдена")
+            conn.commit()
+            return JSONResponse({"success": True, "message": "Задача удалена"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка удаления задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}/reassign")
+async def reassign_task(
+    task_id: int,
+    reassign_data: TaskReassign,
+    current_user: dict = Depends(get_current_user)
+):
+    """Переназначить задачу (только админ)"""
+    if current_user["role"] not in ['admin', 'superadmin']:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    
+    try:
+        # Получаем нового исполнителя
+        new_executor = db.get_user(str(reassign_data.new_executor_id))
+        if not new_executor:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pending_tasks 
+                SET taken_by = ?, taken_by_id = ?, taken_at = ?
+                WHERE id = ?
+            """, (new_executor['full_name'], reassign_data.new_executor_id, now_iso(), task_id))
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Задача не найдена")
+            conn.commit()
+            return JSONResponse({
+                "success": True, 
+                "message": f"Задача переназначена на {new_executor['full_name']}"
+            })
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка переназначения задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}/cancel")
+async def cancel_task(
+    task_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """Отказаться от задачи (снять с себя)"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pending_tasks 
+                SET taken_by = NULL, taken_by_id = NULL, taken_at = NULL
+                WHERE id = ? AND taken_by_id = ?
+            """, (task_id, current_user['user_id']))
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=400, detail="Вы не являетесь исполнителем этой задачи")
+            conn.commit()
+            return JSONResponse({"success": True, "message": "Вы отказались от задачи"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка отказа от задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tasks/stats")
+async def get_tasks_stats(current_user: dict = Depends(get_current_user)):
+    """Получить статистику по задачам"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Всего активных задач
+            cursor.execute("SELECT COUNT(*) FROM pending_tasks")
+            total_pending = cursor.fetchone()[0]
+            
+            # Мои задачи
+            cursor.execute("SELECT COUNT(*) FROM pending_tasks WHERE taken_by_id = ?", (current_user['user_id'],))
+            my_tasks = cursor.fetchone()[0]
+            
+            # Доступные задачи
+            cursor.execute("SELECT COUNT(*) FROM pending_tasks WHERE taken_by_id IS NULL")
+            available_tasks = cursor.fetchone()[0]
+            
+            # Выполненные сегодня
+            today = datetime.now().strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*) FROM completed_tasks WHERE completion_time LIKE ?", (today + '%',))
+            completed_today = cursor.fetchone()[0]
+            
+            return JSONResponse({
+                "success": True,
+                "data": {
+                    "total_pending": total_pending,
+                    "my_tasks": my_tasks,
+                    "available_tasks": available_tasks,
+                    "completed_today": completed_today
+                }
+            })
+    except Exception as e:
+        print(f"❌ Ошибка получения статистики задач: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
