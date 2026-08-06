@@ -1,11 +1,18 @@
 #!/bin/bash
+set -euo pipefail
+
 echo "🚀 Запуск STASHServiceDesk..."
+PORT="${PORT:-3000}"
 
-# Запуск бота в фоне
-python orders_bot.py &
+python -u orders_bot.py > /tmp/stash_orders_bot.log 2>&1 &
+BOT_PID=$!
+echo "🤖 Бот запущен (PID $BOT_PID)"
 
-# Запуск API
-uvicorn api:app --host 0.0.0.0 --port 3000
+cleanup() {
+    echo "🛑 Остановка сервисов..."
+    kill "$BOT_PID" 2>/dev/null || true
+    wait "$BOT_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
 
-# Ожидание завершения процессов
-wait
+exec python -m uvicorn api:app --host 0.0.0.0 --port "$PORT"

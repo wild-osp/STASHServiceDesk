@@ -419,6 +419,56 @@ class Database:
             cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (limit, offset))
             return [dict(row) for row in cursor.fetchall()]
     
+    def get_all_orders_filtered(self, limit: int = 50, offset: int = 0, search: Optional[str] = None, master: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Получает заказы с фильтрацией по поиску, мастеру и статусу"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            conditions = []
+            params = []
+            
+            if search:
+                search_pattern = f'%{search}%'
+                conditions.append('(order_number LIKE ? OR phone LIKE ? OR client_name LIKE ? OR device LIKE ?)')
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+            
+            if master:
+                conditions.append('master = ?')
+                params.append(master)
+            
+            if status and status != 'all':
+                conditions.append('status = ?')
+                params.append(status)
+            
+            where_clause = ' WHERE ' + ' AND '.join(conditions) if conditions else ''
+            
+            cursor.execute(f'SELECT * FROM orders{where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?', params + [limit, offset])
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def count_all_orders_filtered(self, search: Optional[str] = None, master: Optional[str] = None, status: Optional[str] = None) -> int:
+        """Считает количество заказов с фильтрацией"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            conditions = []
+            params = []
+            
+            if search:
+                search_pattern = f'%{search}%'
+                conditions.append('(order_number LIKE ? OR phone LIKE ? OR client_name LIKE ? OR device LIKE ?)')
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+            
+            if master:
+                conditions.append('master = ?')
+                params.append(master)
+            
+            if status and status != 'all':
+                conditions.append('status = ?')
+                params.append(status)
+            
+            where_clause = ' WHERE ' + ' AND '.join(conditions) if conditions else ''
+            
+            cursor.execute(f'SELECT COUNT(*) as count FROM orders{where_clause}', params)
+            return cursor.fetchone()['count']
+    
     def get_statistics(self) -> Dict[str, Any]:
         with self.get_connection() as conn:
             cursor = conn.cursor()

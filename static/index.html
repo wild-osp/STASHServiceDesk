@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STASHServiceDesk</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-primary: #0b1a2f;
@@ -1272,10 +1273,21 @@
                 '</div>';
         }
 
-        if (!userId) {
-            showAccessDenied('Ошибка: не передан ID пользователя');
+        // Инициализация Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+        }
+
+        const initData = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp.initData : '';
+        const fallbackUserId = urlParams.get('user_id') || '';
+
+        if (!initData && !fallbackUserId) {
+            showAccessDenied('Пожалуйста, откройте приложение через Telegram бота');
         } else {
-            fetch('/api/auth/check', { headers: { 'X-User-Id': userId } })
+            const headers = { 'X-User-Id': fallbackUserId || 'anonymous' };
+            if (initData) headers['X-TG-Init-Data'] = initData;
+
+            fetch('/api/auth/check', { headers })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -1313,7 +1325,12 @@
         const API_BASE = window.location.origin + '/api';
 
         async function apiFetch(endpoint, options = {}) {
-            const headers = { 'Content-Type': 'application/json', 'X-User-Id': userId || 'anonymous', ...options.headers };
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId || 'anonymous',
+                ...(initData ? { 'X-TG-Init-Data': initData } : {}),
+                ...options.headers
+            };
             const response = await fetch(API_BASE + endpoint, { ...options, headers });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
@@ -1603,16 +1620,12 @@
         // ============================================================
         async function loadOrders() {
             try {
-                let url = '/orders?limit=200';
-                if (currentMaster) {
-                    url += '&master=' + encodeURIComponent(currentMaster);
-                }
-                let r = await apiFetch(url);
+                const r = await apiFetch('/orders?limit=500');
                 if (r.success) {
-                    allOrders = r.data;
+                    allOrders = r.data || [];
                     document.getElementById('totalBadge').textContent = r.pagination.total;
                     document.getElementById('statTotal').textContent = r.pagination.total;
-                    let today = new Date().toISOString().slice(0,10);
+                    const today = new Date().toISOString().slice(0,10);
                     document.getElementById('statToday').textContent = allOrders.filter(o => o.date === today).length;
                     renderOrders();
                     loadStatusCounts();
@@ -1621,12 +1634,26 @@
             } catch(e) { console.error(e); }
         }
 
+        function normalizeText(value) {
+            return (value || '').toString().trim().toLowerCase();
+        }
+
         function renderOrders() {
-            let filtered = allOrders;
-            if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
+            let filtered = [...allOrders];
+
+            if (currentFilter !== 'all') {
+                const targetStatus = normalizeText(currentFilter);
+                filtered = filtered.filter(o => normalizeText(o.status) === targetStatus);
+            }
+
+            if (currentMaster) {
+                const targetMaster = normalizeText(currentMaster);
+                filtered = filtered.filter(o => normalizeText(o.master) === targetMaster);
+            }
+
             let q = searchQuery.trim().toLowerCase();
             if (q) {
-                filtered = filtered.filter(o => (o.order_number || '').includes(q) || (o.phone || '').includes(q) || (o.client_name || '').toLowerCase().includes(q) || (o.device || '').toLowerCase().includes(q) || (o.problem || '').toLowerCase().includes(q));
+                filtered = filtered.filter(o => (o.order_number || '').toString().toLowerCase().includes(q) || (o.phone || '').toString().toLowerCase().includes(q) || (o.client_name || '').toString().toLowerCase().includes(q) || (o.device || '').toString().toLowerCase().includes(q) || (o.problem || '').toString().toLowerCase().includes(q));
             }
             
             const comparator = getComparator();
@@ -1700,13 +1727,13 @@
 
         function applyMasterFilter(value) {
             currentMaster = value;
-            renderOrders();
+            loadOrders();
         }
 
         function resetMasterFilter() {
             currentMaster = '';
             document.getElementById('masterFilter').value = '';
-            renderOrders();
+            loadOrders();
         }
 
         function changeSort(value) {
@@ -2477,6 +2504,22 @@
         // ============================================================
         // ИНИЦИАЛИЗАЦИЯ
         // ============================================================
+        // Обработчик поиска по заказам
+        document.getElementById('searchInput')?.addEventListener('input', function() {
+            searchQuery = this.value;
+            loadOrders();
+        });
+
+        // Обработчики фильтров по статусу
+        document.querySelectorAll('#page-orders .filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#page-orders .filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                loadOrders();
+            });
+        });
+
         updateSortIcons();
         console.log('✅ Mini App загружен. Привет, ' + (currentUser?.full_name || 'пользователь') + '!');
     </script>

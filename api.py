@@ -25,8 +25,20 @@ except Exception as e:
 
 print(f"🕐 Текущее время API: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-DATA_DIR = os.getenv('DATA_DIR', '/app/data')
-os.makedirs(DATA_DIR, exist_ok=True)
+DEFAULT_DATA_DIR = '/app/data'
+FALLBACK_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+
+if os.path.exists('/app'):
+    DATA_DIR = os.getenv('DATA_DIR', DEFAULT_DATA_DIR)
+else:
+    DATA_DIR = os.getenv('DATA_DIR', FALLBACK_DATA_DIR)
+
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except OSError:
+    DATA_DIR = FALLBACK_DATA_DIR
+    os.makedirs(DATA_DIR, exist_ok=True)
+
 os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
 from database import get_db, now_iso
@@ -86,13 +98,48 @@ class TaskReassign(BaseModel):
 # ============================================================
 # АВТОРИЗАЦИЯ
 # ============================================================
+import urllib.parse
+
 async def get_current_user(
-    x_user_id: str = Header(default='anonymous')
+    x_tg_init_data: str = Header(default=None),
+    x_user_id: str = Header(default=None)
 ):
-    if x_user_id == 'anonymous':
-        raise HTTPException(status_code=401, detail="Не авторизован")
+    if not x_tg_init_data and not x_user_id:
+        raise HTTPException(status_code=401, detail="Не авторизован: отсутствует X-TG-Init-Data")
+
+    if not x_tg_init_data and x_user_id:
+        telegram_id = x_user_id
+        user = db.get_user(telegram_id)
+        if not user:
+            raise HTTPException(status_code=403, detail="Доступ запрещен")
+        return {
+            "user_id": user['telegram_id'],
+            "username": user['username'] or '',
+            "full_name": user['full_name'] or '',
+            "role": user['role'] or 'user',
+            "master": user.get('master', '')
+        }
+
+    # Парсим initData для извлечения user_id
+    # initData имеет формат key=value&key=value
+    # Например: query_id=AAHdF6...&user=%7B%22id%22%3A12345%2C%22first_name%22%3A%22Test%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22testuser%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%7D&auth_date=1671234567&hash=abcdef12345
     
-    user = db.get_user(x_user_id)
+    parsed_data = urllib.parse.parse_qs(x_tg_init_data)
+    
+    user_data_str = parsed_data.get('user', [None])[0]
+    if not user_data_str:
+        raise HTTPException(status_code=401, detail="Не авторизован: user данные отсутствуют в initData")
+    
+    try:
+        user_data = json.loads(user_data_str)
+        telegram_id = str(user_data.get('id'))
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=401, detail="Не авторизован: некорректные user данные в initData")
+
+    if not telegram_id:
+        raise HTTPException(status_code=401, detail="Не авторизован: user_id отсутствует в initData")
+    
+    user = db.get_user(telegram_id)
     if not user:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     
@@ -132,23 +179,17 @@ async def serve_app():
 
 @app.get("/api/auth/check")
 async def check_user(
-    x_user_id: str = Header(default='anonymous'),
-    x_username: str = Header(default=''),
-    x_full_name: str = Header(default='')
+    current_user: dict = Depends(get_current_user)
 ):
-    if x_user_id == 'anonymous':
-        raise HTTPException(status_code=401, detail="Не авторизован")
-    user = db.get_user(x_user_id)
-    if not user:
-        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    # Если get_current_user не вызвал HTTPException, значит пользователь авторизован
     return JSONResponse({
         "success": True,
         "user": {
-            "id": user['telegram_id'],
-            "username": user['username'] or '',
-            "full_name": user['full_name'] or '',
-            "role": user['role'] or 'user',
-            "master": user.get('master', '')
+            "id": current_user['user_id'],
+            "username": current_user['username'],
+            "full_name": current_user['full_name'],
+            "role": current_user['role'],
+            "master": current_user['master']
         }
     })
 
@@ -388,30 +429,29 @@ async def get_orders(
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
     master: Optional[str] = None,
+    status: Optional[str] = None,  # Add status parameter
     current_user: dict = Depends(get_current_user)
 ):
     try:
         if current_user["role"] in ['admin', 'superadmin']:
-            if search:
-                results = db.search_orders(search)
-                total = len(results)
-                results = results[offset:offset + limit]
-            else:
-                results = db.get_all_orders(limit, offset)
-                with db.get_connection() as conn:
-                    cursor = conn.cursor()
-                    cursor.execute('SELECT COUNT(*) as total FROM orders')
-                    total = cursor.fetchone()['total']
+            results = db.get_all_orders_filtered(limit, offset, search, master, status) # New function to handle all filters
+            total = db.count_all_orders_filtered(search, master, status) # New function to count filtered orders
         else:
-            results = db.get_user_orders(current_user["user_id"], "user")
-            total = len(results)
+            # For regular users, apply filters after fetching their specific orders
+            user_orders = db.get_user_orders(current_user["user_id"], "user")
+            
             if search:
                 search_lower = search.lower()
-                results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
-            results = results[offset:offset + limit]
-        
-        if master:
-            results = [o for o in results if o.get('master') == master]
+                user_orders = [o for o in user_orders if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
+            
+            if master:
+                user_orders = [o for o in user_orders if o.get('master') == master]
+            
+            if status and status != 'all': # Apply status filter for regular users
+                user_orders = [o for o in user_orders if o.get('status') == status]
+
+            total = len(user_orders)
+            results = user_orders[offset:offset + limit]
         
         return JSONResponse({
             "success": True,
