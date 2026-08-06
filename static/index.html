@@ -1619,6 +1619,7 @@
         // ЗАКАЗЫ
         // ============================================================
         async function loadOrders() {
+            const container = document.getElementById('orderList');
             try {
                 const r = await apiFetch('/orders?limit=500');
                 if (r.success) {
@@ -1630,8 +1631,13 @@
                     renderOrders();
                     loadStatusCounts();
                     document.getElementById('techBadge').textContent = r.pagination.total || 0;
+                } else {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки заказов</h3><p>Попробуйте перезагрузить страницу</p></div>';
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Ошибка загрузки заказов</h3><p>' + escapeHtml(e.message) + '</p></div>';
+            }
         }
 
         function normalizeText(value) {

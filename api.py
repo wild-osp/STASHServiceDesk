@@ -425,7 +425,7 @@ async def receive_order_from_1c(
 # ============================================================
 @app.get("/api/orders")
 async def get_orders(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
     master: Optional[str] = None,
