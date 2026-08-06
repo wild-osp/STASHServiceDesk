@@ -25,20 +25,8 @@ except Exception as e:
 
 print(f"🕐 Текущее время API: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-DEFAULT_DATA_DIR = '/app/data'
-FALLBACK_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-
-if os.path.exists('/app'):
-    DATA_DIR = os.getenv('DATA_DIR', DEFAULT_DATA_DIR)
-else:
-    DATA_DIR = os.getenv('DATA_DIR', FALLBACK_DATA_DIR)
-
-try:
-    os.makedirs(DATA_DIR, exist_ok=True)
-except OSError:
-    DATA_DIR = FALLBACK_DATA_DIR
-    os.makedirs(DATA_DIR, exist_ok=True)
-
+DATA_DIR = os.getenv('DATA_DIR', '/app/data')
+os.makedirs(DATA_DIR, exist_ok=True)
 os.environ['DB_PATH'] = os.path.join(DATA_DIR, 'orders.db')
 
 from database import get_db, now_iso
@@ -84,68 +72,15 @@ class OrderFrom1C(BaseModel):
     notes: Optional[str] = None
 
 # ============================================================
-# МОДЕЛЬ ДЛЯ ЗАДАЧ
-# ============================================================
-class TaskCreate(BaseModel):
-    text: str
-    priority: str = "Обычный"
-    deadline: Optional[str] = None
-    order_id: Optional[int] = None
-
-class TaskUpdate(BaseModel):
-    text: Optional[str] = None
-    priority: Optional[str] = None
-    deadline: Optional[str] = None
-    order_id: Optional[int] = None
-
-class TaskReassign(BaseModel):
-    new_executor_id: int
-
-# ============================================================
 # АВТОРИЗАЦИЯ
 # ============================================================
-import urllib.parse
-
 async def get_current_user(
-    x_tg_init_data: str = Header(default=None),
-    x_user_id: str = Header(default=None)
+    x_user_id: str = Header(default='anonymous')
 ):
-    if not x_tg_init_data and not x_user_id:
-        raise HTTPException(status_code=401, detail="Не авторизован: отсутствует X-TG-Init-Data")
-
-    if not x_tg_init_data and x_user_id:
-        telegram_id = x_user_id
-        user = db.get_user(telegram_id)
-        if not user:
-            raise HTTPException(status_code=403, detail="Доступ запрещен")
-        return {
-            "user_id": user['telegram_id'],
-            "username": user['username'] or '',
-            "full_name": user['full_name'] or '',
-            "role": user['role'] or 'user',
-            "master": user.get('master', '')
-        }
-
-    # Парсим initData для извлечения user_id
-    # initData имеет формат key=value&key=value
-    # Например: query_id=AAHdF6...&user=%7B%22id%22%3A12345%2C%22first_name%22%3A%22Test%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22testuser%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%7D&auth_date=1671234567&hash=abcdef12345
+    if x_user_id == 'anonymous':
+        raise HTTPException(status_code=401, detail="Не авторизован")
     
-    parsed_data = urllib.parse.parse_qs(x_tg_init_data)
-    
-    user_data_str = parsed_data.get('user', [None])[0]
-    if not user_data_str:
-        raise HTTPException(status_code=401, detail="Не авторизован: user данные отсутствуют в initData")
-    
-    try:
-        user_data = json.loads(user_data_str)
-        telegram_id = str(user_data.get('id'))
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=401, detail="Не авторизован: некорректные user данные в initData")
-
-    if not telegram_id:
-        raise HTTPException(status_code=401, detail="Не авторизован: user_id отсутствует в initData")
-    
-    user = db.get_user(telegram_id)
+    user = db.get_user(x_user_id)
     if not user:
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     
@@ -185,17 +120,23 @@ async def serve_app():
 
 @app.get("/api/auth/check")
 async def check_user(
-    current_user: dict = Depends(get_current_user)
+    x_user_id: str = Header(default='anonymous'),
+    x_username: str = Header(default=''),
+    x_full_name: str = Header(default='')
 ):
-    # Если get_current_user не вызвал HTTPException, значит пользователь авторизован
+    if x_user_id == 'anonymous':
+        raise HTTPException(status_code=401, detail="Не авторизован")
+    user = db.get_user(x_user_id)
+    if not user:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
     return JSONResponse({
         "success": True,
         "user": {
-            "id": current_user['user_id'],
-            "username": current_user['username'],
-            "full_name": current_user['full_name'],
-            "role": current_user['role'],
-            "master": current_user['master']
+            "id": user['telegram_id'],
+            "username": user['username'] or '',
+            "full_name": user['full_name'] or '',
+            "role": user['role'] or 'user',
+            "master": user.get('master', '')
         }
     })
 
@@ -431,33 +372,34 @@ async def receive_order_from_1c(
 # ============================================================
 @app.get("/api/orders")
 async def get_orders(
-    limit: int = Query(50, ge=1, le=1000),
+    limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
     master: Optional[str] = None,
-    status: Optional[str] = None,  # Add status parameter
     current_user: dict = Depends(get_current_user)
 ):
     try:
         if current_user["role"] in ['admin', 'superadmin']:
-            results = db.get_all_orders_filtered(limit, offset, search, master, status) # New function to handle all filters
-            total = db.count_all_orders_filtered(search, master, status) # New function to count filtered orders
+            if search:
+                results = db.search_orders(search)
+                total = len(results)
+                results = results[offset:offset + limit]
+            else:
+                results = db.get_all_orders(limit, offset)
+                with db.get_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT COUNT(*) as total FROM orders')
+                    total = cursor.fetchone()['total']
         else:
-            # For regular users, apply filters after fetching their specific orders
-            user_orders = db.get_user_orders(current_user["user_id"], "user")
-            
+            results = db.get_user_orders(current_user["user_id"], "user")
+            total = len(results)
             if search:
                 search_lower = search.lower()
-                user_orders = [o for o in user_orders if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
-            
-            if master:
-                user_orders = [o for o in user_orders if o.get('master') == master]
-            
-            if status and status != 'all': # Apply status filter for regular users
-                user_orders = [o for o in user_orders if o.get('status') == status]
-
-            total = len(user_orders)
-            results = user_orders[offset:offset + limit]
+                results = [o for o in results if search_lower in (o.get('order_number') or '').lower() or search_lower in (o.get('client_name') or '').lower() or search_lower in (o.get('phone') or '').lower()]
+            results = results[offset:offset + limit]
+        
+        if master:
+            results = [o for o in results if o.get('master') == master]
         
         return JSONResponse({
             "success": True,
@@ -653,337 +595,6 @@ async def search_orders(
             results = results[:limit]
         return JSONResponse({"success": True, "data": results, "total": total, "limit": limit})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ============================================================
-# ЗАДАЧИ (НОВЫЙ РАЗДЕЛ)
-# ============================================================
-
-@app.get("/api/tasks")
-async def get_tasks(
-    status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
-):
-    """Получить список задач"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            
-            if status == 'completed':
-                cursor.execute("""
-                    SELECT id,
-                           task_text AS text,
-                           author,
-                           author_id,
-                           completed_by,
-                           completed_by_id,
-                           completion_time,
-                           order_id,
-                           taken_by,
-                           taken_by_id,
-                           taken_at
-                    FROM completed_tasks
-                    ORDER BY id DESC
-                    LIMIT 100
-                """)
-                rows = cursor.fetchall()
-                return JSONResponse({
-                    "success": True,
-                    "data": [dict(row) for row in rows],
-                    "type": "completed"
-                })
-            else:
-                # Активные задачи
-                query = (
-                    "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, "
-                    "taken_by, taken_by_id, taken_at, created_at, updated_at "
-                    "FROM pending_tasks ORDER BY id DESC"
-                )
-                params = []
-                
-                if status == 'my':
-                    query = "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, taken_by, taken_by_id, taken_at, created_at, updated_at FROM pending_tasks WHERE taken_by_id = ? ORDER BY id DESC"
-                    params = [current_user['user_id']]
-                elif status == 'pending':
-                    query = "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, taken_by, taken_by_id, taken_at, created_at, updated_at FROM pending_tasks WHERE taken_by_id IS NULL ORDER BY id DESC"
-                
-                cursor.execute(query, params)
-                rows = cursor.fetchall()
-                return JSONResponse({
-                    "success": True,
-                    "data": [dict(row) for row in rows],
-                    "type": "pending"
-                })
-    except Exception as e:
-        print(f"❌ Ошибка получения задач: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/tasks")
-async def create_task(
-    task_data: TaskCreate,
-    current_user: dict = Depends(get_current_user)
-):
-    """Создать новую задачу"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO pending_tasks 
-                (task_text, author, author_id, priority, deadline, order_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                task_data.text,
-                current_user['full_name'],
-                current_user['user_id'],
-                task_data.priority,
-                task_data.deadline,
-                task_data.order_id,
-                now_iso()
-            ))
-            task_id = cursor.lastrowid
-            conn.commit()
-            return JSONResponse({
-                "success": True,
-                "message": "Задача создана",
-                "task_id": task_id
-            })
-    except Exception as e:
-        print(f"❌ Ошибка создания задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/tasks/{task_id}/take")
-async def take_task(
-    task_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Взять задачу в работу"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE pending_tasks 
-                SET taken_by = ?, taken_by_id = ?, taken_at = ?
-                WHERE id = ? AND taken_by_id IS NULL
-            """, (current_user['full_name'], current_user['user_id'], now_iso(), task_id))
-            if cursor.rowcount == 0:
-                raise HTTPException(status_code=400, detail="Задача уже взята или не найдена")
-            conn.commit()
-            return JSONResponse({"success": True, "message": "Задача взята в работу"})
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка взятия задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/tasks/{task_id}/complete")
-async def complete_task(
-    task_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Завершить задачу"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            row = cursor.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail="Задача не найдена")
-            task = dict(row)
-            
-            if task.get('taken_by_id') != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
-                raise HTTPException(status_code=403, detail="Вы не можете завершить эту задачу")
-            
-            cursor.execute("""
-                INSERT INTO completed_tasks (task_text, author, author_id, completed_by, completed_by_id, completion_time, order_id, taken_by, taken_by_id, taken_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                task.get('task_text'),
-                task.get('author'),
-                task.get('author_id'),
-                current_user['full_name'],
-                current_user['user_id'],
-                now_iso(),
-                task.get('order_id'),
-                task.get('taken_by'),
-                task.get('taken_by_id'),
-                task.get('taken_at')
-            ))
-            
-            # Удаляем из активных
-            cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
-            conn.commit()
-            return JSONResponse({"success": True, "message": "Задача завершена"})
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка завершения задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/tasks/{task_id}")
-async def update_task(
-    task_id: int,
-    task_data: TaskUpdate,
-    current_user: dict = Depends(get_current_user)
-):
-    """Обновить задачу (автор или админ)"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM pending_tasks WHERE id = ?", (task_id,))
-            task = cursor.fetchone()
-            if not task:
-                raise HTTPException(status_code=404, detail="Задача не найдена")
-            if task['author_id'] != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
-                raise HTTPException(status_code=403, detail="Вы не можете редактировать эту задачу")
-
-            fields = []
-            params = []
-            if task_data.text is not None:
-                fields.append('task_text = ?')
-                params.append(task_data.text)
-            if task_data.priority is not None:
-                fields.append('priority = ?')
-                params.append(task_data.priority)
-            if task_data.deadline is not None:
-                fields.append('deadline = ?')
-                params.append(task_data.deadline)
-            if task_data.order_id is not None:
-                fields.append('order_id = ?')
-                params.append(task_data.order_id)
-            if not fields:
-                raise HTTPException(status_code=400, detail="Нет данных для обновления")
-            fields.append('updated_at = ?')
-            params.append(now_iso())
-            params.append(task_id)
-            cursor.execute(f"UPDATE pending_tasks SET {', '.join(fields)} WHERE id = ?", tuple(params))
-            conn.commit()
-            return JSONResponse({"success": True, "message": "Задача обновлена"})
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка обновления задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/api/tasks/{task_id}")
-async def delete_task(
-    task_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Удалить задачу (только админ)"""
-    if current_user["role"] not in ['admin', 'superadmin']:
-        raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
-            if cursor.rowcount == 0:
-                cursor.execute("DELETE FROM completed_tasks WHERE id = ?", (task_id,))
-                if cursor.rowcount == 0:
-                    raise HTTPException(status_code=404, detail="Задача не найдена")
-            conn.commit()
-            return JSONResponse({"success": True, "message": "Задача удалена"})
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка удаления задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/tasks/{task_id}/reassign")
-async def reassign_task(
-    task_id: int,
-    reassign_data: TaskReassign,
-    current_user: dict = Depends(get_current_user)
-):
-    """Переназначить задачу (только админ)"""
-    if current_user["role"] not in ['admin', 'superadmin']:
-        raise HTTPException(status_code=403, detail="Доступ запрещен")
-    
-    try:
-        # Получаем нового исполнителя
-        new_executor = db.get_user(str(reassign_data.new_executor_id))
-        if not new_executor:
-            raise HTTPException(status_code=404, detail="Пользователь не найден")
-        
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE pending_tasks 
-                SET taken_by = ?, taken_by_id = ?, taken_at = ?
-                WHERE id = ?
-            """, (new_executor['full_name'], reassign_data.new_executor_id, now_iso(), task_id))
-            if cursor.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Задача не найдена")
-            conn.commit()
-            return JSONResponse({
-                "success": True, 
-                "message": f"Задача переназначена на {new_executor['full_name']}"
-            })
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка переназначения задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/tasks/{task_id}/cancel")
-async def cancel_task(
-    task_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Отказаться от задачи (снять с себя)"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE pending_tasks 
-                SET taken_by = NULL, taken_by_id = NULL, taken_at = NULL
-                WHERE id = ? AND taken_by_id = ?
-            """, (task_id, current_user['user_id']))
-            if cursor.rowcount == 0:
-                raise HTTPException(status_code=400, detail="Вы не являетесь исполнителем этой задачи")
-            conn.commit()
-            return JSONResponse({"success": True, "message": "Вы отказались от задачи"})
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Ошибка отказа от задачи: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/tasks/stats")
-async def get_tasks_stats(current_user: dict = Depends(get_current_user)):
-    """Получить статистику по задачам"""
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            
-            # Всего активных задач
-            cursor.execute("SELECT COUNT(*) FROM pending_tasks")
-            total_pending = cursor.fetchone()[0]
-            
-            # Мои задачи
-            cursor.execute("SELECT COUNT(*) FROM pending_tasks WHERE taken_by_id = ?", (current_user['user_id'],))
-            my_tasks = cursor.fetchone()[0]
-            
-            # Доступные задачи
-            cursor.execute("SELECT COUNT(*) FROM pending_tasks WHERE taken_by_id IS NULL")
-            available_tasks = cursor.fetchone()[0]
-            
-            # Выполненные сегодня
-            today = datetime.now().strftime('%Y-%m-%d')
-            cursor.execute("SELECT COUNT(*) FROM completed_tasks WHERE completion_time LIKE ?", (today + '%',))
-            completed_today = cursor.fetchone()[0]
-            
-            return JSONResponse({
-                "success": True,
-                "data": {
-                    "total_pending": total_pending,
-                    "my_tasks": my_tasks,
-                    "available_tasks": available_tasks,
-                    "completed_today": completed_today
-                }
-            })
-    except Exception as e:
-        print(f"❌ Ошибка получения статистики задач: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
