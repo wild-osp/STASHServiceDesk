@@ -28,11 +28,46 @@ def now_iso():
 
 class Database:
     """Класс для управления базой данных заказов"""
+
+    @staticmethod
+    def resolve_db_path(db_path: str = None) -> str:
+        """Находит рабочий файл базы данных среди возможных путей."""
+        candidates = []
+
+        if db_path:
+            candidates.append(db_path)
+
+        env_path = os.getenv('DB_PATH')
+        if env_path:
+            candidates.append(env_path)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates.extend([
+            '/app/data/orders.db',
+            '/app/orders.db',
+            os.path.join(base_dir, 'Data', 'orders.db'),
+            os.path.join(base_dir, 'data', 'orders.db'),
+            os.path.join(base_dir, 'orders.db'),
+        ])
+
+        seen = set()
+        for candidate in candidates:
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            if os.path.exists(candidate):
+                return candidate
+
+        if db_path:
+            return db_path
+        if env_path:
+            return env_path
+        return '/app/data/orders.db'
     
     def __init__(self, db_path: str = None):
-        if db_path is None:
-            db_path = os.getenv('DB_PATH', '/app/data/orders.db')
-        self.db_path = db_path
+        resolved_path = self.resolve_db_path(db_path)
+        self.db_path = resolved_path
+        os.environ['DB_PATH'] = self.db_path
         self.init_database()
         self.init_users_table()
         self.ensure_master_column()
