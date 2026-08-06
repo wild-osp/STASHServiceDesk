@@ -89,6 +89,45 @@ class Database:
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_device ON orders(device)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_status ON orders(status)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_master ON orders(master)')
+
+            # Таблицы задач
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS pending_tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task_text TEXT NOT NULL,
+                    author TEXT,
+                    author_id TEXT,
+                    priority TEXT DEFAULT 'Обычный',
+                    deadline TEXT,
+                    order_id INTEGER,
+                    taken_by TEXT,
+                    taken_by_id TEXT,
+                    taken_at TEXT,
+                    created_at TEXT,
+                    updated_at TEXT,
+                    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
+                )
+            ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS completed_tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task_text TEXT NOT NULL,
+                    author TEXT,
+                    author_id TEXT,
+                    completed_by TEXT,
+                    completed_by_id TEXT,
+                    completion_time TEXT,
+                    order_id INTEGER,
+                    taken_by TEXT,
+                    taken_by_id TEXT,
+                    taken_at TEXT,
+                    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
+                )
+            ''')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_tasks_taken_by_id ON pending_tasks(taken_by_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_tasks_author_id ON pending_tasks(author_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_completed_tasks_completed_by_id ON completed_tasks(completed_by_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_completed_tasks_completion_time ON completed_tasks(completion_time)')
             
             conn.commit()
             

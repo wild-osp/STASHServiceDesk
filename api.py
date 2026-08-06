@@ -92,6 +92,12 @@ class TaskCreate(BaseModel):
     deadline: Optional[str] = None
     order_id: Optional[int] = None
 
+class TaskUpdate(BaseModel):
+    text: Optional[str] = None
+    priority: Optional[str] = None
+    deadline: Optional[str] = None
+    order_id: Optional[int] = None
+
 class TaskReassign(BaseModel):
     new_executor_id: int
 
@@ -665,9 +671,19 @@ async def get_tasks(
             
             if status == 'completed':
                 cursor.execute("""
-                    SELECT id, task_text, author, completed_by, completion_time 
-                    FROM completed_tasks 
-                    ORDER BY id DESC 
+                    SELECT id,
+                           task_text AS text,
+                           author,
+                           author_id,
+                           completed_by,
+                           completed_by_id,
+                           completion_time,
+                           order_id,
+                           taken_by,
+                           taken_by_id,
+                           taken_at
+                    FROM completed_tasks
+                    ORDER BY id DESC
                     LIMIT 100
                 """)
                 rows = cursor.fetchall()
@@ -678,14 +694,18 @@ async def get_tasks(
                 })
             else:
                 # Активные задачи
-                query = "SELECT * FROM pending_tasks ORDER BY id DESC"
+                query = (
+                    "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, "
+                    "taken_by, taken_by_id, taken_at, created_at, updated_at "
+                    "FROM pending_tasks ORDER BY id DESC"
+                )
                 params = []
                 
                 if status == 'my':
-                    query = "SELECT * FROM pending_tasks WHERE taken_by_id = ? ORDER BY id DESC"
+                    query = "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, taken_by, taken_by_id, taken_at, created_at, updated_at FROM pending_tasks WHERE taken_by_id = ? ORDER BY id DESC"
                     params = [current_user['user_id']]
                 elif status == 'pending':
-                    query = "SELECT * FROM pending_tasks WHERE taken_by_id IS NULL ORDER BY id DESC"
+                    query = "SELECT id, task_text AS text, author, author_id, priority, deadline, order_id, taken_by, taken_by_id, taken_at, created_at, updated_at FROM pending_tasks WHERE taken_by_id IS NULL ORDER BY id DESC"
                 
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
@@ -709,7 +729,7 @@ async def create_task(
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO pending_tasks 
-                (text, author, author_id, priority, deadline, order_id, created_at)
+                (task_text, author, author_id, priority, deadline, order_id, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 task_data.text,
@@ -764,18 +784,29 @@ async def complete_task(
     try:
         with db.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM pending_tasks WHERE id = ?", (task_id,))
-            task = dict(cursor.fetchone())  # Преобразуем Row в dict
-            if not task:
+            row = cursor.fetchone()
+            if not row:
                 raise HTTPException(status_code=404, detail="Задача не найдена")
+            task = dict(row)
             
             if task.get('taken_by_id') != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
                 raise HTTPException(status_code=403, detail="Вы не можете завершить эту задачу")
             
             cursor.execute("""
-                INSERT INTO completed_tasks (task_text, author, completed_by, completion_time, order_id)
-                VALUES (?, ?, ?, ?, ?)
-            """, (task.get('text'), task.get('author'), current_user['full_name'], now_iso(), task.get('order_id')))
+                INSERT INTO completed_tasks (task_text, author, author_id, completed_by, completed_by_id, completion_time, order_id, taken_by, taken_by_id, taken_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                task.get('task_text'),
+                task.get('author'),
+                task.get('author_id'),
+                current_user['full_name'],
+                current_user['user_id'],
+                now_iso(),
+                task.get('order_id'),
+                task.get('taken_by'),
+                task.get('taken_by_id'),
+                task.get('taken_at')
+            ))
             
             # Удаляем из активных
             cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
@@ -785,6 +816,52 @@ async def complete_task(
         raise
     except Exception as e:
         print(f"❌ Ошибка завершения задачи: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}")
+async def update_task(
+    task_id: int,
+    task_data: TaskUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Обновить задачу (автор или админ)"""
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM pending_tasks WHERE id = ?", (task_id,))
+            task = cursor.fetchone()
+            if not task:
+                raise HTTPException(status_code=404, detail="Задача не найдена")
+            if task['author_id'] != current_user['user_id'] and current_user['role'] not in ['admin', 'superadmin']:
+                raise HTTPException(status_code=403, detail="Вы не можете редактировать эту задачу")
+
+            fields = []
+            params = []
+            if task_data.text is not None:
+                fields.append('task_text = ?')
+                params.append(task_data.text)
+            if task_data.priority is not None:
+                fields.append('priority = ?')
+                params.append(task_data.priority)
+            if task_data.deadline is not None:
+                fields.append('deadline = ?')
+                params.append(task_data.deadline)
+            if task_data.order_id is not None:
+                fields.append('order_id = ?')
+                params.append(task_data.order_id)
+            if not fields:
+                raise HTTPException(status_code=400, detail="Нет данных для обновления")
+            fields.append('updated_at = ?')
+            params.append(now_iso())
+            params.append(task_id)
+            cursor.execute(f"UPDATE pending_tasks SET {', '.join(fields)} WHERE id = ?", tuple(params))
+            conn.commit()
+            return JSONResponse({"success": True, "message": "Задача обновлена"})
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Ошибка обновления задачи: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/tasks/{task_id}")
@@ -801,7 +878,9 @@ async def delete_task(
             cursor = conn.cursor()
             cursor.execute("DELETE FROM pending_tasks WHERE id = ?", (task_id,))
             if cursor.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Задача не найдена")
+                cursor.execute("DELETE FROM completed_tasks WHERE id = ?", (task_id,))
+                if cursor.rowcount == 0:
+                    raise HTTPException(status_code=404, detail="Задача не найдена")
             conn.commit()
             return JSONResponse({"success": True, "message": "Задача удалена"})
     except HTTPException:
