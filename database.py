@@ -43,6 +43,23 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def ensure_table_columns(self, table_name: str, columns: Dict[str, str]):
+        """Добавляет отсутствующие колонки в существующую таблицу."""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(f"PRAGMA table_info({table_name})")
+                existing_columns = {row['name'] for row in cursor.fetchall()}
+
+                for column_name, column_definition in columns.items():
+                    if column_name not in existing_columns:
+                        print(f"🔧 Добавляем колонку {column_name} в таблицу {table_name}...")
+                        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}")
+
+                conn.commit()
+        except Exception as e:
+            print(f"⚠️ Ошибка при проверке/добавлении колонок для {table_name}: {e}")
     
     def init_database(self):
         """Инициализирует структуру базы данных"""
@@ -124,6 +141,25 @@ class Database:
                     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
                 )
             ''')
+
+            self.ensure_table_columns('pending_tasks', {
+                'author_id': 'TEXT',
+                'taken_by_id': 'TEXT',
+                'taken_at': 'TEXT',
+                'priority': "TEXT DEFAULT 'Обычный'",
+                'deadline': 'TEXT',
+                'updated_at': 'TEXT'
+            })
+            self.ensure_table_columns('completed_tasks', {
+                'author_id': 'TEXT',
+                'completed_by': 'TEXT',
+                'completed_by_id': 'TEXT',
+                'completion_time': 'TEXT',
+                'taken_by': 'TEXT',
+                'taken_by_id': 'TEXT',
+                'taken_at': 'TEXT'
+            })
+
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_tasks_taken_by_id ON pending_tasks(taken_by_id)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_tasks_author_id ON pending_tasks(author_id)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_completed_tasks_completed_by_id ON completed_tasks(completed_by_id)')
