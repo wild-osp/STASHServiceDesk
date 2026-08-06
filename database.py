@@ -51,11 +51,37 @@ class Database:
         ])
 
         seen = set()
+        best_path = None
+        best_count = -1
+
         for candidate in candidates:
             if not candidate or candidate in seen:
                 continue
             seen.add(candidate)
-            if os.path.exists(candidate):
+
+            if not os.path.exists(candidate):
+                continue
+
+            try:
+                with sqlite3.connect(candidate) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'")
+                    if cursor.fetchone() is None:
+                        continue
+                    cursor.execute("SELECT COUNT(*) FROM orders")
+                    count = cursor.fetchone()[0]
+            except Exception:
+                continue
+
+            if count > best_count:
+                best_path = candidate
+                best_count = count
+
+        if best_path:
+            return best_path
+
+        for candidate in candidates:
+            if candidate and candidate not in seen:
                 return candidate
 
         if db_path:
