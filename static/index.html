@@ -1245,7 +1245,7 @@
                 return;
             }
             
-            apiFetch('/orders?limit=500')
+            apiFetch('/orders?limit=100000')
                 .then(r => {
                     if (r.success && r.data.length > 0) {
                         buildClientsFromOrders(r.data);
@@ -1342,7 +1342,7 @@
                 return;
             }
             
-            apiFetch('/orders?limit=500')
+            apiFetch('/orders?limit=100000')
                 .then(r => {
                     if (r.success) {
                         renderClientDetail(cleanPhone, r.data);
@@ -1461,7 +1461,7 @@
 
         async function loadOrders() {
             try {
-                let url = '/orders?limit=200';
+                let url = '/orders?limit=100000';
                 if (currentMaster) {
                     url += '&master=' + encodeURIComponent(currentMaster);
                 }
