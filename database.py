@@ -409,11 +409,11 @@ class Database:
                     problem LIKE ? OR
                     receiver LIKE ?
                 ORDER BY created_at DESC
-                LIMIT 100
+                LIMIT 100000
             ''', (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern))
             return [dict(row) for row in cursor.fetchall()]
     
-    def get_all_orders(self, limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
+    def get_all_orders(self, limit: int = 100000, offset: int = 0) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (limit, offset))
@@ -487,9 +487,9 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             if role in ['admin', 'superadmin']:
-                cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200')
+                cursor.execute('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100000')
             else:
-                cursor.execute('SELECT * FROM orders WHERE phone LIKE ? OR client_name LIKE ? ORDER BY created_at DESC LIMIT 200', (f'%{user_id}%', f'%{user_id}%'))
+                cursor.execute('SELECT * FROM orders WHERE phone LIKE ? OR client_name LIKE ? ORDER BY created_at DESC LIMIT 100000', (f'%{user_id}%', f'%{user_id}%'))
             return [dict(row) for row in cursor.fetchall()]
 
     # ============================================================

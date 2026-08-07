@@ -372,7 +372,7 @@ async def receive_order_from_1c(
 # ============================================================
 @app.get("/api/orders")
 async def get_orders(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=100000),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
     master: Optional[str] = None,
@@ -579,7 +579,7 @@ async def get_dashboard_stats(
 @app.get("/api/search")
 async def search_orders(
     q: str = Query(..., min_length=1),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=100000),
     current_user: dict = Depends(get_current_user)
 ):
     try:
