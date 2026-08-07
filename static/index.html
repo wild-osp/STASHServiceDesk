@@ -58,7 +58,11 @@
             padding: 12px 8px;
             text-align: center;
             border-bottom: 3px solid var(--accent);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
         }
+        .stat-card:hover { background: var(--bg-card); transform: translateY(-2px); }
+        .stat-card:active { transform: scale(0.95); }
         .stat-number { font-size: 26px; font-weight: 700; color: var(--accent); }
         .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
@@ -698,8 +702,8 @@
             <span class="header-badge" id="totalBadge">0</span>
         </div>
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего</div></div>
-            <div class="stat-card"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
+            <div class="stat-card" onclick="filterByAll()"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Всего</div></div>
+            <div class="stat-card" onclick="filterByToday()"><div class="stat-number" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
         </div>
         <div class="search-wrapper">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по номеру, телефону, ФИО, устройству..." />
@@ -903,6 +907,7 @@
         let currentUser = null;
         let USER_ROLE = 'user';
         let allOrders = [], currentFilter = 'all', searchQuery = '';
+        let filterToday = false;
         let currentMaster = '';
         let allUsers = [];
         let sortMode = 'number';
@@ -1099,6 +1104,30 @@
         function applyMasterFilter(value) {
             currentMaster = value;
             loadOrders();
+        }
+
+        function filterByAll() {
+            filterToday = false;
+            currentFilter = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.dataset.filter === 'all') b.classList.add('active');
+            });
+            renderOrders();
+        }
+
+        function filterByToday() {
+            filterToday = true;
+            currentFilter = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.dataset.filter === 'all') b.classList.add('active');
+            });
+            renderOrders();
         }
 
         async function loadStatusCounts() {
@@ -1480,6 +1509,10 @@
 
         function renderOrders() {
             let filtered = allOrders;
+            if (filterToday) {
+                let today = new Date().toISOString().slice(0,10);
+                filtered = filtered.filter(o => o.date === today);
+            }
             if (currentFilter !== 'all') filtered = filtered.filter(o => o.status === currentFilter);
             let q = searchQuery.trim().toLowerCase();
             if (q) {
@@ -1508,6 +1541,7 @@
         document.getElementById('filters')?.addEventListener('click', function(e) {
             let btn = e.target.closest('.filter-btn');
             if (!btn) return;
+            filterToday = false;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
