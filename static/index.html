@@ -1048,7 +1048,7 @@
         function resetMasterFilter() {
             currentMaster = '';
             document.getElementById('masterFilter').value = '';
-            renderOrders();
+            loadOrders();
         }
 
         function updateSortIcons() {
@@ -1098,32 +1098,27 @@
 
         function applyMasterFilter(value) {
             currentMaster = value;
-            renderOrders();
+            loadOrders();
         }
 
         async function loadStatusCounts() {
-            try {
-                const r = await apiFetch('/status-counts');
-                if (r.success) {
-                    const counts = {};
-                    r.data.forEach(item => {
-                        counts[item.status] = item.count;
-                    });
-                    document.querySelectorAll('.filter-btn').forEach(btn => {
-                        const status = btn.dataset.filter;
-                        if (status === 'all') {
-                            const total = Object.values(counts).reduce((a, b) => a + b, 0);
-                            btn.textContent = `Все (${total})`;
-                        } else if (counts[status]) {
-                            btn.textContent = `${status} (${counts[status]})`;
-                        } else {
-                            btn.textContent = `${status} (0)`;
-                        }
-                    });
+            const counts = {};
+            (allOrders || []).forEach(order => {
+                const status = order.status || 'Без статуса';
+                counts[status] = (counts[status] || 0) + 1;
+            });
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const status = btn.dataset.filter;
+                if (status === 'all') {
+                    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+                    btn.textContent = `Все (${total})`;
+                } else if (counts[status]) {
+                    btn.textContent = `${status} (${counts[status]})`;
+                } else {
+                    btn.textContent = `${status} (0)`;
                 }
-            } catch(e) {
-                console.error('Ошибка загрузки статусов:', e);
-            }
+            });
         }
 
         function showDetail(order) {
